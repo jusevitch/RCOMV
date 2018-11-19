@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <arg name="world_name" default="worlds/empty.world"/>
+
+  <arg name="laser_enabled" default="true"/>
+  <arg name="kinect_enabled" default="false"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/> <!-- world_name is wrt GAZEBO_RESOURCE_PATH environment variable -->
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <include file="$(find husky_gazebo)/launch/spawn_husky.launch">
+    <arg name="laser_enabled" value="$(arg laser_enabled)"/>
+    <arg name="kinect_enabled" value="$(arg kinect_enabled)"/>
+  </include>
+
+
+   <node
+    pkg = "rcomv_ugv"
+    type = "pidctrl"
+    name = "PIDcontroller"
+    output = "screen"
+    launch-prefix="xterm -e" 
+  >
+    <param name = "Kp1" value = "0.5"/>
+    <param name = "Kp2" value = "0.8"/>
+    <param name = "Kd1" value = "0.0"/>
+    <param name = "Kd2" value = "0.0"/>
+    <param name = "Ki1" value = "0.0"/>
+    <param name = "Ki2" value = "0.0"/>
+	<param name="goal_x" value = "-5"/>
+	<param name="goal_y" value = "-5"/> 
+  </node>
+
+</launch>

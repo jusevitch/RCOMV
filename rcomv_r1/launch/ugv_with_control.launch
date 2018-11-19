@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+
+<launch>
+    	<arg name="ugv_name" default="r1_sim"/>
+    	<arg name="enable_logging" default="false" />
+    	<arg name="enable_ground_truth" default="true" />
+  	<arg name="log_file" default="$(arg ugv_name)" />
+    	<arg name="name_space" default="$(arg ugv_name)" />
+
+	<!-- parameters for the WMSR node -->
+	<arg name="wmsr_node" default="false" />
+	<arg name="x" default = "0" />
+	<arg name="y" default = "0" />
+	<arg name="z" default = "0.1" />
+	<arg name="n" default="15" />
+	<arg name="k" default="7" />
+	<arg name="idx" default="1" />
+	<arg name="role" default="2" />
+	<arg name="F" default="0" />
+	<arg name="demo" default="2" />
+
+	<arg name="color" default="Black" />
+
+	<arg name="lead_x" default="6" />
+	<arg name="lead_y" default="6" />
+	<arg name="lead_z" default="10" />
+
+	<!-- goal location for simple waypoint tracking -->
+    	<arg name="goal_x" default="0" />
+    	<arg name="goal_y" default="0" />
+
+	<!-- PID control gain -->
+    <arg name="Kp1" default="0.0"/> <arg name="Ki1" default="0.0"/> <arg name="Kd1" default="0.0"/>
+    <arg name="Kp2" default="0.0"/> <arg name="Ki2" default="0.0"/> <arg name="Kd2" default="0.0"/>
+
+	<!-- parameters for the trajectory tracking test -->
+      <arg name="path_node" default="false" />
+      <arg name="radius" default="2"/>
+      <arg name="cx" default="0" />
+      <arg name="cy" default="0" />
+
+
+	<group ns="$(arg name_space)">
+	      <!-- ugv robot node -->
+	 <include file="$(find rcomv_r1)/launch/spawn_ugv.launch">
+	        <arg name="namespace" value="$(arg name_space)" />  <!-- namespace -->
+      		<arg name="ugv_name" value="$(arg ugv_name)" />
+      		<arg name="model" value="$(find rcomv_r1)/urdf/r1_sim.urdf.xacro" />
+      		<arg name="enable_logging" value="$(arg enable_logging)" />
+      		<arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
+      		<arg name="log_file" value="$(arg log_file)"/>
+      		<arg name="x" value="$(arg x)"/>
+      		<arg name="y" value="$(arg y)"/>
+	        <arg name="z" value="$(arg z)"/>
+    	</include>
+
+      	<node name="tf_footprint_base" pkg="tf" type="static_transform_publisher"
+            	args="0 0 0 0 0 0 base_link base_footprint 40" />
+
+      	<node name="fake_joint_calibration" pkg="rostopic" type="rostopic"
+            	args="pub /calibrated std_msgs/Bool true" />
+
+      	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+      	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+      	<!-- PID controller node -->
+        <node name="pid_controller_node" pkg="rcomv_r1" type="pid_controller" launch-prefix="xterm -e"    output="screen" unless="$(arg wmsr_node)">
+	          <param name="max_linear_velocity" value="2" />
+	          <param name="max_angular_velocity" value="2" />
+
+            	  <param name="goal_x" value="$(arg goal_x)" />
+	          <param name="goal_y" value="$(arg goal_y)" />
+
+	          <param name="Kp1" value="$(arg Kp1)"/>
+		  <param name="Ki1" value="$(arg Ki1)"/>
+                  <param name="Kd1" value="$(arg Kd1)"/>
+
+                  <param name="Kp2" value="$(arg Kp2)"/>
+ 		  <param name="Ki2" value="$(arg Ki2)"/>
+		  <param name="Kd2" value="$(arg Kd2)"/>
+      	</node>
+        <node name="pid_controller_node" pkg="rcomv_r1" type="pid_controller" if="$(arg wmsr_node)">
+	          <param name="max_linear_velocity" value="2" />
+	          <param name="max_angular_velocity" value="2" />
+
+            	  <param name="goal_x" value="$(arg x)" />
+	          <param name="goal_y" value="$(arg y)" />
+
+	          <param name="Kp1" value="$(arg Kp1)"/>
+		  <param name="Ki1" value="$(arg Ki1)"/>
+                  <param name="Kd1" value="$(arg Kd1)"/>
+
+                  <param name="Kp2" value="$(arg Kp2)"/>
+ 		  <param name="Ki2" value="$(arg Ki2)"/>
+		  <param name="Kd2" value="$(arg Kd2)"/>
+      	</node>
+
+
+	<!-- WMSR node -->
+	<node name="wmsr_node" pkg="rcomv_r1" type="wmsr_node" if="$(arg wmsr_node)">
+		<param name="n" value="$(arg n)" />
+		<param name="k" value="$(arg k)" />
+		<param name="F" value="$(arg F)" />
+		<param name="idx" value="$(arg idx)" />
+		<param name="role" value="$(arg role)" />
+
+		<param name="x" value="$(arg x)" />
+		<param name="y" value="$(arg y)" />
+		<!-- param name="z" value="$(arg z)" /-->
+
+		<param name="demo" value="$(arg demo)" />
+
+		<param name="cx" value="$(arg lead_x)" />
+		<param name="cy" value="$(arg lead_y)" />
+		<!--param name="cz" value="$(arg lead_z)" /-->
+	</node>
+
+ 	<node name="path_publisher_node" pkg="rcomv_r1" type="path_publisher"  launch-prefix="xterm -e"    output="screen" if="$(arg path_node)" >
+		<param name="radius" value="$(arg radius)"/>
+		<param name="cx" value="$(arg cx)" />
+		<param name="cy" value="$(arg cy)" />
+	</node>
+
+     </group>
+
+
+</launch>

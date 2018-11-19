@@ -1,0 +1,292 @@
+<launch>
+  <arg name="mav_name" default="firefly"/>
+  <arg name="world_name" default="basic"/>
+  <arg name="enable_logging" default="false" />
+  <arg name="enable_ground_truth" default="true" />
+  <arg name="log_file" default="$(arg mav_name)" />
+
+  <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models"/>
+  <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models"/>
+  
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find rotors_gazebo)/worlds/$(arg world_name).world" />
+    <!-- <arg name="debug" value="true"/> -->
+    <arg name="paused" value="true"/>
+    <!-- <arg name="gui" value="false"/> -->
+  </include>
+
+	
+	<arg name="n" default="15" />
+	<arg name="k" default="7" />
+	<arg name="F" default="1" />
+
+	<arg name="demo" default="3" />
+  
+	<arg name="cx" default="6" />
+	<arg name="cy" default="6" />
+	<arg name="cz" default="10" />
+
+	<!-- uav 1 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+		
+		<arg name="name_space" value="uav1"/>
+		<arg name="idx" value="1" />
+		<arg name="role" value="2"/>
+		<arg name="x" value="11" />
+		<arg name="y" value="6" />
+		<arg name="z" value="10" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 2 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+		
+		<arg name="name_space" value="uav2"/>
+		<arg name="idx" value="2" />
+		<arg name="role" value="2"/>
+		<arg name="x" value="12" />
+		<arg name="y" value="6" />
+		<arg name="z" value="8" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 3 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+
+		<arg name="mav_name" value="firefly"/>
+		
+		<arg name="name_space" value="uav3"/>
+		<arg name="idx" value="3" />
+		<arg name="role" value="3"/>
+		<arg name="x" value="13" />
+		<arg name="y" value="6" />
+		<arg name="z" value="12" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 4 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+
+		<arg name="mav_name" value="firefly"/>
+		
+		<arg name="name_space" value="uav4"/>
+		<arg name="idx" value="4" />
+		<arg name="role" value="3"/>
+		<arg name="x" value="11" />
+		<arg name="y" value="9" />
+		<arg name="z" value="10" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 5 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+
+		<arg name="mav_name" value="firefly"/>
+		
+		<arg name="name_space" value="uav5"/>
+		<arg name="idx" value="5" />
+		<arg name="role" value="3"/>
+		<arg name="x" value ="11" />
+		<arg name="y" value="10" />
+		<arg name="z" value="8" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 6 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+		
+		<arg name="name_space" value="uav6"/>
+		<arg name="idx" value="6" />
+		<arg name="role" value="2"/>
+		<arg name="x" value="11" />
+		<arg name="y" value="11" />
+		<arg name="z" value="12" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 7 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+		
+		<arg name="name_space" value="uav7"/>
+		<arg name="idx" value="7" />
+		<arg name="role" value="2"/>
+		<arg name="x" value="1" />
+		<arg name="y" value="9" />
+		<arg name="z" value="10" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 8 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+		
+		<arg name="name_space" value="uav8"/>
+		<arg name="idx" value="8" />
+		<arg name="role" value="2"/>
+		<arg name="x" value="1" />
+		<arg name="y" value="10" />
+		<arg name="z" value="8" /> 
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 9 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+		
+		<arg name="mav_name" value="firefly"/>
+		
+		<arg name="name_space" value="uav9"/>
+		<arg name="idx" value="9" />
+		<arg name="role" value="1"/>
+		<arg name="x" value="1" />
+		<arg name="y" value="12" />		
+		<arg name="z" value="12" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 10 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+		
+		<arg name="name_space" value="uav10"/>
+		<arg name="idx" value="10" />
+		<arg name="role" value="2"/>
+		<arg name="x" value="1" />
+		<arg name="y" value="3" />
+		<arg name="z" value="10" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 11 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+		
+		<arg name="name_space" value="uav11"/>
+		<arg name="idx" value="11" />
+		<arg name="role" value="2"/>
+		<arg name="x" value="1" />
+		<arg name="y" value="2" />
+		<arg name="z" value="8" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 12 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+		
+		<arg name="name_space" value="uav12"/>
+		<arg name="idx" value="12" />
+		<arg name="role" value="2"/>
+		<arg name="x" value="1" />
+		<arg name="y" value="1" />
+		<arg name="z" value="12" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 13 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+		
+		<arg name="name_space" value="uav13"/>
+		<arg name="idx" value="13" />
+		<arg name="role" value="2"/>
+		<arg name="x" value="11" />
+		<arg name="y" value="3" />
+		<arg name="z" value="10" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 14 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+		
+		<arg name="name_space" value="uav14"/>
+		<arg name="idx" value="14" />
+		<arg name="role" value="2"/>
+		<arg name="x" value="11" />
+		<arg name="y" value="2" />
+		<arg name="z" value="8" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+	<!-- uav 15 -->
+	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">
+		
+		<arg name="n" value="$(arg n)" />
+		<arg name="k" value="$(arg k)" />
+		<arg name="F" value="$(arg F)" />
+		
+		<arg name="name_space" value="uav15"/>
+		<arg name="idx" value="15" />
+		<arg name="role" value="2"/>
+		<arg name="x" value="11" />
+		<arg name="y" value="1" />
+		<arg name="z" value="12" />
+
+		<arg name="demo" value="$(arg demo)" />
+	</include>
+
+</launch>

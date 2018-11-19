@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+   <arg default="r1_sim" name="ugv_name"/>
+   <arg default="basic" name="world_name"/>
+   <arg default="true" name="enable_logging"/>
+   <arg default="true" name="enable_ground_truth"/>
+   <arg default="$(arg ugv_name)" name="log_file"/>
+   <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models"/>
+   <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models"/>
+   <include file="$(find gazebo_ros)/launch/empty_world.launch">
+      <arg name="world_name" value="$(find rcomv_uav)/worlds/$(arg world_name).world"/>
+      <arg name="paused" value="true"/>
+   </include>
+   <arg default="true" name="wmsr_node"/>
+   <arg default="15" name="n"/>
+   <arg default="7" name="k"/>
+   <arg default="1" name="F"/>
+   <arg default="3" name="demo"/>
+   <arg default="15" name="lead_x"/>
+   <arg default="-15" name="lead_y"/>
+   <arg default="0.4" name="Kp1"/>
+   <arg default="0" name="Ki1"/>
+   <arg default="0.1" name="Kd1"/>
+   <arg default="4" name="Kp2"/>
+   <arg default="0" name="Ki2"/>
+   <arg default="1.5" name="Kd2"/>
+   <node launch-prefix="xterm -e" name="switch_node" output="screen" pkg="r1_gazebo" type="switch"/><!--upper level switch node-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv1-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv1"/>
+      <arg name="idx" value="1"/>
+      <arg name="role" value="2"/>
+      <arg name="x" value="20"/>
+      <arg name="y" value="-15"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv1-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv2-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv2"/>
+      <arg name="idx" value="2"/>
+      <arg name="role" value="2"/>
+      <arg name="x" value="21"/>
+      <arg name="y" value="-15"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv2-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv3-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv3"/>
+      <arg name="idx" value="3"/>
+      <arg name="role" value="3"/>
+      <arg name="x" value="22"/>
+      <arg name="y" value="-15"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv3-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv4-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv4"/>
+      <arg name="idx" value="4"/>
+      <arg name="role" value="3"/>
+      <arg name="x" value="20"/>
+      <arg name="y" value="-12"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv4-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv5-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv5"/>
+      <arg name="idx" value="5"/>
+      <arg name="role" value="3"/>
+      <arg name="x" value="20"/>
+      <arg name="y" value="-11"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv5-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv6-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv6"/>
+      <arg name="idx" value="6"/>
+      <arg name="role" value="2"/>
+      <arg name="x" value="20"/>
+      <arg name="y" value="-10"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv6-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv7-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv7"/>
+      <arg name="idx" value="7"/>
+      <arg name="role" value="2"/>
+      <arg name="x" value="10"/>
+      <arg name="y" value="-12"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv7-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv8-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv8"/>
+      <arg name="idx" value="8"/>
+      <arg name="role" value="2"/>
+      <arg name="x" value="10"/>
+      <arg name="y" value="-11"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv8-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv9-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv9"/>
+      <arg name="idx" value="9"/>
+      <arg name="role" value="2"/>
+      <arg name="x" value="10"/>
+      <arg name="y" value="-10"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv9-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv10-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv10"/>
+      <arg name="idx" value="10"/>
+      <arg name="role" value="2"/>
+      <arg name="x" value="10"/>
+      <arg name="y" value="-18"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv10-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv11-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv11"/>
+      <arg name="idx" value="11"/>
+      <arg name="role" value="2"/>
+      <arg name="x" value="10"/>
+      <arg name="y" value="-19"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv11-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv12-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv12"/>
+      <arg name="idx" value="12"/>
+      <arg name="role" value="2"/>
+      <arg name="x" value="10"/>
+      <arg name="y" value="-20"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv12-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv13-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv13"/>
+      <arg name="idx" value="13"/>
+      <arg name="role" value="2"/>
+      <arg name="x" value="20"/>
+      <arg name="y" value="-18"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv13-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv14-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv14"/>
+      <arg name="idx" value="14"/>
+      <arg name="role" value="2"/>
+      <arg name="x" value="20"/>
+      <arg name="y" value="-19"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv14-->
+   <include file="$(find r1_gazebo)/launch/ugv_with_control.launch"><!--start of ugv15-->
+      <arg name="wmsr_node" value="$(arg wmsr_node)"/>
+      <arg name="n" value="$(arg n)"/>
+      <arg name="k" value="$(arg k)"/>
+      <arg name="F" value="$(arg F)"/>
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv15"/>
+      <arg name="idx" value="15"/>
+      <arg name="role" value="1"/>
+      <arg name="x" value="20"/>
+      <arg name="y" value="-20"/>
+      <arg name="lead_x" value="$(arg lead_x)"/>
+      <arg name="lead_y" value="$(arg lead_y)"/>
+      <arg name="demo" value="$(arg demo)"/>
+      <arg name="Kp1" value="$(arg Kp1)"/>
+      <arg name="Ki1" value="$(arg Ki1)"/>
+      <arg name="Kd1" value="$(arg Kd1)"/>
+      <arg name="Kp2" value="$(arg Kp2)"/>
+      <arg name="Ki2" value="$(arg Ki2)"/>
+      <arg name="Kd2" value="$(arg Kd2)"/>
+   </include><!--end of ugv15-->
+</launch>

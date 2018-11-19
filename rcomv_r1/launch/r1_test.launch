@@ -1,0 +1,39 @@
+
+  <launch>
+
+  <arg name="ugv_name" default="r1_sim"/>
+  <arg name="world_name" default="small_terrain"/>
+  <arg name="enable_logging" default="false" />
+  <arg name="enable_ground_truth" default="true" />
+  <arg name="log_file" default="$(arg ugv_name)" />
+
+  <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models"/>
+  <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+      <arg name="world_name" value="$(find rcomv_uav)/worlds/$(arg world_name).world" />
+      <!-- <arg name="debug" value="true"/> -->
+      <arg name="paused" value="true"/>
+      <!-- <arg name="gui" value="false"/> -->
+  </include>
+
+  <include file="$(find rcomv_r1)/launch/ugv_with_control.launch"><!--start of ugv1-->
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv1"/>
+      <arg name="x" value="1"/>
+      <arg name="y" value="1"/>
+      <arg name="z" value="0.1"/>
+
+      <arg name="goal_x" value="1" />
+      <arg name="goal_y" value="5" />
+      <arg name="Kp1" value="0.4"/> <arg name="Ki1" value="0.0"/> <arg name="Kd1" value="0.1"/>
+      <arg name="Kp2" value="4.0"/> <arg name="Ki2" value="0.0"/> <arg name="Kd2" value="1.5"/>
+
+      <arg name="path_node" value="true" />
+      <arg name="radius" value="3"/>
+      <arg name="cx" value="-1" />
+      <arg name="cy" value="-1" />
+   </include><!--end of ugv1-->
+
+</launch>
