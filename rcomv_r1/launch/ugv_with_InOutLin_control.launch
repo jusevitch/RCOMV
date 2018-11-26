@@ -26,20 +26,15 @@
 	<arg name="lead_y" default="6" />
 	<arg name="lead_z" default="10" />
 
-	<!-- goal location for simple waypoint tracking -->
-    	<arg name="goal_x" default="0" />
-    	<arg name="goal_y" default="0" />
 
-	<!-- PID control gain -->
-    <arg name="Kp1" default="0.0"/> <arg name="Ki1" default="0.0"/> <arg name="Kd1" default="0.0"/>
-    <arg name="Kp2" default="0.0"/> <arg name="Ki2" default="0.0"/> <arg name="Kd2" default="0.0"/>
-
-	<!-- parameters for the trajectory tracking test -->
-      <arg name="path_node" default="false" />
-      <arg name="radius" default="2"/>
-      <arg name="cx" default="0" />
-      <arg name="cy" default="0" />
-
+	<!-- parameters for the trajectory tracking conteoller -->
+      <arg name="b" default="0.05" />
+      <arg name="k1" default="4" />
+      <arg name="k2" default="4"/>
+      <arg name="vmax" default="6" />
+      <arg name="wmax" default="4"/>
+      <arg name="path_type" default="circular" />
+ 
 
 	<group ns="$(arg name_space)">
 	      <!-- ugv robot node -->
@@ -66,35 +61,21 @@
       	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 
       	<!-- PID controller node -->
-        <node name="pid_controller_node" pkg="rcomv_r1" type="pid_controller" launch-prefix="xterm -e"    output="screen" unless="$(arg wmsr_node)">
-	          <param name="max_linear_velocity" value="2" />
-	          <param name="max_angular_velocity" value="2" />
-
-            	  <param name="goal_x" value="$(arg goal_x)" />
-	          <param name="goal_y" value="$(arg goal_y)" />
-
-	          <param name="Kp1" value="$(arg Kp1)"/>
-		  <param name="Ki1" value="$(arg Ki1)"/>
-                  <param name="Kd1" value="$(arg Kd1)"/>
-
-                  <param name="Kp2" value="$(arg Kp2)"/>
- 		  <param name="Ki2" value="$(arg Ki2)"/>
-		  <param name="Kd2" value="$(arg Kd2)"/>
+        <node name="InOutLin_controller_node" pkg="rcomv_r1" type="InputOutputLin_Controller" launch-prefix="xterm -e"    output="screen" unless="$(arg wmsr_node)">
+      			<param name="b" value="$(arg b)" />
+      			<param name="k1" value="$(arg k1)" />
+      			<param name="k2" value="$(arg k2)"/>
+      			<param name="vmax" value="$(arg vmax)" />
+      			<param name="wmax" value="$(arg wmax)"/>
+      			<param name="path_type" value="$(arg path_type)" />
       	</node>
-        <node name="pid_controller_node" pkg="rcomv_r1" type="pid_controller" if="$(arg wmsr_node)">
-	          <param name="max_linear_velocity" value="2" />
-	          <param name="max_angular_velocity" value="2" />
-
-            	  <param name="goal_x" value="$(arg x)" />
-	          <param name="goal_y" value="$(arg y)" />
-
-	          <param name="Kp1" value="$(arg Kp1)"/>
-		  <param name="Ki1" value="$(arg Ki1)"/>
-                  <param name="Kd1" value="$(arg Kd1)"/>
-
-                  <param name="Kp2" value="$(arg Kp2)"/>
- 		  <param name="Ki2" value="$(arg Ki2)"/>
-		  <param name="Kd2" value="$(arg Kd2)"/>
+        <node name="InOutLin_controller_node" pkg="rcomv_r1" type="InputOutputLin_Controller" if="$(arg wmsr_node)">
+      			<param name="b" value="$(arg b)" />
+      			<param name="k1" value="$(arg k1)" />
+      			<param name="k2" value="$(arg k2)"/>
+      			<param name="vmax" value="$(arg vmax)" />
+      			<param name="wmax" value="$(arg wmax)"/>
+      			<param name="path_type" value="$(arg path_type)" />
       	</node>
 
 
@@ -117,11 +98,7 @@
 		<!--param name="cz" value="$(arg lead_z)" /-->
 	</node>
 
- 	<node name="path_publisher_node" pkg="rcomv_r1" type="path_publisher"  launch-prefix="xterm -e"    output="screen" if="$(arg path_node)" >
-		<param name="radius" value="$(arg radius)"/>
-		<param name="cx" value="$(arg cx)" />
-		<param name="cy" value="$(arg cy)" />
-	</node>
+
 
      </group>
 

@@ -10,6 +10,7 @@
     <arg name="x" default="0.0"/>
     <arg name="y" default="0.0"/>
     <arg name="z" default="0.1"/>
+    <arg name="yaw" default="0.0" />
 
     <arg name="enable_logging" default="false"/>
     <arg name="enable_ground_truth" default="true"/>
@@ -32,6 +33,7 @@
         -x $(arg x)
         -y $(arg y)
         -z $(arg z)
+	-Y $(arg yaw)
         -model $(arg namespace)"
   respawn="false" output="screen">
  </node>

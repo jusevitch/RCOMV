@@ -160,6 +160,11 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
+add_executable(InputOutputLin_Controller src/InputOutputLin_Controller.cpp 
+src/InputOutputLin_Controller.h)
+add_dependencies(InputOutputLin_Controller ${catkin_EXPORTED_TARGETS})
+target_link_libraries(InputOutputLin_Controller ${catkin_LIBRARIES})
+
 add_executable(pid_controller src/pid_controller.cpp src/pid_controller.h)
 add_dependencies(pid_controller ${catkin_EXPORTED_TARGETS})
 target_link_libraries(pid_controller ${catkin_LIBRARIES})

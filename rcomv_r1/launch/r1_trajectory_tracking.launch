@@ -17,24 +17,22 @@
       <!-- <arg name="gui" value="false"/> -->
   </include>
 
-  <include file="$(find rcomv_r1)/launch/ugv_with_control.launch"><!--start of ugv1-->
+  <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv1-->
       <arg name="ugv_name" value="$(arg ugv_name)"/>
       <arg name="enable_logging" value="$(arg enable_logging)"/>
       <arg name="name_space" value="ugv1"/>
-      <arg name="x" value="1"/>
-      <arg name="y" value="1"/>
+      <arg name="x" value="5"/>
+      <arg name="y" value="-1"/>
       <arg name="z" value="0.1"/>
-      <arg name="yaw" value="1.57" />
+      <arg name="yaw" value="3.14" />
 
-      <arg name="goal_x" value="4" />
-      <arg name="goal_y" value="1" />
-      <arg name="Kp1" value="0.4"/> <arg name="Ki1" value="0.0"/> <arg name="Kd1" value="0.1"/>
-      <arg name="Kp2" value="4.0"/> <arg name="Ki2" value="0.0"/> <arg name="Kd2" value="1.5"/>
+      <arg name="b" value="0.05" />
+      <arg name="k1" value="1" />
+      <arg name="k2" value="1"/>
+      <arg name="vmax" value="6" />
+      <arg name="wmax" value="4"/>
+      <arg name="path_type" value="circular" />
 
-      <arg name="path_node" value="false" />
-      <arg name="radius" value="3"/>
-      <arg name="cx" value="-1" />
-      <arg name="cy" value="-1" />
    </include><!--end of ugv1-->
 
 </launch>
