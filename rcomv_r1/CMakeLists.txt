@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   mav_msgs
   tf
   cmake_modules
+  message_generation
 )
 
 
@@ -56,11 +57,11 @@ find_package(Eigen REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files( 
+   DIRECTORY msg
+   FILES
+   ParametricPath.msg	
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -77,10 +78,8 @@ find_package(Eigen REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+ generate_messages(
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -114,7 +113,7 @@ find_package(Eigen REQUIRED)
 catkin_package(
    INCLUDE_DIRS  ${Eigen_INCLUDE_DIRS}
 #  LIBRARIES r1_gazebo
-   CATKIN_DEPENDS rospy roscpp std_msgs geometry_msgs sensor_msgs nav_msgs tf
+   CATKIN_DEPENDS rospy roscpp std_msgs geometry_msgs sensor_msgs nav_msgs tf message_runtime
    DEPENDS Eigen
 )
 

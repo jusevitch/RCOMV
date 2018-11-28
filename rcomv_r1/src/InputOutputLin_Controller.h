@@ -55,7 +55,8 @@ private:
   std::string path_type;
   double t0; // initial time
   double xc, yc; // center location
-  double R; // radius
+  double R; // radius for cirular path
+  double R1, R2; // radius for eight_shaped path
   double wd; // reference turning rate
   bool odometry_connected; // flag of odometry
   double initial_time;

@@ -77,7 +77,6 @@ WMSRNode::WMSRNode()
 
 
     // Publisher: reference
-    //std::string pub_topic = "WMSR" + std::to_string(idx) + "/ref";
     // pub topic is relative to the node namespace
     std::string pub_topic = "WMSR/ref";
     ref_pub = nh.advertise<ref_msgs>(pub_topic, 10);
@@ -120,7 +119,7 @@ void WMSRNode::switch_subCallback(const std_msgs::Bool::ConstPtr& msg){
   switch_signal.data = msg->data;
 }
 
-// inform states Subscriber Callback Function
+//  Subscriber Callback Function: subscribes reference paths of other WMSR nodes 
 void WMSRNode::ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_idx)
 {
   ref_lists[list_idx].header = msgs->header;

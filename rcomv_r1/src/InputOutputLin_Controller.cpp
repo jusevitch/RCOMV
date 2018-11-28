@@ -21,6 +21,9 @@ InOutLinController::InOutLinController()
   nh_private_.param<double>("yc", yc, 0);
   nh_private_.param<double>("R", R, 4);
   nh_private_.param<double>("wd", wd, 0.5);
+  nh_private_.param<double>("t0", t0, ros::Time().toSec());
+  nh_private_.param<double>("R1", R1, 4);
+  nh_private_.param<double>("R2", R2, 4);
 
   //
   odometry_connected = false;
@@ -109,6 +112,12 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
      xd = xc + R*cos(wd*t);
      yd = yc + R*sin(wd*t);
      vd = R*wd;
+  }
+  // the reference states and velocity: eight-shaped path
+  if (path_type.compare(std::string("eight_shaped")) == 0) {
+     xd = xc + R1*sin(2*wd*t);
+     yd = yc + R2*sin(wd*t);
+     vd = hypot((2*R1*wd*cos(2*wd*t)), (R2*wd*cos(wd*t)));
   }
 
   // the reference output
