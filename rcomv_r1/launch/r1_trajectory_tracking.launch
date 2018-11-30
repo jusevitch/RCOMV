@@ -21,8 +21,8 @@
       <arg name="ugv_name" value="$(arg ugv_name)"/>
       <arg name="enable_logging" value="$(arg enable_logging)"/>
       <arg name="name_space" value="ugv1"/>
-      <arg name="x" value="11"/>
-      <arg name="y" value="-1"/>
+      <arg name="x" value="0"/>
+      <arg name="y" value="0"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="3.14" />
 
@@ -35,7 +35,9 @@
       <arg name="path_type" value="circular" />
       <arg name="xc" value="0" />
       <arg name="yc" value="0" />
-      <arg name="R" value="0" />
+      <arg name="R" value="5" />
+      <arg name="R1" value="5" />
+      <arg name="R2" value="10" />
       <arg name="wd" value="0.5" />
 
    </include><!--end of ugv1-->

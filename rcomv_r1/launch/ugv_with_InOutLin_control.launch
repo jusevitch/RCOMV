@@ -37,6 +37,8 @@
       <arg name="xc" default="0" />
       <arg name="yc" default="0" />
       <arg name="R" default="4" />
+      <arg name="R1" default="5" />
+      <arg name="R2" default="10" />
       <arg name="wd" default="0.5" />
  
 
@@ -76,6 +78,8 @@
 			<param name="xc" value="$(arg xc)" />
 			<param name="yc" value="$(arg yc)" />
 			<param name="R" value="$(arg R)" />
+      			<param name="R1" value="$(arg R1)" />
+      			<param name="R2" value="$(arg R2)" />
 			<param name="wd" value="$(arg wd)" />
       	</node>
         <node name="InOutLin_controller_node" pkg="rcomv_r1" type="InputOutputLin_Controller" if="$(arg wmsr_node)">
