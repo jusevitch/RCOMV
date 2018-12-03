@@ -6,6 +6,10 @@
   <arg name="enable_logging" default="false" />
   <arg name="enable_ground_truth" default="true" />
   <arg name="log_file" default="$(arg ugv_name)" />
+  <!-- eight_shaped: eight_shaped parametric equations;
+       circular: circular parmetric equations; 
+       cubic: cubic polynomials -->
+  <arg name="path_type" default="parametric" />
 
   <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models"/>
   <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models"/>
@@ -21,25 +25,40 @@
       <arg name="ugv_name" value="$(arg ugv_name)"/>
       <arg name="enable_logging" value="$(arg enable_logging)"/>
       <arg name="name_space" value="ugv1"/>
-      <arg name="x" value="0"/>
+      <arg name="x" value="4" />
       <arg name="y" value="0"/>
       <arg name="z" value="0.1"/>
-      <arg name="yaw" value="3.14" />
+      <arg name="yaw" value="1.57" />
 
+      <arg name="Ri" value="1" />
+      <arg name="alphai" value="3.14"/>  		
+
+      <!-- controller parameters -->
       <arg name="b" value="0.05" />
       <arg name="k1" value="0.5" />
       <arg name="k2" value="0.5"/>
-      <arg name="vmax" value="6" />
+      <arg name="vmax" value="2" />
       <arg name="wmax" value="4"/>
       
-      <arg name="path_type" value="circular" />
-      <arg name="xc" value="0" />
+      <!-- path parameters -->
+      <arg name="path_type" value="cubic" /> 
+      <!-- parametric path -->
+      <arg name="xc" value="-5" />
       <arg name="yc" value="0" />
       <arg name="R" value="5" />
       <arg name="R1" value="5" />
-      <arg name="R2" value="10" />
-      <arg name="wd" value="0.5" />
+      <arg name="R2" value="5" />
+      <arg name="wd" value="0.2" />
+      <!-- cubic polynomial path -->
+      <arg name="qi_x" value="5" /> <arg name="qi_y" value="0" /> <arg name="qi_theta" value="1.57" />
+      <arg name="qf_x" value="-10" /> <arg name="qf_y" value="0" /> <arg name="qf_theta" value="4.71" />
+      <arg name="poly_k" value="40" />
+      <arg name="T" value="15" />
+      
+
 
    </include><!--end of ugv1-->
+
+  
 
 </launch>

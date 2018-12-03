@@ -1,0 +1,202 @@
+
+  <launch>
+
+  <arg name="ugv_name" default="r1_sim"/>
+  <arg name="world_name" default="small_building"/>
+  <arg name="enable_logging" default="false" />
+  <arg name="enable_ground_truth" default="true" />
+  <arg name="log_file" default="$(arg ugv_name)" />
+
+  <arg name="path_type" default="parametric" />
+
+  <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models"/>
+  <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+      <arg name="world_name" value="$(find rcomv_uav)/worlds/$(arg world_name).world" />
+      <!-- <arg name="debug" value="true"/> -->
+      <arg name="paused" value="true"/>
+      <!-- <arg name="gui" value="false"/> -->
+  </include>
+
+  <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv1-->
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv1"/>
+      <arg name="x" value="6" />
+      <arg name="y" value="-20"/>
+      <arg name="z" value="0.1"/>
+      <arg name="yaw" value="1.57" />
+
+      <arg name="Ri" value="1" />
+      <arg name="alphai" value="0"/>  		
+
+      <!-- controller parameters -->
+      <arg name="b" value="0.05" />
+      <arg name="k1" value="0.5" />
+      <arg name="k2" value="0.5"/>
+      <arg name="vmax" value="4" />
+      <arg name="wmax" value="4"/>
+      
+      <!-- path parameters -->
+      <arg name="path_type" value="cubic" /> 
+      <!-- parametric path -->
+      <arg name="xc" value="-5" />
+      <arg name="yc" value="0" />
+      <arg name="R" value="5" />
+      <arg name="R1" value="5" />
+      <arg name="R2" value="5" />
+      <arg name="wd" value="0.2" />
+      <!-- cubic polynomial path -->
+      <arg name="qi_x" value="5" /> <arg name="qi_y" value="-20" /> <arg name="qi_theta" value="1.57" />
+      <arg name="qf_x" value="-10" /> <arg name="qf_y" value="-20" /> <arg name="qf_theta" value="4.71" />
+      <arg name="poly_k" value="40" />
+      <arg name="T" value="20" />
+
+   </include><!--end of ugv1-->
+
+  <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv2-->
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv2"/>
+      <arg name="x" value="4" />
+      <arg name="y" value="-20"/>
+      <arg name="z" value="0.1"/>
+      <arg name="yaw" value="1.57" />
+
+      <arg name="Ri" value="1" />
+      <arg name="alphai" value="3.14"/>  		
+
+      <!-- controller parameters -->
+      <arg name="b" value="0.05" />
+      <arg name="k1" value="0.5" />
+      <arg name="k2" value="0.5"/>
+      <arg name="vmax" value="4" />
+      <arg name="wmax" value="4"/>
+      
+      <!-- path parameters -->
+      <arg name="path_type" value="cubic" /> 
+      <!-- parametric path -->
+      <arg name="xc" value="-5" />
+      <arg name="yc" value="0" />
+      <arg name="R" value="5" />
+      <arg name="R1" value="5" />
+      <arg name="R2" value="5" />
+      <arg name="wd" value="0.2" />
+      <!-- cubic polynomial path -->
+      <arg name="qi_x" value="5" /> <arg name="qi_y" value="-20" /> <arg name="qi_theta" value="1.57" />
+      <arg name="qf_x" value="-10" /> <arg name="qf_y" value="-20" /> <arg name="qf_theta" value="4.71" />
+      <arg name="poly_k" value="40" />
+      <arg name="T" value="20" />
+
+   </include><!--end of ugv2-->
+
+<include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv3-->
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv3"/>
+      <arg name="x" value="5" />
+      <arg name="y" value="-19"/>
+      <arg name="z" value="0.1"/>
+      <arg name="yaw" value="1.57" />
+
+      <arg name="Ri" value="1" />
+      <arg name="alphai" value="1.57"/>
+  		
+      <!-- controller parameters -->
+      <arg name="b" value="0.05" />
+      <arg name="k1" value="0.5" />
+      <arg name="k2" value="0.5"/>
+      <arg name="vmax" value="4" />
+      <arg name="wmax" value="4"/>
+      
+      <!-- path parameters -->
+      <arg name="path_type" value="cubic" /> 
+      <!-- parametric path -->
+      <arg name="xc" value="-5" />
+      <arg name="yc" value="0" />
+      <arg name="R" value="5" />
+      <arg name="R1" value="5" />
+      <arg name="R2" value="5" />
+      <arg name="wd" value="0.2" />
+      <!-- cubic polynomial path -->
+      <arg name="qi_x" value="5" /> <arg name="qi_y" value="-20" /> <arg name="qi_theta" value="1.57" />
+      <arg name="qf_x" value="-10" /> <arg name="qf_y" value="-20" /> <arg name="qf_theta" value="4.71" />
+      <arg name="poly_k" value="40" />
+      <arg name="T" value="20" />
+
+   </include><!--end of ugv3-->
+
+<include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv4-->
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv4"/>
+      <arg name="x" value="6.414" />
+      <arg name="y" value="-21.414"/>
+      <arg name="z" value="0.1"/>
+      <arg name="yaw" value="1.57" />
+
+      <arg name="Ri" value="2" />
+      <arg name="alphai" value="-0.785"/>
+  		
+      <!-- controller parameters -->
+      <arg name="b" value="0.05" />
+      <arg name="k1" value="0.5" />
+      <arg name="k2" value="0.5"/>
+      <arg name="vmax" value="4" />
+      <arg name="wmax" value="4"/>
+      
+      <!-- path parameters -->
+      <arg name="path_type" value="cubic" /> 
+      <!-- parametric path -->
+      <arg name="xc" value="-5" />
+      <arg name="yc" value="0" />
+      <arg name="R" value="5" />
+      <arg name="R1" value="5" />
+      <arg name="R2" value="5" />
+      <arg name="wd" value="0.2" />
+      <!-- cubic polynomial path -->
+      <arg name="qi_x" value="5" /> <arg name="qi_y" value="-20" /> <arg name="qi_theta" value="1.57" />
+      <arg name="qf_x" value="-10" /> <arg name="qf_y" value="-20" /> <arg name="qf_theta" value="4.71" />
+      <arg name="poly_k" value="40" />
+      <arg name="T" value="20" />
+
+   </include><!--end of ugv4-->
+
+<include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv5-->
+      <arg name="ugv_name" value="$(arg ugv_name)"/>
+      <arg name="enable_logging" value="$(arg enable_logging)"/>
+      <arg name="name_space" value="ugv5"/>
+      <arg name="x" value="3.586" />
+      <arg name="y" value="-21.414"/>
+      <arg name="z" value="0.1"/>
+      <arg name="yaw" value="1.57" />
+
+      <arg name="Ri" value="2" />
+      <arg name="alphai" value="-2.356"/>
+  		
+      <!-- controller parameters -->
+      <arg name="b" value="0.05" />
+      <arg name="k1" value="0.5" />
+      <arg name="k2" value="0.5"/>
+      <arg name="vmax" value="4" />
+      <arg name="wmax" value="4"/>
+      
+      <!-- path parameters -->
+      <arg name="path_type" value="cubic" /> 
+      <!-- parametric path -->
+      <arg name="xc" value="-5" />
+      <arg name="yc" value="0" />
+      <arg name="R" value="5" />
+      <arg name="R1" value="5" />
+      <arg name="R2" value="5" />
+      <arg name="wd" value="0.2" />
+      <!-- cubic polynomial path -->
+      <arg name="qi_x" value="5" /> <arg name="qi_y" value="-20" /> <arg name="qi_theta" value="1.57" />
+      <arg name="qf_x" value="-10" /> <arg name="qf_y" value="-20" /> <arg name="qf_theta" value="4.71" />
+      <arg name="poly_k" value="40" />
+      <arg name="T" value="20" />
+
+   </include><!--end of ugv5-->
+
+</launch>

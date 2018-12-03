@@ -16,8 +16,12 @@
 #include <string>
 
 
-// path parameters structure
-
+// pose structure
+struct pose {
+  double x;
+  double y;
+  double theta;
+};
 
 class InOutLinController
 {
@@ -49,15 +53,27 @@ private:
   void trajectory_subCallback(); // to be determined)
 
   // private variables
+  // controller paramters
   double b; // a longitudinal distance ahead of the unicycle model
   double k1, k2; // control gains
   double vmax, wmax; // maximum velocity, and angular velocity
+
+  double Ri, alphai; // relative distance from the center (in the body fixed frame)
+
   std::string path_type;
   double t0; // initial time
+
+  // parametric path paramters
   double xc, yc; // center location
   double R; // radius for cirular path
   double R1, R2; // radius for eight_shaped path
   double wd; // reference turning rate
+
+  // cubic ploynomials path paramters
+  pose qi, qf; // initial, final pose
+  double poly_k;
+  double T;  // total travel time
+
   bool odometry_connected; // flag of odometry
   double initial_time;
 
@@ -65,11 +81,15 @@ private:
 
 
   // helper functions
-  //void controller(double &v, double &w, string path_type);
+  void CubePolyPath(pose qi, pose qf, double k, double T, double t,
+                    double &xd, double &yd, double &vd, double &wd);
 
 }; // end of class
 
 // helper function
 double QuaternionToYaw(const nav_msgs::Odometry &msgs);
+// helper function
+double findDifference(double init_psi, double goal_psi);
+
 
 #endif

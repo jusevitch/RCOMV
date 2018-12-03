@@ -13,6 +13,8 @@ InOutLinController::InOutLinController()
   nh_private_.param<double>("k2", k2, 4);
   nh_private_.param<double>("vmax", vmax, 6);
   nh_private_.param<double>("wmax", wmax, 4);
+  nh_private_.param<double>("Ri", Ri, 0);
+  nh_private_.param<double>("alphai", alphai, 0);
 
   // Initialize the paramters (varying, will be updated by subscribers)
   nh_private_.param<std::string>("path_type", path_type, "circular");
@@ -24,7 +26,10 @@ InOutLinController::InOutLinController()
   nh_private_.param<double>("t0", t0, ros::Time().toSec());
   nh_private_.param<double>("R1", R1, 4);
   nh_private_.param<double>("R2", R2, 4);
-
+  nh_private_.param<double>("qi_x", qi.x, 5); nh_private_.param<double>("qi_y", qi.y, 0); nh_private_.param<double>("qi_theta", qi.theta, 1.57);
+  nh_private_.param<double>("qf_x", qf.x, -5); nh_private_.param<double>("qf_y", qf.y, 0); nh_private_.param<double>("qf_theta", qf.theta, 4.71);
+  nh_private_.param<double>("poly_k", poly_k, 20);
+  nh_private_.param<double>("T", T, 15);
   //
   odometry_connected = false;
   initial_time = ros::Time().toSec();
@@ -106,18 +111,29 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
   double c_th, s_th;
   double e_y1, e_y2;
   double u1, u2;
+
+
+
   double t = ros::Time::now().toSec() - t0;
+
   // the reference states and velocity: circular path
   if (path_type.compare(std::string("circular")) == 0) {
-     xd = xc + R*cos(wd*t);
-     yd = yc + R*sin(wd*t);
-     vd = R*wd;
+     xd = xc + R*cos(wd*t) + Ri*cos(wd*t+alphai);
+     yd = yc + R*sin(wd*t) + Ri*sin(wd*t+alphai);
+     vd = hypot(wd*(-R*sin(wd*t) - Ri*sin(wd*t+alphai)),
+                wd*(R*cos(wd*t) + Ri*cos(wd*t+alphai)));
   }
   // the reference states and velocity: eight-shaped path
   if (path_type.compare(std::string("eight_shaped")) == 0) {
-     xd = xc + R1*sin(2*wd*t);
-     yd = yc + R2*sin(wd*t);
-     vd = hypot((2*R1*wd*cos(2*wd*t)), (R2*wd*cos(wd*t)));
+     xd = xc + R1*sin(2*wd*t) + Ri*cos(wd*t+alphai);
+     yd = yc + R2*sin(wd*t) + Ri*sin(wd*t+alphai);
+     //vd = hypot((2*R1*wd*cos(2*wd*t)), (R2*wd*cos(wd*t)));
+     vd = hypot((2*wd*R1*cos(2*wd*t) - wd*Ri*sin(wd*t+alphai)),
+                wd*(R2*cos(wd*t) + Ri*cos(wd*t+alphai)));
+  }
+  // the reference states and velocity: cubic polynomial path
+  if (path_type.compare(std::string("cubic")) == 0) {
+      CubePolyPath(qi, qf, poly_k, T, t, xd, yd, vd, wd);
   }
 
   // the reference output
@@ -145,6 +161,14 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
   cmd_vel.linear.x = std::max(-vmax, std::min(cmd_vel.linear.x, vmax));
   cmd_vel.angular.z = std::max(-wmax, std::min(cmd_vel.angular.z, wmax));
 
+  // stop when t > T for cubic polynomial path
+  if (path_type.compare(std::string("cubic")) == 0) {
+      if (t > T) {
+        cmd_vel.linear.x = 0;
+        cmd_vel.angular.z = 0;
+      }
+  }
+
   // publish
   pub.publish(cmd_vel);
 }
@@ -162,6 +186,62 @@ double QuaternionToYaw(const nav_msgs::Odometry &msgs)
   yaw = fmod(yaw + 2*M_PI, 2*M_PI); // transform from [-pi,pi] to [0,2pi]
 
   return yaw;
+}
+
+void InOutLinController::CubePolyPath(pose qi, pose qf, double k, double T, double t,
+                  double &xd, double &yd, double &vd, double &wd) {
+  // uniform time law
+  double s = t/T;
+  // angle between body frame and
+  // parameters of the polynomial
+  double xi = qi.x, yi = qi.y, thetai = qi.theta;
+  double xf = qf.x, yf = qf.y, thetaf = qf.theta;
+  double alpha_x = k*cos(thetaf) - 3*xf;
+  double alpha_y = k*sin(thetaf) - 3*yf;
+  double beta_x = k*cos(thetai) + 3*xi;
+  double beta_y = k*sin(thetai) + 3*xf;
+
+  // center position
+  xd = pow(s,3.0)*xf - pow((s-1),3.0)*xi + alpha_x*pow(s,2.0)*(s-1) + beta_x*s*pow((s-1),2.0);
+  yd = pow(s,3.0)*yf - pow((s-1),3.0)*yi + alpha_y*pow(s,2.0)*(s-1) + beta_y*s*pow((s-1),2.0);
+  // center velocity
+  // dx/ds and dy/ds
+  double vel_x = 3*pow(s,2.0)*xf - 3*pow((s-1),2.0)*xi + alpha_x*(3*pow(s,2.0)-2*s) + beta_x*(3*pow(s,2.0)-4*s+1);
+  double vel_y = 3*pow(s,2.0)*yf - 3*pow((s-1),2.0)*yi + alpha_y*(3*pow(s,2.0)-2*s) + beta_y*(3*pow(s,2.0)-4*s+1);
+  // dx/dt = dx/ds * ds/dt
+  vel_x = vel_x / T;
+  vel_y = vel_y / T;
+  // center acceleration
+  //
+  double accel_x = 6*s*xf - 6*(s-1)*xi + alpha_x*(6*s-2) + beta_x*(6*s-4);
+  double accel_y = 6*s*yf - 6*(s-1)*yi + alpha_y*(6*s-2) + beta_y*(6*s-4);
+  //
+  accel_x = accel_x / (T*T);
+  accel_y = accel_y / (T*T);
+  // center velocity and turning rate
+  vd = hypot(vel_x, vel_y);
+  wd = (accel_y*vel_x - accel_x*vel_y) / pow(vd,2.0);
+
+  // transform
+  //double theta = findDifference(atan2(vel_y, vel_x), thetai);
+  double theta = atan2(vel_y, vel_x) - thetai;
+  xd = xd + Ri*cos(theta+alphai);
+  yd = yd + Ri*sin(theta+alphai);
+  vel_x = vel_x - wd*Ri*sin(theta+alphai);
+  vel_y = vel_y + wd*Ri*cos(theta+alphai);
+  // update accel ???
+  vd = hypot(vel_x, vel_y);
+  wd = (accel_y*vel_x - accel_x*vel_y) / pow(vd,2.0);
+}
+
+// helper function
+double findDifference(double init_psi, double goal_psi)
+{
+ double err  = goal_psi - init_psi;
+ int sign = (std::signbit(err) == 0) ? 1 : -1;
+ err  = (fabs(err) <= M_PI) ? err :
+                 sign * fmod(fabs(err) - 2*M_PI, M_PI);
+ return err;
 }
 
 int main(int argc, char** argv) {
