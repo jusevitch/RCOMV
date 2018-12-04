@@ -2,7 +2,7 @@
   <launch>
 
   <arg name="ugv_name" default="r1_sim"/>
-  <arg name="world_name" default="small_building"/>
+  <arg name="world_name" default="basic"/>
   <arg name="enable_logging" default="false" />
   <arg name="enable_ground_truth" default="true" />
   <arg name="log_file" default="$(arg ugv_name)" />

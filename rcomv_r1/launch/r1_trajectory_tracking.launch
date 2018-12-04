@@ -26,12 +26,12 @@
       <arg name="enable_logging" value="$(arg enable_logging)"/>
       <arg name="name_space" value="ugv1"/>
       <arg name="x" value="4" />
-      <arg name="y" value="0"/>
+      <arg name="y" value="1"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.57" />
 
-      <arg name="Ri" value="1" />
-      <arg name="alphai" value="3.14"/>  		
+      <arg name="Ri" value="1.414" />
+      <arg name="alphai" value="2.356"/>  		
 
       <!-- controller parameters -->
       <arg name="b" value="0.05" />

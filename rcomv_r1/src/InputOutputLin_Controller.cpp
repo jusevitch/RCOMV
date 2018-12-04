@@ -222,13 +222,15 @@ void InOutLinController::CubePolyPath(pose qi, pose qf, double k, double T, doub
   vd = hypot(vel_x, vel_y);
   wd = (accel_y*vel_x - accel_x*vel_y) / pow(vd,2.0);
 
-  // transform
+  // transform from the center to the agent
   //double theta = findDifference(atan2(vel_y, vel_x), thetai);
   double theta = atan2(vel_y, vel_x) - thetai;
   xd = xd + Ri*cos(theta+alphai);
   yd = yd + Ri*sin(theta+alphai);
   vel_x = vel_x - wd*Ri*sin(theta+alphai);
   vel_y = vel_y + wd*Ri*cos(theta+alphai);
+  accel_x = accel_x - wd*wd*Ri*cos(theta+alphai); // ignore d(wd) / dt
+  accel_y = accel_y - wd*wd*Ri*sin(theta+alphai); // ignore d(wd) / dt
   // update accel ???
   vd = hypot(vel_x, vel_y);
   wd = (accel_y*vel_x - accel_x*vel_y) / pow(vd,2.0);
