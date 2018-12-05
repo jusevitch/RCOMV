@@ -7,10 +7,11 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
-//#include <mav_msgs/eigen_mav_msgs.h>
+
+#include <rcomv_r1/CubicPath.h>
+
 #include <tf/transform_broadcaster.h>
 
-//#include <Eigen/Eigen>
 #include <stdlib.h>
 #include <math.h>
 #include <string>
@@ -50,7 +51,7 @@ private:
   void pubCallback(const ros::TimerEvent& event);
   void disCallback(const ros::TimerEvent& event);  // display callback function
   void odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs);
-  void trajectory_subCallback(); // to be determined)
+  void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs); // to be determined)
 
   // private variables
   // controller paramters

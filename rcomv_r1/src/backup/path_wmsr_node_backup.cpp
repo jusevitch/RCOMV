@@ -1,7 +1,7 @@
 /*
 // ------------------------------------------------------------------
 // WMSR node for r1 rover. 2D motions only.
-// Reach an agreement on parameters of the refrence trajectory
+//
 //------------------------------------------------------------------
 */
 
@@ -14,39 +14,33 @@ WMSRNode::WMSRNode()
     // ---------------------------- variables and topic messages ------------------------------
     // Initialize variables assigned in the launch file
     // syntax: ("variable name in the launch file", variable to be assigned, default value)
-    //
     nh_private_.param<int>("n", n, 15);
     nh_private_.param<int>("k", k, 7);
-    // index and type of agent
+
     nh_private_.param<int>("idx", idx, 1);
     nh_private_.param<int>("role", role, 2);
-    // num of adversaries
+
     nh_private_.param<int>("F", F, 0);
-    // inital pose
+
     nh_private_.param<double>("x", x0, 0);
     nh_private_.param<double>("y", y0, 0);
-    nh_private_.param<double>("theta", y0, 0);
 
     // Initialize msgs
     // refrence path:
     // 1. for leader agents, they will be assigned with desired values fron the launch file
-    // 2. for other agents, they will be assigned with some random offset fron the launch file
-    nh_private_.param<std::string>("path_type", inform_center_path.path_type, "cubic");
-    // inital location of the reference path
-    nh_private_.param<double>("qi_x", inform_center_path.qi_x, 0);
-    nh_private_.param<double>("qi_y", inform_center_path.qi_y, 0);
-    nh_private_.param<double>("qi_theta", inform_center_path.qi_theta, M_PI*0.5);
-    // final location of the reference path
-    nh_private_.param<double>("qf_x", inform_center_path.qf_x, 10);
-    nh_private_.param<double>("qf_y", inform_center_path.qf_y, 0);
-    nh_private_.param<double>("qf_theta", inform_center_path.qf_theta, M_PI*-0.5);
-    nh_private_.param<double>("T", inform_center_path.T, 15);
+    // 2. for other agents, they will be assigned with random values fron the launch file
+    nh_private_.param<std::string>("path_type", inform_center_path.path_type, "circular");
+    nh_private_.param<double>("xc", inform_center_path.xc, 0);
+    nh_private_.param<double>("yc", inform_center_path.yc, 0);
+    nh_private_.param<double>("R", inform_center_path.R, 4);
+    nh_private_.param<double>("wd", inform_center_path.wd, 0.5);
     nh_private_.param<double>("t0", inform_center_path.t0, ros::Time().toSec());
-    nh_private_.param<double>("poly_k", inform_center_path.poly_k, 40);
-    // 3. malicous path: assign a different final location
-    mali_path.qf_x = inform_center_path.qf_x * 2;
-    mali_path.qf_y = inform_center_path.qf_y * 2;
-    mali_path.poly_k = inform_center_path.poly_k * 2;
+    nh_private_.param<double>("R1", inform_center_path.R1, 4);
+    nh_private_.param<double>("R2", inform_center_path.R2, 4);
+    // 3. malicous path: assigned to different values from desired path
+    mali_path.R = inform_center_path.R + 3;
+    mali_path.xc = inform_center_path.cx + 1;
+    mali_path.yc = inform_center_path.cy + 1;
 
     // ------------------------- Subscribers and Publishers -----------------------------
     // Publisher: command trajectory for the controller
@@ -67,10 +61,8 @@ WMSRNode::WMSRNode()
 
     // make the robot stay at the initial position.
     path_msgs trajectory_msg;
-    trajectory_msg.qi_x = x0; trajectory_msg.qi_y = y0; trajectory_msg.qi_theta = theta0;
-    trajectory_msg.qf_x = x0; trajectory_msg.qf_y = y0; trajectory_msg.qf_theta = theta0;
-    trajectory_msg.poly_k = 0;
-    trajectory_msg.T = 1000;
+    trajectory_msg.xc = x0;
+    trajectory_msg.yc = y0;
     output_pub.publish(trajectory_msg);
 
     ros::Duration(0.1).sleep();
@@ -81,13 +73,13 @@ WMSRNode::WMSRNode()
     // Publisher: reference
     // pub topic is relative to the node namespace
     std::string pub_topic = "WMSR/ref";
-    ref_pub = nh.advertise<path_msgs>(pub_topic, 10);
+    ref_pub = nh.advertise<path_msgs>(pub_topic, 10);pose.position.x
     // Publisher Timer with frequency: 10 Hz
     ref_pub_timer = nh.createTimer(ros::Duration(0.1),
                 &WMSRNode::ref_pubCallback, this);
 
 
-    // Subscribers: (msgs list holds the msgs from subscibed topics)
+    // Subscribers: (msgs list to hold the msgs from subscibed topics)
     for (int i = 1; i <= k; i++) {
       // Initialize the msgs list that holds msgs from neighbor agents
       path_msgs ref_point;
@@ -103,7 +95,10 @@ WMSRNode::WMSRNode()
 
       ROS_INFO("sub_idx at: [%d] with topic name: ", sub_idx);
     }
+
+
     ROS_INFO_STREAM("Started ugv"<<idx<<" WMSR Node.");
+
   }
 
   // Destructor
@@ -122,15 +117,13 @@ void WMSRNode::switch_subCallback(const std_msgs::Bool::ConstPtr& msg){
 void WMSRNode::ref_subCallback(const path_msgs::ConstPtr& msgs, const int list_idx)
 {
   ref_lists[list_idx].path_type = msgs->path_type;
-  ref_lists[list_idx].qi_x = msgs->qi_x;
-  ref_lists[list_idx].qi_y = msgs->qi_y;
-  ref_lists[list_idx].qi_theta = msgs->qi_theta;
-  ref_lists[list_idx].qf_x = msgs->qf_x;
-  ref_lists[list_idx].qf_y = msgs->qf_y;
-  ref_lists[list_idx].qf_theta = msgs->qf_theta;
+  ref_lists[list_idx].xc = msgs->xc;
+  ref_lists[list_idx].yc = msgs->yc;
+  ref_lists[list_idx].wd = msgs->wd;
   ref_lists[list_idx].t0 = msgs->t0;
-  ref_lists[list_idx].T = msgs->T;
-  ref_lists[list_idx].poly_k = msgs->poly_k;
+  ref_lists[list_idx].R = msgs->R;
+  ref_lists[list_idx].R1 = msgs->R1;
+  ref_lists[list_idx].R2 = msgs->R2;
 }
 
 // Publisher Callback Function: publishes the reference path to other WMSR nodes
@@ -154,8 +147,9 @@ void WMSRNode::ref_pubCallback(const ros::TimerEvent& event)
   // If it's a PHYSICAL attack, update the inform states to some malicious path, and publish the malicious path
   else {
     // malicous path
-    mali_path.qf_x += 0.2;
-    mali_path.qf_y += 0.2;
+    mali_path.R += 0.2;
+    mali_path.R1 += 0.2;
+    mali_path.R2 += 0.2;
     // cyber attack
     if (attack == 1) {
       inform_center_path = WMSRNode::WMSRAlgorithm(ref_lists);
@@ -165,7 +159,7 @@ void WMSRNode::ref_pubCallback(const ros::TimerEvent& event)
       inform_center_path = mali_path;
     }
 
-    ref_pub.publish(mali_path);    // publish malicious reference path to other WMSR node
+    ref_pub.publish(mali_path);    // publish malicious path to other WMSR node
   }
 }
 
@@ -175,56 +169,66 @@ path_msgs WMSRNode::WMSRAlgorithm(const std::vector<path_msgs> &list)
 {
   path_msgs ref_path;
 
-  std::vector<double> list_qi_x(k,0);
-  std::vector<double> list_qi_y(k,0);
-  std::vector<double> list_qi_theta(k,0);
-  std::vector<double> list_qf_x(k,0);
-  std::vector<double> list_qf_y(k,0);
-  std::vector<double> list_qf_theta(k,0);
+  std::vector<double> list_xc(k,0);
+  std::vector<double> list_yc(k,0);
+  std::vector<double> list_wd(k,0);
   std::vector<double> list_t0(k,0);
-  std::vector<double> list_T(k,0);
-  std::vector<double> list_poly_k(k,0);
+  std::vector<double> list_R(k,0);
+  std::vector<double> list_R1(k,0);
+  std::vector<double> list_R2(k,0);
 
-  double qi_x, qi_y, qi_theta, qf_x, qf_y, qf_theta, t0, T, poly_k; // uniform weights
+  double w_xc, w_yc, w_wd, w_t0, w_R, w_R1, w_R2; // uniform weights
 
-  //double wav_qi_x = 0, wav_yc = 0, wav_wd = 0, wav_t0 = 0, wav_R = 0, wav_R1 = 0, wav_R2 = 0; // weighted averages
+  double wav_xc = 0, wav_yc = 0, wav_wd = 0, wav_t0 = 0, wav_R = 0, wav_R1 = 0, wav_R2 = 0; // weighted averages
 
-  //double qi_x, yc, wd, t0, R, R1, R2;
-  qi_x = inform_center_path.qi_x;
-  qi_y = inform_center_path.qi_y;
-  qi_theta = inform_center_path.qi_theta;
-  qf_x = inform_center_path.qf_x;
-  qf_y = inform_center_path.qf_y;
-  qf_theta = inform_center_path.qf_theta;
+  double xc, yc, wd, t0, R, R1, R2;
+  xc = inform_center_path.xc;
+  yc = inform_center_path.yc;
+  wd = inform_center_path.wd;
   t0 = inform_center_path.t0;
-  T = inform_center_path.T;
-  poly_k = inform_center_path.poly_k;
+  R = inform_center_path.R;
+  R1 = inform_center_path.R1;
+  R2 = inform_center_path.R2;
 
   // scan the data
   for (int i = 0; i < k; i++) {
-    list_qi_x[i] = list[i].qi_x;
-    list_qi_y[i] = list[i].qi_y;
-    list_qi_theta[i] = list[i].qi_theta;
-    list_qf_x[i] = list[i].qf_x;
-    list_qf_y[i] = list[i].qf_y;
-    list_qf_theta[i] = list[i].qf_theta;
+    list_xc[i] = list[i].xc;
+    list_yc[i] = list[i].yc;
+    list_wd[i] = list[i].wd;
     list_t0[i] = list[i].t0;
-    list_T[i] = list[i].T;
-    list_poly_k[i] = list[i].poly_k;
+    list_R[i] = list[i].R;
+    list_R1[i] = list[i].R1;
+    list_R2[i] = list[i].R2;
   }
 
-  //remove outliers, and compute the weighted average
-  ref_path.qi_x = FilterOutlier(list_qi_x, k, qi_x, F);
-  ref_path.qi_y = FilterOutlier(list_qi_y, k, qi_y, F);
-  ref_path.qi_theta = FilterOutlier(list_qi_theta, k, qi_theta, F);
-  ref_path.qf_x = FilterOutlier(list_qf_x, k, qf_x, F);
-  ref_path.qf_y = FilterOutlier(list_qf_y, k, qf_y, F);
-  ref_path.qf_theta = FilterOutlier(list_qf_theta, k, qf_theta, F);
-  ref_path.t0 = FilterOutlier(list_t0, k, t0, F);
-  ref_path.T = FilterOutlier(list_t0, k, T, F);
-  ref_path.poly_k = FilterOutlier(list_t0, k, poly_k, F);
+  //remove outliers
+  w_xc = FilterOutlier(list_xc, k, xc, F);
+  w_yc = FilterOutlier(list_yc, k, yc, F);
+  w_wd = FilterOutlier(list_wd, k, wd, F);
+  w_t0 = FilterOutlier(list_t0, k, t0, F);
+  w_R = FilterOutlier(list_R, k, R, F);
+  w_R1 = FilterOutlier(list_R1, k, R1, F);
+  w_R2 = FilterOutlier(list_R2, k, R2, F);
 
+  // update reference path of the current WMSR node
+  // note: size increases by 1 due to the added states of the current WMSR node
+  for (int j = 0; j < k+1; j++) {
+    wav_xc += w_xc * list_xc[j];
+    wav_yc += w_yc * list_yc[j];
+    wav_wd += w_wd * list_wd[j];
+    wav_t0 += w_t0 * list_t0[j];
+    wav_R += w_R * list_R[j];
+    wav_R1 += w_R1 * list_R1[j];
+    wav_R2 += w_R2 * list_R2[j];
+  }
   ref_path.path_type = inform_center_path.path_type;
+  ref_path.xc = wav_xc;
+  ref_path.yc = wav_yc;
+  ref_path.wd = wav_wd;
+  ref_path.t0 = wav_t0;
+  ref_path.R = wav_R;
+  ref_path.R1 = wav_R1;
+  ref_path.R2 = wav_R2;
 
   return ref_path;
 }
@@ -233,9 +237,31 @@ path_msgs WMSRNode::WMSRAlgorithm(const std::vector<path_msgs> &list)
 // Output Publisher Callback
 void WMSRNode::out_pubCallback(const ros::TimerEvent& event)
 {
+  // calculate the node states in the formation
+  WMSRNode::Formation();
   output_pub.publish(inform_formation_path);
 }
 
+// Helper Function: Create formation
+void WMSRNode::Formation()
+{
+  const float DEG_2_RAD = M_PI / 180.0;
+  double d_theta = 360 / 5 * DEG_2_RAD;
+  double d_radius = 1;
+  int group_size = n / 5;
+
+  double theta = (idx-1) / group_size * d_theta;
+  double radius = (idx-1) % group_size * d_radius + 2;
+
+  inform_formation_path.xc = inform_center_path.xc + radius * cos(theta);
+  inform_formation_path.yc = inform_center_path.yc + radius * sin(theta);
+  inform_formation_path.path_type = inform_center_path.path_type;
+  inform_formation_path.wd = inform_center_path.wd;
+  inform_formation_path.t0 = inform_center_path.t0;
+  inform_formation_path.R = inform_center_path.R;
+  inform_formation_path.R1 = inform_center_path.R1;
+  inform_formation_path.R2 = inform_center_path.R2;
+}
 
 // Helper Function: remove outlier entries
 double FilterOutlier(std::vector<double> &list, const int k, const double inform_state, const int F)
@@ -282,15 +308,6 @@ double FilterOutlier(std::vector<double> &list, const int k, const double inform
   list.push_back(inform_state);
   valid_size++;
 
-  // uniform weights
-  double wts = 1.0 / double(valid_size);
-  double weighted_average = 0;
-
-  // compute the weighted average
-  for (int j = 0; j < k+1; j++) {
-    weighted_average += wts * list[j];
-  }
-
-  // return the filtered value
-  return weighted_average;
+  // return the weights
+  return 1.0 / double(valid_size);
 }

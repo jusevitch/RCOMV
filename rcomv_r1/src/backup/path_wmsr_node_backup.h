@@ -12,7 +12,7 @@
 #include <mav_msgs/default_topics.h>
 #include <mav_msgs/eigen_mav_msgs.h>
 
-#include <rcomv_r1/CubicPath.h>
+#include <rcomv_r1/ParametricPath.h>
 
 #include <ros/ros.h>
 #include <std_srvs/Empty.h>
@@ -26,7 +26,7 @@
 #include <algorithm>
 
 // define aliases for msgs types
-typedef rcomv_r1::CubicPath path_msgs;
+typedef rcomv_r1::ParametricPath path_msgs;
 
 // define the WMSR Node class
 class WMSRNode
@@ -55,7 +55,8 @@ private:
 
   // messages
   path_msgs inform_center_path;  // reference path of the formation center
-  std::vector<path_msgs> ref_lists; // reference center location received from neighbor agents
+  ref_msgs inform_formation_path // reference path of the agent (with a constant offset from the center)
+  std::vector<path_msgs> ref_lists; // reference center location from neighbor agents
   path_msgs mali_path; // malicous path (for cyber attack, physical attack, or both)
 
   // Callback Functions
@@ -63,20 +64,21 @@ private:
   void ref_pubCallback(const ros::TimerEvent& event);
   void out_pubCallback(const ros::TimerEvent& event);
 
-  // private variables for intermediate step calculations
+  // private variables for intermediate calculations
   //int weight_x, weight_y, weight_z;   // weights for the neighbor agents
   int n, k;   // number of agents and number of neighbors in the graph
   int idx;    // the index of the current agent, range from 1 to n
   int role;   // the role of hte current agents: Malicious=1, Normal=2, Leader=3
-  //std::vector<std::vector<int>> L; // comunication graph
+  std::vector<std::vector<int>> L; // comunication graph
   int F;    // allowed maximum number of adversaries
-  double x0, y0, theta0; // inital pose
+  double x0, y0; // inital pose
   int attack_type; // 1: cyber attack, 2: physical attack
 
   // Some Helper functions
-  // WMSR Algorithm: output the filtered reference path using WMSR algorithm
+  // WMSR Algorithm
   path_msgs WMSRAlgorithm(const std::vector<path_msgs> &list);
-
+  // Compute the acutal location of the agent by adding its offset to the center location
+  void Formation();
 
 }; // end of class
 

@@ -19,6 +19,7 @@ InOutLinController::InOutLinController()
   // Initialize the paramters (varying, will be updated by subscribers)
   nh_private_.param<std::string>("path_type", path_type, "circular");
   nh_private_.param<double>("t0", t0, 0);
+  // parametric path paramters
   nh_private_.param<double>("xc", xc, 0);
   nh_private_.param<double>("yc", yc, 0);
   nh_private_.param<double>("R", R, 4);
@@ -26,6 +27,7 @@ InOutLinController::InOutLinController()
   nh_private_.param<double>("t0", t0, ros::Time().toSec());
   nh_private_.param<double>("R1", R1, 4);
   nh_private_.param<double>("R2", R2, 4);
+  // cubic ploynomials path paramters
   nh_private_.param<double>("qi_x", qi.x, 5); nh_private_.param<double>("qi_y", qi.y, 0); nh_private_.param<double>("qi_theta", qi.theta, 1.57);
   nh_private_.param<double>("qf_x", qf.x, -5); nh_private_.param<double>("qf_y", qf.y, 0); nh_private_.param<double>("qf_theta", qf.theta, 4.71);
   nh_private_.param<double>("poly_k", poly_k, 20);
@@ -73,9 +75,19 @@ void InOutLinController::odom_subCallback(const nav_msgs::Odometry::ConstPtr& ms
   state.twist = msgs->twist;
 }
 
-//void trajectory_subCallback() {
-//
-//} // to be determined)
+void InOutLinController::trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs)
+{
+  path_type = msgs->path_type;
+  qi.x = msgs->qi_x;
+  qi.y = msgs->qi_y;
+  qi.theta = msgs->qi_theta;
+  qf.x = msgs->qf_x;
+  qf.y = msgs->qf_y;
+  qf.theta = msgs->qf_theta;
+  t0 = msgs->t0;
+  T = msgs->T;
+  poly_k = msgs->poly_k;
+}
 
 // callback function to display the odometry reading
 void InOutLinController::disCallback(const ros::TimerEvent& event) {
@@ -111,8 +123,6 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
   double c_th, s_th;
   double e_y1, e_y2;
   double u1, u2;
-
-
 
   double t = ros::Time::now().toSec() - t0;
 
@@ -246,6 +256,8 @@ double findDifference(double init_psi, double goal_psi)
  return err;
 }
 
+
+// main function: create a InOutLinController class type that handles everything
 int main(int argc, char** argv) {
   ros::init(argc, argv, "InOutLinController_node");
 
