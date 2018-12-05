@@ -308,54 +308,54 @@ centers.x = xFinal;
 centers.y = yFinal;
 centers.z = zFinal;
 
-% store data to  txt files
-fid=fopen('SimpleLeaderWMSR_xMaxMin_3D.txt','w');
-fprintf(fid, '%8s %8s \n', 'xMin', 'xMax', 'yMin', 'yMax', 'zMin', 'zMax');
-for i = 1:steps+2
-    fprintf(fid, '%6.4f %6.4f \r\n', xMin(i,1), xMax(i,1), yMin(i,1), yMax(i,1), zMin(i,1), zMax(i,1));
-end
-fclose(fid);
+% % store data to  txt files
+% fid=fopen('SimpleLeaderWMSR_xMaxMin_3D.txt','w');
+% fprintf(fid, '%8s %8s \n', 'xMin', 'xMax', 'yMin', 'yMax', 'zMin', 'zMax');
+% for i = 1:steps+2
+%     fprintf(fid, '%6.4f %6.4f \r\n', xMin(i,1), xMax(i,1), yMin(i,1), yMax(i,1), zMin(i,1), zMax(i,1));
+% end
+% fclose(fid);
 
-fid=fopen('SimpleLeaderWMSR_Final_3D.txt','w');
-for i = 1:steps+2
-    for j = 1:n
-        fprintf(fid, '%10.4f', xFinal(i,j));
-    end
-    for j = 1:n
-        fprintf(fid, '%10.4f', yFinal(i,j));
-    end
-    for j = 1:n
-        fprintf(fid, '%10.4f', zFinal(i,j));
-    end
-    fprintf(fid, '\r\n');
-end
-fclose(fid);
+% fid=fopen('SimpleLeaderWMSR_Final_3D.txt','w');
+% for i = 1:steps+2
+%     for j = 1:n
+%         fprintf(fid, '%10.4f', xFinal(i,j));
+%     end
+%     for j = 1:n
+%         fprintf(fid, '%10.4f', yFinal(i,j));
+%     end
+%     for j = 1:n
+%         fprintf(fid, '%10.4f', zFinal(i,j));
+%     end
+%     fprintf(fid, '\r\n');
+% end
+% fclose(fid);
 
 
-% Plot the difference between xMax and xMin
-stepsVec = [0:steps+1];
-figure(1)
-subplot(3,1,1);
-diff = xMax - xMin;
-plot(stepsVec, diff);
-title('Difference between xMax and xMin')
-xlabel('Time Step t')
-ylabel('xMax - xMin')
-
-subplot(3,1,2);
-diff = yMax - yMin;
-plot(stepsVec, diff);
-title('Difference between yMax and yMin')
-xlabel('Time Step t')
-ylabel('yMax - yMin')
-
-subplot(3,1,3);
-diff = zMax - zMin;
-plot(stepsVec, diff);
-title('Difference between zMax and zMin')
-xlabel('Time Step t')
-ylabel('zMax - zMin')
-
+% % Plot the difference between xMax and xMin
+ stepsVec = [0:steps+1];
+% figure(1)
+% subplot(3,1,1);
+% diff = xMax - xMin;
+% plot(stepsVec, diff);
+% title('Difference between xMax and xMin')
+% xlabel('Time Step t')
+% ylabel('xMax - xMin')
+% 
+% subplot(3,1,2);
+% diff = yMax - yMin;
+% plot(stepsVec, diff);
+% title('Difference between yMax and yMin')
+% xlabel('Time Step t')
+% ylabel('yMax - yMin')
+% 
+% subplot(3,1,3);
+% diff = zMax - zMin;
+% plot(stepsVec, diff);
+% title('Difference between zMax and zMin')
+% xlabel('Time Step t')
+% ylabel('zMax - zMin')
+% 
 figure(2)
 subplot(3,1,1);
 plot(stepsVec,xFinal(:,norx), stepsVec, xFinal(:,malicious), '--r')

@@ -173,6 +173,10 @@ add_executable(wmsr_node src/wmsr_node.cpp src/wmsr_node.h)
 add_dependencies(wmsr_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(wmsr_node ${catkin_LIBRARIES})
 
+add_executable(path_wmsr_node src/path_wmsr_node.cpp src/path_wmsr_node.h)
+add_dependencies(path_wmsr_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(path_wmsr_node ${catkin_LIBRARIES})
+
 add_executable(path_publisher src/path_publisher.cpp )
 add_dependencies(path_publisher ${catkin_EXPORTED_TARGETS})
 target_link_libraries(path_publisher ${catkin_LIBRARIES})

@@ -8,11 +8,8 @@ string path_type
 float64 xc
 float64 yc
 
-# angular frequency 
+# angular frequency
 float64 wd
-
-# initial time
-float64 t0
 
 # Radius for the circular path
 float64 R
@@ -20,5 +17,3 @@ float64 R
 # Radius for the eight-shaped path
 float64 R1
 float64 R2
-
-

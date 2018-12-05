@@ -18,7 +18,7 @@ InOutLinController::InOutLinController()
 
   // Initialize the paramters (varying, will be updated by subscribers)
   nh_private_.param<std::string>("path_type", path_type, "circular");
-  nh_private_.param<double>("t0", t0, 0);
+  //
   // parametric path paramters
   nh_private_.param<double>("xc", xc, 0);
   nh_private_.param<double>("yc", yc, 0);
@@ -84,7 +84,7 @@ void InOutLinController::trajectory_subCallback(const rcomv_r1::CubicPath::Const
   qf.x = msgs->qf_x;
   qf.y = msgs->qf_y;
   qf.theta = msgs->qf_theta;
-  t0 = msgs->t0;
+  //t0 = msgs->t0;
   T = msgs->T;
   poly_k = msgs->poly_k;
 }
@@ -234,7 +234,8 @@ void InOutLinController::CubePolyPath(pose qi, pose qf, double k, double T, doub
 
   // transform from the center to the agent
   //double theta = findDifference(atan2(vel_y, vel_x), thetai);
-  double theta = atan2(vel_y, vel_x) - thetai;
+  //double theta = atan2(vel_y, vel_x) - thetai;
+  double theta = atan2(vel_y, vel_x) ;
   xd = xd + Ri*cos(theta+alphai);
   yd = yd + Ri*sin(theta+alphai);
   vel_x = vel_x - wd*Ri*sin(theta+alphai);

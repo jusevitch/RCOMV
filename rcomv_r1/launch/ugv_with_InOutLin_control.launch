@@ -12,13 +12,12 @@
 	<arg name="x" default = "0" />
 	<arg name="y" default = "0" />
 	<arg name="z" default = "0.1" />
-        <arg name="yaw" default="0.0" />
+  <arg name="yaw" default="0.0" />
 	<arg name="n" default="15" />
 	<arg name="k" default="7" />
 	<arg name="idx" default="1" />
 	<arg name="role" default="2" />
 	<arg name="F" default="0" />
-	<arg name="demo" default="2" />
 
 	<arg name="color" default="Black" />
 
@@ -29,7 +28,7 @@
 
       <!-- parameters for the trajectory tracking conteoller -->
       <arg name="Ri" default="0" />
-      <arg name="alphai" default="0"/>  
+      <arg name="alphai" default="0"/>
       <arg name="b" default="0.05" />
       <arg name="k1" default="4" />
       <arg name="k2" default="4"/>
@@ -46,7 +45,7 @@
       <arg name="qf_x" default="-5" /> <arg name="qf_y" default="0" /> <arg name="qf_theta" default="4.71" />
       <arg name="poly_k" default="20" />
       <arg name="T" default="15" />
-      
+
 
 	<group ns="$(arg name_space)">
 	      <!-- ugv robot node -->
@@ -60,7 +59,7 @@
       		<arg name="x" value="$(arg x)"/>
       		<arg name="y" value="$(arg y)"/>
 	        <arg name="z" value="$(arg z)"/>
-		<arg name="yaw" value="$(arg yaw)" />
+		      <arg name="yaw" value="$(arg yaw)" />
     	</include>
 
       	<node name="tf_footprint_base" pkg="tf" type="static_transform_publisher"
@@ -72,44 +71,46 @@
       	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
       	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 
-      	<!-- PID controller node -->
+      	<!-- In/Output Linearization controller node -->
+        <!-- without wmsr node -->
         <node name="InOutLin_controller_node" pkg="rcomv_r1" type="InputOutputLin_Controller" launch-prefix="xterm -e"    output="screen" unless="$(arg wmsr_node)">
-			<param name="Ri" value="$(arg Ri)" />
-      			<param name="alphai" value="$(arg alphai)"/>  
+			      <param name="Ri" value="$(arg Ri)" />
+      			<param name="alphai" value="$(arg alphai)"/>
 
       			<param name="b" value="$(arg b)" />
       			<param name="k1" value="$(arg k1)" />
       			<param name="k2" value="$(arg k2)"/>
       			<param name="vmax" value="$(arg vmax)" />
       			<param name="wmax" value="$(arg wmax)"/>
-      			
-			<param name="path_type" value="$(arg path_type)" />
-			<param name="xc" value="$(arg xc)" />
-			<param name="yc" value="$(arg yc)" />
-			<param name="R" value="$(arg R)" />
+
+			      <param name="path_type" value="$(arg path_type)" />
+			      <param name="xc" value="$(arg xc)" />
+			      <param name="yc" value="$(arg yc)" />
+			      <param name="R" value="$(arg R)" />
       			<param name="R1" value="$(arg R1)" />
       			<param name="R2" value="$(arg R2)" />
-			<param name="wd" value="$(arg wd)" />
-			<param name="qi_x" value="$(arg qi_x)" /> <param name="qi_y" value="$(arg qi_y)" /> 
-			<param name="qi_theta" value="$(arg qi_theta)" />
-      			<param name="qf_x" value="$(arg qf_x)" /> <param name="qf_y" value="$(arg qf_y)" /> 
-			<param name="qf_theta" value="$(arg qf_theta)" />
+			      <param name="wd" value="$(arg wd)" />
+
+            <param name="qi_x" value="$(arg qi_x)" /> <param name="qi_y" value="$(arg qi_y)" />
+			      <param name="qi_theta" value="$(arg qi_theta)" />
+      			<param name="qf_x" value="$(arg qf_x)" /> <param name="qf_y" value="$(arg qf_y)" />
+			      <param name="qf_theta" value="$(arg qf_theta)" />
       			<param name="poly_k" value="$(arg poly_k)" />
       			<param name="T" value="$(arg T)" />
 
       	</node>
+        <!-- with wmsr node -->
         <node name="InOutLin_controller_node" pkg="rcomv_r1" type="InputOutputLin_Controller" if="$(arg wmsr_node)">
       			<param name="b" value="$(arg b)" />
       			<param name="k1" value="$(arg k1)" />
       			<param name="k2" value="$(arg k2)"/>
       			<param name="vmax" value="$(arg vmax)" />
       			<param name="wmax" value="$(arg wmax)"/>
-      			<param name="path_type" value="$(arg path_type)" />
       	</node>
 
 
 	<!-- WMSR node -->
-	<node name="wmsr_node" pkg="rcomv_r1" type="wmsr_node" if="$(arg wmsr_node)">
+	<node name="wmsr_node" pkg="rcomv_r1" type="path_wmsr_node" if="$(arg wmsr_node)">
 		<param name="n" value="$(arg n)" />
 		<param name="k" value="$(arg k)" />
 		<param name="F" value="$(arg F)" />
@@ -118,13 +119,17 @@
 
 		<param name="x" value="$(arg x)" />
 		<param name="y" value="$(arg y)" />
-		<!-- param name="z" value="$(arg z)" /-->
+    <param name="theta" value="$(arg yaw)" />
 
-		<param name="demo" value="$(arg demo)" />
+    <param name="qi_x" value="$(arg qi_x)"/><!--reference cubic polynomial path-->
+    <param name="qi_y" value="$(arg qi_y)"/>
+    <param name="qi_theta" value="$(arg qi_theta)"/>
+    <param name="qf_x" value="$(arg qf_x)"/>
+    <param name="qf_y" value="$(arg qf_y)"/>
+    <param name="qf_theta" value="$(arg qf_theta)"/>
+    <param name="poly_k" value="$(arg poly_k)"/>
+    <param name="T" value="$(arg T)"/>
 
-		<param name="cx" value="$(arg lead_x)" />
-		<param name="cy" value="$(arg lead_y)" />
-		<!--param name="cz" value="$(arg lead_z)" /-->
 	</node>
 
 

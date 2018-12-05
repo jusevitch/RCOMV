@@ -41,7 +41,7 @@ WMSRNode::WMSRNode()
     nh_private_.param<double>("qf_y", inform_center_path.qf_y, 0);
     nh_private_.param<double>("qf_theta", inform_center_path.qf_theta, M_PI*-0.5);
     nh_private_.param<double>("T", inform_center_path.T, 15);
-    nh_private_.param<double>("t0", inform_center_path.t0, ros::Time().toSec());
+    //nh_private_.param<double>("t0", inform_center_path.t0, ros::Time().toSec());
     nh_private_.param<double>("poly_k", inform_center_path.poly_k, 40);
     // 3. malicous path: assign a different final location
     mali_path.qf_x = inform_center_path.qf_x * 2;
@@ -128,7 +128,7 @@ void WMSRNode::ref_subCallback(const path_msgs::ConstPtr& msgs, const int list_i
   ref_lists[list_idx].qf_x = msgs->qf_x;
   ref_lists[list_idx].qf_y = msgs->qf_y;
   ref_lists[list_idx].qf_theta = msgs->qf_theta;
-  ref_lists[list_idx].t0 = msgs->t0;
+  //ref_lists[list_idx].t0 = msgs->t0;
   ref_lists[list_idx].T = msgs->T;
   ref_lists[list_idx].poly_k = msgs->poly_k;
 }
@@ -181,22 +181,20 @@ path_msgs WMSRNode::WMSRAlgorithm(const std::vector<path_msgs> &list)
   std::vector<double> list_qf_x(k,0);
   std::vector<double> list_qf_y(k,0);
   std::vector<double> list_qf_theta(k,0);
-  std::vector<double> list_t0(k,0);
+  //std::vector<double> list_t0(k,0);
   std::vector<double> list_T(k,0);
   std::vector<double> list_poly_k(k,0);
 
   double qi_x, qi_y, qi_theta, qf_x, qf_y, qf_theta, t0, T, poly_k; // uniform weights
 
-  //double wav_qi_x = 0, wav_yc = 0, wav_wd = 0, wav_t0 = 0, wav_R = 0, wav_R1 = 0, wav_R2 = 0; // weighted averages
 
-  //double qi_x, yc, wd, t0, R, R1, R2;
   qi_x = inform_center_path.qi_x;
   qi_y = inform_center_path.qi_y;
   qi_theta = inform_center_path.qi_theta;
   qf_x = inform_center_path.qf_x;
   qf_y = inform_center_path.qf_y;
   qf_theta = inform_center_path.qf_theta;
-  t0 = inform_center_path.t0;
+  //t0 = inform_center_path.t0;
   T = inform_center_path.T;
   poly_k = inform_center_path.poly_k;
 
@@ -208,7 +206,7 @@ path_msgs WMSRNode::WMSRAlgorithm(const std::vector<path_msgs> &list)
     list_qf_x[i] = list[i].qf_x;
     list_qf_y[i] = list[i].qf_y;
     list_qf_theta[i] = list[i].qf_theta;
-    list_t0[i] = list[i].t0;
+    //list_t0[i] = list[i].t0;
     list_T[i] = list[i].T;
     list_poly_k[i] = list[i].poly_k;
   }
@@ -220,7 +218,7 @@ path_msgs WMSRNode::WMSRAlgorithm(const std::vector<path_msgs> &list)
   ref_path.qf_x = FilterOutlier(list_qf_x, k, qf_x, F);
   ref_path.qf_y = FilterOutlier(list_qf_y, k, qf_y, F);
   ref_path.qf_theta = FilterOutlier(list_qf_theta, k, qf_theta, F);
-  ref_path.t0 = FilterOutlier(list_t0, k, t0, F);
+  //ref_path.t0 = FilterOutlier(list_t0, k, t0, F);
   ref_path.T = FilterOutlier(list_t0, k, T, F);
   ref_path.poly_k = FilterOutlier(list_t0, k, poly_k, F);
 

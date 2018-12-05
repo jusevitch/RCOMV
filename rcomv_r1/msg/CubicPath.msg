@@ -14,8 +14,6 @@ float64 qf_x
 float64 qf_y
 float64 qf_theta
 
-# initial time
-float64 t0
 # total travel time
 float64 T
 
