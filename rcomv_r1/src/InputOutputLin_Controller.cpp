@@ -47,7 +47,7 @@ InOutLinController::InOutLinController()
   //Subscriber := current states
   odom_sub = nh.subscribe("odom", 10, &InOutLinController::odom_subCallback, this);
   //Subscriber := reference trajectory parameters
-  //trajectory_sub = nh.subscribe("ref", 10, &InOutLinController::trajectory_subCallback, this);
+  trajectory_sub = nh.subscribe("ref", 10, &InOutLinController::trajectory_subCallback, this);
 
 }
 

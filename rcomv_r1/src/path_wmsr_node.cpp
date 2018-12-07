@@ -22,10 +22,13 @@ WMSRNode::WMSRNode()
     nh_private_.param<int>("role", role, 2);
     // num of adversaries
     nh_private_.param<int>("F", F, 0);
+    // type of attack
+    nh_private_.param<int>("attack", attack, 1);
     // inital pose
     nh_private_.param<double>("x", x0, 0);
     nh_private_.param<double>("y", y0, 0);
     nh_private_.param<double>("theta", y0, 0);
+
 
     // Initialize msgs
     // refrence path:
@@ -98,7 +101,7 @@ WMSRNode::WMSRNode()
       // sub topics are resolved in global namespace
       std::string sub_topic = "/ugv" + std::to_string(sub_idx) + "/WMSR/ref";
 
-      ref_subs.push_back(nh.subscribe<ref_msgs>(sub_topic, 10,
+      ref_subs.push_back(nh.subscribe<path_msgs>(sub_topic, 10,
                     boost::bind(&WMSRNode::ref_subCallback, this, _1, i-1)) );
 
       ROS_INFO("sub_idx at: [%d] with topic name: ", sub_idx);
@@ -170,7 +173,13 @@ void WMSRNode::ref_pubCallback(const ros::TimerEvent& event)
 }
 
 
-// Helper Function::
+// Output Publisher Callback
+void WMSRNode::out_pubCallback(const ros::TimerEvent& event)
+{
+  output_pub.publish(inform_center_path);
+}
+
+// Helper Function:: WMSR Algorithm
 path_msgs WMSRNode::WMSRAlgorithm(const std::vector<path_msgs> &list)
 {
   path_msgs ref_path;
@@ -219,19 +228,12 @@ path_msgs WMSRNode::WMSRAlgorithm(const std::vector<path_msgs> &list)
   ref_path.qf_y = FilterOutlier(list_qf_y, k, qf_y, F);
   ref_path.qf_theta = FilterOutlier(list_qf_theta, k, qf_theta, F);
   //ref_path.t0 = FilterOutlier(list_t0, k, t0, F);
-  ref_path.T = FilterOutlier(list_t0, k, T, F);
-  ref_path.poly_k = FilterOutlier(list_t0, k, poly_k, F);
+  ref_path.T = FilterOutlier(list_T, k, T, F);
+  ref_path.poly_k = FilterOutlier(list_poly_k, k, poly_k, F);
 
   ref_path.path_type = inform_center_path.path_type;
 
   return ref_path;
-}
-
-
-// Output Publisher Callback
-void WMSRNode::out_pubCallback(const ros::TimerEvent& event)
-{
-  output_pub.publish(inform_formation_path);
 }
 
 
@@ -291,4 +293,16 @@ double FilterOutlier(std::vector<double> &list, const int k, const double inform
 
   // return the filtered value
   return weighted_average;
+}
+
+
+// main function: create a WMSRNode class type that handles everything
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "path_trajectory_WMSRNode");
+
+  WMSRNode path_trajectory_WMSR_node;
+
+  ros::spin();
+
+  return 0;
 }

@@ -2,7 +2,7 @@
   <launch>
 
   <arg name="ugv_name" default="r1_sim"/>
-  <arg name="world_name" default="basic"/>
+  <arg name="world_name" default="small_building"/>
   <arg name="enable_logging" default="false" />
   <arg name="enable_ground_truth" default="true" />
   <arg name="log_file" default="$(arg ugv_name)" />
@@ -29,13 +29,13 @@
       <arg name="yaw" value="1.57" />
 
       <arg name="Ri" value="1" />
-      <arg name="alphai" value="0"/>  		
+      <arg name="alphai" value="-1.5708"/>  		
 
       <!-- controller parameters -->
       <arg name="b" value="0.05" />
       <arg name="k1" value="0.5" />
       <arg name="k2" value="0.5"/>
-      <arg name="vmax" value="4" />
+      <arg name="vmax" value="2" />
       <arg name="wmax" value="4"/>
       
       <!-- path parameters -->
@@ -65,13 +65,13 @@
       <arg name="yaw" value="1.57" />
 
       <arg name="Ri" value="1" />
-      <arg name="alphai" value="3.14"/>  		
+      <arg name="alphai" value="1.5708"/>  		
 
       <!-- controller parameters -->
       <arg name="b" value="0.05" />
       <arg name="k1" value="0.5" />
       <arg name="k2" value="0.5"/>
-      <arg name="vmax" value="4" />
+      <arg name="vmax" value="2" />
       <arg name="wmax" value="4"/>
       
       <!-- path parameters -->
@@ -101,13 +101,13 @@
       <arg name="yaw" value="1.57" />
 
       <arg name="Ri" value="1" />
-      <arg name="alphai" value="1.57"/>
+      <arg name="alphai" value="0"/>
   		
       <!-- controller parameters -->
       <arg name="b" value="0.05" />
       <arg name="k1" value="0.5" />
       <arg name="k2" value="0.5"/>
-      <arg name="vmax" value="4" />
+      <arg name="vmax" value="2" />
       <arg name="wmax" value="4"/>
       
       <!-- path parameters -->
@@ -137,13 +137,13 @@
       <arg name="yaw" value="1.57" />
 
       <arg name="Ri" value="2" />
-      <arg name="alphai" value="-0.785"/>
+      <arg name="alphai" value="-2.356"/>
   		
       <!-- controller parameters -->
       <arg name="b" value="0.05" />
       <arg name="k1" value="0.5" />
       <arg name="k2" value="0.5"/>
-      <arg name="vmax" value="4" />
+      <arg name="vmax" value="2" />
       <arg name="wmax" value="4"/>
       
       <!-- path parameters -->
@@ -173,13 +173,13 @@
       <arg name="yaw" value="1.57" />
 
       <arg name="Ri" value="2" />
-      <arg name="alphai" value="-2.356"/>
+      <arg name="alphai" value="2.356"/>
   		
       <!-- controller parameters -->
       <arg name="b" value="0.05" />
       <arg name="k1" value="0.5" />
       <arg name="k2" value="0.5"/>
-      <arg name="vmax" value="4" />
+      <arg name="vmax" value="2" />
       <arg name="wmax" value="4"/>
       
       <!-- path parameters -->

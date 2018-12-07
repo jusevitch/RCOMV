@@ -68,6 +68,7 @@ private:
   int n, k;   // number of agents and number of neighbors in the graph
   int idx;    // the index of the current agent, range from 1 to n
   int role;   // the role of hte current agents: Malicious=1, Normal=2, Leader=3
+  int attack; // type of attack: cyber attack=1, physical attack=2
   //std::vector<std::vector<int>> L; // comunication graph
   int F;    // allowed maximum number of adversaries
   double x0, y0, theta0; // inital pose

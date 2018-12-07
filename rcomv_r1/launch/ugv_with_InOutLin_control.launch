@@ -74,7 +74,7 @@
       	<!-- In/Output Linearization controller node -->
         <!-- without wmsr node -->
         <node name="InOutLin_controller_node" pkg="rcomv_r1" type="InputOutputLin_Controller" launch-prefix="xterm -e"    output="screen" unless="$(arg wmsr_node)">
-			      <param name="Ri" value="$(arg Ri)" />
+			<param name="Ri" value="$(arg Ri)" />
       			<param name="alphai" value="$(arg alphai)"/>
 
       			<param name="b" value="$(arg b)" />
@@ -101,7 +101,10 @@
       	</node>
         <!-- with wmsr node -->
         <node name="InOutLin_controller_node" pkg="rcomv_r1" type="InputOutputLin_Controller" if="$(arg wmsr_node)">
+			<param name="Ri" value="$(arg Ri)" />
+      			<param name="alphai" value="$(arg alphai)"/>
       			<param name="b" value="$(arg b)" />
+
       			<param name="k1" value="$(arg k1)" />
       			<param name="k2" value="$(arg k2)"/>
       			<param name="vmax" value="$(arg vmax)" />
@@ -119,8 +122,9 @@
 
 		<param name="x" value="$(arg x)" />
 		<param name="y" value="$(arg y)" />
-    <param name="theta" value="$(arg yaw)" />
+    		<param name="theta" value="$(arg yaw)" />
 
+    	
     <param name="qi_x" value="$(arg qi_x)"/><!--reference cubic polynomial path-->
     <param name="qi_y" value="$(arg qi_y)"/>
     <param name="qi_theta" value="$(arg qi_theta)"/>
