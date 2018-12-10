@@ -32,6 +32,7 @@ InOutLinController::InOutLinController()
   nh_private_.param<double>("qf_x", qf.x, -5); nh_private_.param<double>("qf_y", qf.y, 0); nh_private_.param<double>("qf_theta", qf.theta, 4.71);
   nh_private_.param<double>("poly_k", poly_k, 20);
   nh_private_.param<double>("T", T, 15);
+  nh_private_.param<double>("endless", endless_flag, false);
   //
   odometry_connected = false;
   initial_time = ros::Time().toSec();
@@ -128,18 +129,18 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
 
   // the reference states and velocity: circular path
   if (path_type.compare(std::string("circular")) == 0) {
-     xd = xc + R*cos(wd*t) + Ri*cos(wd*t+alphai);
-     yd = yc + R*sin(wd*t) + Ri*sin(wd*t+alphai);
-     vd = hypot(wd*(-R*sin(wd*t) - Ri*sin(wd*t+alphai)),
-                wd*(R*cos(wd*t) + Ri*cos(wd*t+alphai)));
+     xd = xc + R*cos(wd*t) + Ri*cos(theta+alphai);
+     yd = yc + R*sin(wd*t) + Ri*sin(theta+alphai);
+     vd = hypot(wd*(-R*sin(wd*t) - Ri*sin(theta+alphai)),
+                wd*(R*cos(wd*t) + Ri*cos(theta+alphai)));
   }
   // the reference states and velocity: eight-shaped path
   if (path_type.compare(std::string("eight_shaped")) == 0) {
-     xd = xc + R1*sin(2*wd*t) + Ri*cos(wd*t+alphai);
-     yd = yc + R2*sin(wd*t) + Ri*sin(wd*t+alphai);
+     xd = xc + R1*sin(2*wd*t) + Ri*cos(theta+alphai);
+     yd = yc + R2*sin(wd*t) + Ri*sin(theta+alphai);
      //vd = hypot((2*R1*wd*cos(2*wd*t)), (R2*wd*cos(wd*t)));
-     vd = hypot((2*wd*R1*cos(2*wd*t) - wd*Ri*sin(wd*t+alphai)),
-                wd*(R2*cos(wd*t) + Ri*cos(wd*t+alphai)));
+     vd = hypot((2*wd*R1*cos(2*wd*t) - wd*Ri*sin(theta+alphai)),
+                wd*(R2*cos(wd*t) + Ri*cos(theta+alphai)));
   }
   // the reference states and velocity: cubic polynomial path
   if (path_type.compare(std::string("cubic")) == 0) {
@@ -171,11 +172,18 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
   cmd_vel.linear.x = std::max(-vmax, std::min(cmd_vel.linear.x, vmax));
   cmd_vel.angular.z = std::max(-wmax, std::min(cmd_vel.angular.z, wmax));
 
-  // stop when t > T for cubic polynomial path
+  // endless_flag is false: stop when t > T for cubic polynomial path
+  // endless_flag is true: switch qi and qf, and inital t0
   if (path_type.compare(std::string("cubic")) == 0) {
-      if (t > T) {
+      if (t > T && !endless) {
         cmd_vel.linear.x = 0;
         cmd_vel.angular.z = 0;
+      }
+      if (t > T && endless) {
+        pose temp_q = qi;
+        qi = qf;
+        qf = temp_q;
+        t0 = ros::Time::now().toSec(); // intial time
       }
   }
 
@@ -222,17 +230,17 @@ void InOutLinController::CubePolyPath(pose qi, pose qf, double k, double T, doub
   vel_x = vel_x / T;
   vel_y = vel_y / T;
   // center acceleration
-  //
+  // dv/ds
   double accel_x = 6*s*xf - 6*(s-1)*xi + alpha_x*(6*s-2) + beta_x*(6*s-4);
   double accel_y = 6*s*yf - 6*(s-1)*yi + alpha_y*(6*s-2) + beta_y*(6*s-4);
-  //
+  // dv/dt = dv/ds * ds/dt
   accel_x = accel_x / (T*T);
   accel_y = accel_y / (T*T);
-  // center velocity and turning rate
+  // center longitudinal velocity and turning rate
   vd = hypot(vel_x, vel_y);
   wd = (accel_y*vel_x - accel_x*vel_y) / pow(vd,2.0);
 
-  // transform from the center to the agent
+  // transform the states from the center location to the agent's location
   //double theta = findDifference(atan2(vel_y, vel_x), thetai);
   //double theta = atan2(vel_y, vel_x) - thetai;
   double theta = atan2(vel_y, vel_x) ;

@@ -45,6 +45,7 @@
       <arg name="qf_x" default="-5" /> <arg name="qf_y" default="0" /> <arg name="qf_theta" default="4.71" />
       <arg name="poly_k" default="20" />
       <arg name="T" default="15" />
+      <arg name="endless" default="false" />
 
 
 	<group ns="$(arg name_space)">
@@ -97,6 +98,7 @@
 			      <param name="qf_theta" value="$(arg qf_theta)" />
       			<param name="poly_k" value="$(arg poly_k)" />
       			<param name="T" value="$(arg T)" />
+            <param name="endless" value="$(arg endless)" />
 
       	</node>
         <!-- with wmsr node -->
@@ -109,6 +111,7 @@
       			<param name="k2" value="$(arg k2)"/>
       			<param name="vmax" value="$(arg vmax)" />
       			<param name="wmax" value="$(arg wmax)"/>
+            <param name="endless" value="$(arg endless)" />
       	</node>
 
 
@@ -124,7 +127,7 @@
 		<param name="y" value="$(arg y)" />
     		<param name="theta" value="$(arg yaw)" />
 
-    	
+
     <param name="qi_x" value="$(arg qi_x)"/><!--reference cubic polynomial path-->
     <param name="qi_y" value="$(arg qi_y)"/>
     <param name="qi_theta" value="$(arg qi_theta)"/>

@@ -11,6 +11,7 @@ rng('shuffle')
 file_list = {'test_cubic', 'test_world_cubic','test_ruin_world_cubic'};
 % -------------------------- modify here ----------------------------
 file_name = file_list{1};
+file_name = 'eightTraj_squareFormation_15agents';
 % -------------------------------------------------------------------
 
 
@@ -23,11 +24,11 @@ world_name = world_list{world_idx}';
 paused = 'true';
 % -------------------------------------------------------------------
 
-% size of formation
+% size of the formation
 % k must be greater or equal to 5
 % -------------------------- modify here ----------------------------
-n = 5;
-k = 5;
+n = 16;    % number of agents
+k = 7;    % number of neighbours for each agent 
 % -------------------------------------------------------------------
 
 
@@ -37,16 +38,19 @@ k = 5;
 % randomly generate agents
 [F, norx, lead, mali] = SimpleLeaderWMSR_3D(n, k);
 
-% reference center trajectory (assume all leaders know it)
+% reference center trajectory
 lead_path_type = 'cubic';
 % -------------------------- modify here ----------------------------
-% intial/final location
-lead_qi_x = 0;   lead_qi_y = 0; lead_qi_theta = pi/2;
-lead_qf_x = -10; lead_qf_y = 0; lead_qf_theta = pi * 3/2;
-% total travel time
-T = 20;
+% intial/final locations
+lead_qi_x = 10;   lead_qi_y = 0; lead_qi_theta = pi/2;
+lead_qf_x = -10; lead_qf_y = 0; lead_qf_theta = pi /2;
+% total travel time (in secs)
+T = 30;
 % polynomial paramter 
 poly_k = 40;
+% loop flag
+% if set true, switch the final/initial locations every T secs.
+endless = false;
 % -------------------------------------------------------------------
 center_path = struct('qi_x',lead_qi_x, 'qi_y',lead_qi_y, 'qi_theta', lead_qi_theta,...
                      'qf_x',lead_qf_x, 'qf_y',lead_qf_y, 'qf_theta', lead_qf_theta,...
@@ -55,6 +59,8 @@ center_path = struct('qi_x',lead_qi_x, 'qi_y',lead_qi_y, 'qi_theta', lead_qi_the
 
 % Parameters of Input/Output Linearization Feedback Control
 % -------------------------- modify here ----------------------------
+% a fixed distance ahead of the vehicle 
+% the feedback controller is based on the dynamics of this point
 b = 0.05;
 % control gains
 k1 = 0.5;
@@ -69,7 +75,12 @@ wmax = 4;
 % list of formations:
 % line_formation: a straight line with the middle agent as the center
 % star_formation: a star shape with 5 branches of equal agents
-initPose = @(idx,n,center) line_formation(idx, n, center);
+% circle_formation: a circle with unliformly distributed agents
+% square_formation: a square with unliformly distributed agents
+% diamond_formation: a diamond with unliformly distributed agents
+% V_formation: a V shape with unliformly distributed agents
+
+initPose = @(idx,n,center) square_formation(idx, n, center);
 % -------------------------------------------------------------------
 
 
@@ -82,7 +93,7 @@ enable_logging = 'true';
 
 
 
-%% Generating XML
+%% ------------------------- Generating XML -------------------------------
 docNode = com.mathworks.xml.XMLUtils.createDocument('launch');
 launch = docNode.getDocumentElement;
 
@@ -122,6 +133,7 @@ arg = argument(docNode, 0, 'qf_y', num2str(lead_qf_y)); launch.appendChild(arg);
 arg = argument(docNode, 0, 'qf_theta', num2str(lead_qf_theta)); launch.appendChild(arg);
 arg = argument(docNode, 0, 'poly_k', num2str(poly_k)); launch.appendChild(arg);
 arg = argument(docNode, 0, 'T', num2str(T)); launch.appendChild(arg);
+arg = argument(docNode, 0, 'endless', num2str(endless)); launch.appendChild(arg);
 
 
 % add pid gains
@@ -137,7 +149,7 @@ arg = argument(docNode, 0, 'wmax', num2str(wmax)); launch.appendChild(arg);
 % are successfully spawned in Gazebo
 switchNode = docNode.createElement('node');
 switchNode.setAttribute('name', 'switch_node');
-switchNode.setAttribute('pkg', 'r1_gazebo');
+switchNode.setAttribute('pkg', 'rcomv_r1');
 switchNode.setAttribute('type','switch');
 switchNode.setAttribute('output','screen');
 switchNode.setAttribute('launch-prefix','xterm -e');
@@ -149,7 +161,7 @@ for i = 1:n
    
    % element handle for ugvs
    ugv = docNode.createElement('include');
-   ugv.setAttribute('file', '$(find r1_gazebo)/launch/ugv_with_InOutLin_control.launch');
+   ugv.setAttribute('file', '$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch');
    
    % add comment
    ugv.appendChild(docNode.createComment(['start of ugv',num2str(i)]));
@@ -208,6 +220,7 @@ for i = 1:n
         arg = argument(docNode, 1, 'qf_theta', '$(arg qf_theta)'); ugv.appendChild(arg);
         arg = argument(docNode, 1, 'poly_k', '$(arg poly_k)'); ugv.appendChild(arg);
         arg = argument(docNode, 1, 'T', '$(arg T)'); ugv.appendChild(arg);
+        arg = argument(docNode, 1, 'endless', '$(arg endless)'); launch.appendChild(arg);
     else
         arg = argument(docNode, 1, 'qi_x', num2str(lead_qi_x+randn)); ugv.appendChild(arg);
         ugv.appendChild(docNode.createComment('reference cubic polynomial path'));
@@ -218,6 +231,7 @@ for i = 1:n
         arg = argument(docNode, 1, 'qf_theta', num2str(lead_qf_theta+randn*0.2)); ugv.appendChild(arg);
         arg = argument(docNode, 1, 'poly_k', num2str(poly_k+randn)); ugv.appendChild(arg);
         arg = argument(docNode, 1, 'T', num2str(T+randn)); ugv.appendChild(arg);
+        arg = argument(docNode, 1, 'endless', '$(arg endless)'); launch.appendChild(arg);
     end
    
     % add controller parameters
@@ -239,6 +253,8 @@ end
 xmlFileName = [file_name,'.launch'];
 xmlwrite(xmlFileName,docNode);
 type(xmlFileName);
+
+
 
 %% some helper functions
 % create attribute
@@ -264,6 +280,7 @@ function arg = argument(dn, type, name, default)
     arg.setAttributeNode(name_attr); 
 end
 
+
 % create environment  argument
 function env = environment(dn, type, name, default)
     % type=0: default attribute
@@ -282,21 +299,147 @@ function env = environment(dn, type, name, default)
 end
 
 
+%
+%%
+% helper functions: create formations
 % initialize the pose for straight line formation
 function [x,y,z,R,theta] =line_formation(idx, n, center) 
     c_idx = ceil(n/2);
     
+    % center pose
+    cx = center.qi_x;
+    cy = center.qi_y;
+    ctheta = center.qi_theta;
+    cz = 0.1;
+    % offset of the agent (in the body-fixed frame)
+    R = c_idx - idx;
+    theta = 0;
+    
+    % intial agent pose in the global frame
+    x = cx + R*cos(ctheta + theta);
+    y = cy + R*sin(ctheta + theta);
+    z = cz;
+end
+
+% initialize the pose for circle formation
+function [x,y,z,R,theta] =circle_formation(idx, n, center) 
+    % center pose
     cx = center.qi_x;
     cy = center.qi_y;
     ctheta = center.qi_theta;
     cz = 0.1;
     
-    R = c_idx - idx;
-    theta = ctheta;
+    % offset of the agent (in the body-fixed frame)
+    R = 2;
+    theta = (idx-1)/n * (2*pi);
     
-    x = cx + R*cos(theta);
-    y = cy + R*sin(theta);
-    z = cz;
+    % intitial postion in the global frame
+    x = cx + R*cos(ctheta + theta);
+    y = cy + R*sin(ctheta + theta);
+    z = cz; 
+end
+
+% initialize the pose for square formation
+function [x,y,z,R,theta] = square_formation(idx, n, center) 
+    % center pose
+    cx = center.qi_x;
+    cy = center.qi_y;
+    ctheta = center.qi_theta;
+    cz = 0.1;
+    
+    % square width
+    l = n/4 * 1;
+    
+    % offset of the agent (in the body-fixed frame)
+    theta = (idx-1)/n * (2*pi) + pi/4;
+    if (idx <= n/4)
+       R = l/2 / sin(theta); 
+    elseif (idx <= n/2)
+       R = -l/2 / cos(theta);
+    elseif (idx <= n*3/4)
+       R = -l/2 / sin(theta);
+    else
+       R =l/2 / cos(theta);
+    end
+       
+    % intitial postion in the global frame
+    x = cx + R*cos(ctheta + theta);
+    y = cy + R*sin(ctheta + theta);
+    z = cz; 
+end
+
+% initialize the pose for diamond formation
+function [x,y,z,R,theta] = diamond_formation(idx, n, center) 
+    % center pose
+    cx = center.qi_x;
+    cy = center.qi_y;
+    ctheta = center.qi_theta;
+    cz = 0.1;
+    
+    % distance
+    d = 1;
+    num = n/4;
+    % skew angle
+    s = pi/10;
+    
+    % offset of the agent (in the body-fixed frame)
+    %theta = (idx-1)/n * (2*pi) + pi/4
+    if (idx <= n/4)
+       x = (num-1)*(d*cos(s)) - (idx-1)*(d*cos(s)); 
+       y = (idx-1)*(d*sin(s));
+       R = sqrt(x^2+y^2);
+       theta = atan2(y,x);
+    elseif (idx <= n/2)
+       x =  - (idx-1-n/4)*(d*cos(s)); 
+       y = (num-1)*(d*sin(s)) - (idx-1-n/4)*(d*sin(s));
+       R = sqrt(x^2+y^2);
+       theta = atan2(y,x);
+    elseif (idx <= n*3/4)
+       x = -(num-1)*(d*cos(s)) + (idx-1-n/2)*(d*cos(s)); 
+       y =  - (idx-1-n/2)*(d*sin(s));
+       R = sqrt(x^2+y^2); 
+       theta = atan2(y,x);
+    else
+       x = (idx-1-n*3/4)*(d*cos(s)); 
+       y = -(num-1)*(d*sin(s)) + (idx-1-n*3/4)*(d*sin(s));
+       R = sqrt(x^2+y^2); 
+       theta = atan2(y,x);
+    end
+       
+    % intitial postion in the global frame
+    x = cx + R*cos(ctheta + theta);
+    y = cy + R*sin(ctheta + theta);
+    z = cz; 
+end
+
+% initialize the pose for v shape formation
+function [x,y,z,R,theta] = v_formation(idx, n, center) 
+    % center pose
+    cx = center.qi_x;
+    cy = center.qi_y;
+    ctheta = center.qi_theta;
+    cz = 0.1;
+    
+    % distance
+    d = 1;
+    dk = ceil(n/4);
+    % skew angle
+    s = pi/10;
+    
+    % center idx
+    c_idx = ceil(n/2);
+    
+    % offset of the agent (in the body-fixed frame)
+    x = cx + dk - d*abs(idx-c_idx) * cos(s);
+    y = cy + d*(idx-c_idx) * sin(s);
+    theta = atan2(y,x);
+    R = sqrt(x^2+y^2);
+    
+    % intitial postion in the global frame
+    x = cx + R*cos(ctheta + theta);
+    y = cy + R*sin(ctheta + theta);
+    z = cz; 
+    
 end
 
 % initialize the pose for star shape formation
@@ -307,7 +450,7 @@ function [x,y,z,R,theta] = star_formation(idx, n, center)
     
     cx = center.qi_x;
     cy = center.qi_y;
-    ctheta = center.qi_z;
+    ctheta = center.qi_theta;
     cz = 0.1;
     
     % the group of the node idx, and the index inside that group
@@ -315,35 +458,34 @@ function [x,y,z,R,theta] = star_formation(idx, n, center)
     idx_g = mod(idx-1, g_size);
     
     %
-    R = idx_g;
+    R = idx_g + 1;
     
     switch g
         case 0
-            theta = 0+ctheta;
-            x = cx + idx_g * cos(0+ctheta);
-            y = cy + idx_g * sin(0+ctheta);
+            theta = 0;
+            x = cx + R * cos(theta+ctheta);
+            y = cy + R * sin(theta+ctheta);
             z = cz;
         case 1
-            theta = 2/5*pi+ctheta;
-            x = cx + idx_g * cos(2/5*pi+ctheta);
-            y = cy + idx_g * sin(2/5*pi+ctheta);
+            theta = 2/5*pi;
+            x = cx + R * cos(theta+ctheta);
+            y = cy + R * sin(theta+ctheta);
             z = cz;
         case 2
-            theta = 4/5*pi+ctheta;
-            x = cx + idx_g * cos(4/5*pi+ctheta);
-            y = cy + idx_g * sin(4/5*pi+ctheta);
+            theta = 4/5*pi;
+            x = cx + R * cos(theta+ctheta);
+            y = cy + R * sin(theta+ctheta);
             z = cz;
         case 3
-            theta = 6/5*pi+ctheta;
-            x = cx + idx_g * cos(6/5*pi+ctheta);
-            y = cy + idx_g * sin(6/5*pi+ctheta);
+            theta = 6/5*pi;
+            x = cx + R * cos(theta+ctheta);
+            y = cy + R * sin(theta+ctheta);
             z = cz;
         case 4
-            theta = 8/5*pi+ctheta
-            x = cx + idx_g * cos(8/5*pi+ctheta);
-            y = cy + idx_g * sin(8/5*pi+ctheta);
+            theta = 8/5*pi;
+            x = cx + R * cos(theta+ctheta);
+            y = cy + R * sin(theta+ctheta);
             z = cz;
     end
             
 end
-

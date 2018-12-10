@@ -74,6 +74,7 @@ private:
   pose qi, qf; // initial, final pose
   double poly_k;
   double T;  // total travel time
+  bool endless_flag; // true: switch the final and inital locations every T secs
 
   bool odometry_connected; // flag of odometry
   double initial_time;

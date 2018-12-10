@@ -100,7 +100,7 @@ arg = argument(docNode, 0, 'Kd2', num2str(Kd2)); launch.appendChild(arg);
 % are successfully spawned in Gazebo
 switchNode = docNode.createElement('node');
 switchNode.setAttribute('name', 'switch_node');
-switchNode.setAttribute('pkg', 'r1_gazebo');
+switchNode.setAttribute('pkg', 'rcomv_r1');
 switchNode.setAttribute('type','switch');
 switchNode.setAttribute('output','screen');
 switchNode.setAttribute('launch-prefix','xterm -e');
@@ -112,7 +112,7 @@ for i = 1:n
    
    % element handle for ugvs
    ugv = docNode.createElement('include');
-   ugv.setAttribute('file', '$(find r1_gazebo)/launch/ugv_with_control.launch');
+   ugv.setAttribute('file', '$(find rcomv_r1)/launch/ugv_with_control.launch');
    
    % add comment
    ugv.appendChild(docNode.createComment(['start of ugv',num2str(i)]));

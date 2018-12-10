@@ -44,7 +44,6 @@ WMSRNode::WMSRNode()
     nh_private_.param<double>("qf_y", inform_center_path.qf_y, 0);
     nh_private_.param<double>("qf_theta", inform_center_path.qf_theta, M_PI*-0.5);
     nh_private_.param<double>("T", inform_center_path.T, 15);
-    //nh_private_.param<double>("t0", inform_center_path.t0, ros::Time().toSec());
     nh_private_.param<double>("poly_k", inform_center_path.poly_k, 40);
     // 3. malicous path: assign a different final location
     mali_path.qf_x = inform_center_path.qf_x * 2;
