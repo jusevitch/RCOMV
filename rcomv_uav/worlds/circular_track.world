@@ -111,10 +111,10 @@
       <pose frame=''>0.474114 -0.16656 0 0 -0 0</pose>
     </model>
     <state world_name='default'>
-      <sim_time>470 148000000</sim_time>
-      <real_time>153 253586390</real_time>
-      <wall_time>1544495173 703914056</wall_time>
-      <iterations>152470</iterations>
+      <sim_time>584 78000000</sim_time>
+      <real_time>114 491386519</real_time>
+      <wall_time>1544544073 305345621</wall_time>
+      <iterations>113930</iterations>
       <model name='Gas Station'>
         <pose frame=''>-20.6297 1.18796 0 0 0 -1.56042</pose>
         <scale>1 1 1</scale>
@@ -166,10 +166,10 @@
         </link>
       </model>
       <model name='gazebo'>
-        <pose frame=''>-0.401091 0.405544 0 0 -0 0</pose>
+        <pose frame=''>0 -5 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose frame=''>-0.401091 0.405544 0 0 -0 0</pose>
+          <pose frame=''>0 -5 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -191,7 +191,7 @@
     </state>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose frame=''>11.0796 34.6656 20.6747 0 0.461796 -1.90699</pose>
+        <pose frame=''>1.75222 -11.0482 65.5875 -1e-06 1.5298 1.58819</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>

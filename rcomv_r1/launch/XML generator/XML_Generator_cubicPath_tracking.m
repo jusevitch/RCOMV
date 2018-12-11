@@ -12,15 +12,15 @@ file_list = {'test_cubic', 'test_world_cubic','test_ruin_world_cubic'};
 % -------------------------- modify here ----------------------------
 file_name = file_list{1};
 
-file_name = 'circleTraj_squareFormation_8agents';
+file_name = 'eightTraj_circleFormation_8agents_smallWorld';
 % -------------------------------------------------------------------
 
 
 % world description
 world_list = {'basic', 'terrain_copy', 'small_terrain', 'small_building',... 
-                'small_collapsed_building'};
+                'small_collapsed_building','circular_track', 'eight_track'};
 % -------------------------- modify here ----------------------------
-world_idx = 1;
+world_idx = 7;
 world_name = world_list{world_idx}';
 paused = 'true';
 % -------------------------------------------------------------------
@@ -44,8 +44,8 @@ lead_path_type = 'cubic';
 % -------------------------- modify here ----------------------------
 % intial/final locations
 r = 10;
-lead_qi_x = r;   lead_qi_y = 0; lead_qi_theta = pi/2;
-lead_qf_x = -r; lead_qf_y = 0; lead_qf_theta = pi/2*3;
+lead_qi_x = r;   lead_qi_y = -5; lead_qi_theta = pi/2;
+lead_qf_x = -r; lead_qf_y = -5; lead_qf_theta = pi/2;
 % total travel time (in secs)
 T = 30;
 % polynomial paramter 
@@ -82,7 +82,7 @@ wmax = 4;
 % diamond_formation: a diamond with unliformly distributed agents
 % V_formation: a V shape with unliformly distributed agents
 
-initPose = @(idx,n,center) square_formation(idx, n, center);
+initPose = @(idx,n,center) circle_formation(idx, n, center);
 % -------------------------------------------------------------------
 
 
