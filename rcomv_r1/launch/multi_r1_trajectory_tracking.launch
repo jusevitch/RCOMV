@@ -2,12 +2,12 @@
   <launch>
 
   <arg name="ugv_name" default="r1_sim"/>
-  <arg name="world_name" default="small_building"/>
+  <arg name="world_name" default="basic"/>
   <arg name="enable_logging" default="false" />
   <arg name="enable_ground_truth" default="true" />
   <arg name="log_file" default="$(arg ugv_name)" />
 
-  <arg name="path_type" default="parametric" />
+  <arg name="path_type" default="cubic" />
 
   <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models"/>
   <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models"/>
@@ -18,6 +18,8 @@
       <arg name="paused" value="true"/>
       <!-- <arg name="gui" value="false"/> -->
   </include>
+
+	<arg name="endless" default = "true" />
 
   <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv1-->
       <arg name="ugv_name" value="$(arg ugv_name)"/>
@@ -52,6 +54,7 @@
       <arg name="qf_x" value="-10" /> <arg name="qf_y" value="-20" /> <arg name="qf_theta" value="4.71" />
       <arg name="poly_k" value="40" />
       <arg name="T" value="20" />
+      <arg name="endless" value="$(arg endless)" />
 
    </include><!--end of ugv1-->
 
@@ -88,6 +91,7 @@
       <arg name="qf_x" value="-10" /> <arg name="qf_y" value="-20" /> <arg name="qf_theta" value="4.71" />
       <arg name="poly_k" value="40" />
       <arg name="T" value="20" />
+	<arg name="endless" value="$(arg endless)" />
 
    </include><!--end of ugv2-->
 
@@ -124,6 +128,7 @@
       <arg name="qf_x" value="-10" /> <arg name="qf_y" value="-20" /> <arg name="qf_theta" value="4.71" />
       <arg name="poly_k" value="40" />
       <arg name="T" value="20" />
+	<arg name="endless" value="$(arg endless)" />
 
    </include><!--end of ugv3-->
 
@@ -160,6 +165,7 @@
       <arg name="qf_x" value="-10" /> <arg name="qf_y" value="-20" /> <arg name="qf_theta" value="4.71" />
       <arg name="poly_k" value="40" />
       <arg name="T" value="20" />
+	<arg name="endless" value="$(arg endless)" />
 
    </include><!--end of ugv4-->
 
@@ -196,6 +202,7 @@
       <arg name="qf_x" value="-10" /> <arg name="qf_y" value="-20" /> <arg name="qf_theta" value="4.71" />
       <arg name="poly_k" value="40" />
       <arg name="T" value="20" />
+	<arg name="endless" value="$(arg endless)" />
 
    </include><!--end of ugv5-->
 

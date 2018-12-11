@@ -25,13 +25,13 @@
       <arg name="ugv_name" value="$(arg ugv_name)"/>
       <arg name="enable_logging" value="$(arg enable_logging)"/>
       <arg name="name_space" value="ugv1"/>
-      <arg name="x" value="5" />
-      <arg name="y" value="4"/>
+      <arg name="x" value="5.707" />
+      <arg name="y" value="0.707"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.57" />
 
-      <arg name="Ri" value="4" />
-      <arg name="alphai" value="0"/>  		
+      <arg name="Ri" value="1" />
+      <arg name="alphai" value="-0.785"/>  		
 
       <!-- controller parameters -->
       <arg name="b" value="0.05" />
@@ -51,9 +51,10 @@
       <arg name="wd" value="0.2" />
       <!-- cubic polynomial path -->
       <arg name="qi_x" value="5" /> <arg name="qi_y" value="0" /> <arg name="qi_theta" value="1.57" />
-      <arg name="qf_x" value="-10" /> <arg name="qf_y" value="0" /> <arg name="qf_theta" value="4.71" />
-      <arg name="poly_k" value="40" />
-      <arg name="T" value="15" />
+      <arg name="qf_x" value="-5" /> <arg name="qf_y" value="0" /> <arg name="qf_theta" value="4.71" />
+      <arg name="poly_k" value="25" />
+      <arg name="T" value="20" />
+      <arg name="endless" default="true" />
       
 
 

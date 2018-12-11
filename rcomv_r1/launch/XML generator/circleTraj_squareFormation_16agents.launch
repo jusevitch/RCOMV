@@ -20,7 +20,7 @@
    <arg default="1.5708" name="qi_theta"/>
    <arg default="-10" name="qf_x"/>
    <arg default="0" name="qf_y"/>
-   <arg default="1.5708" name="qf_theta"/>
+   <arg default="4.7124" name="qf_theta"/>
    <arg default="40" name="poly_k"/>
    <arg default="30" name="T"/>
    <arg default="0" name="endless"/>
@@ -30,7 +30,6 @@
    <arg default="2" name="vmax"/>
    <arg default="4" name="wmax"/>
    <node launch-prefix="xterm -e" name="switch_node" output="screen" pkg="rcomv_r1" type="switch"/><!--upper level switch node-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv1-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -41,27 +40,27 @@
       <arg name="name_space" value="ugv1"/><!--group namespace-->
       <arg name="idx" value="1"/><!--idex and type of the agent-->
       <arg name="role" value="2"/>
-      <arg name="x" value="10"/><!--initial_pose-->
+      <arg name="x" value="8"/><!--initial_pose-->
       <arg name="y" value="2"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
-      <arg name="Ri" value="2"/>
-      <arg name="alphai" value="0"/>
-      <arg name="qi_x" value="10.0544"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="-1.4697"/>
-      <arg name="qi_theta" value="1.6411"/>
-      <arg name="qf_x" value="-9.1143"/>
-      <arg name="qf_y" value="-0.30498"/>
-      <arg name="qf_theta" value="1.6515"/>
-      <arg name="poly_k" value="38.7989"/>
-      <arg name="T" value="30.8011"/>
+      <arg name="Ri" value="2.8284"/>
+      <arg name="alphai" value="0.7854"/>
+      <arg name="qi_x" value="8.5764"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="-0.81016"/>
+      <arg name="qi_theta" value="1.6819"/>
+      <arg name="qf_x" value="-9.8611"/>
+      <arg name="qf_y" value="-0.53011"/>
+      <arg name="qf_theta" value="4.8768"/>
+      <arg name="poly_k" value="38.3961"/>
+      <arg name="T" value="29.9535"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv1-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv2-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -72,27 +71,27 @@
       <arg name="name_space" value="ugv2"/><!--group namespace-->
       <arg name="idx" value="2"/><!--idex and type of the agent-->
       <arg name="role" value="2"/>
-      <arg name="x" value="9.2346"/><!--initial_pose-->
-      <arg name="y" value="1.8478"/>
+      <arg name="x" value="8"/><!--initial_pose-->
+      <arg name="y" value="0.82843"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
-      <arg name="Ri" value="2"/>
-      <arg name="alphai" value="0.3927"/>
-      <arg name="qi_x" value="10.0628"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="-0.27914"/>
-      <arg name="qi_theta" value="1.8089"/>
-      <arg name="qf_x" value="-9.3126"/>
-      <arg name="qf_y" value="-0.75273"/>
-      <arg name="qf_theta" value="1.4714"/>
-      <arg name="poly_k" value="41.3724"/>
-      <arg name="T" value="29.1052"/>
+      <arg name="Ri" value="2.1648"/>
+      <arg name="alphai" value="1.1781"/>
+      <arg name="qi_x" value="9.1761"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="0.52206"/>
+      <arg name="qi_theta" value="1.863"/>
+      <arg name="qf_x" value="-9.4179"/>
+      <arg name="qf_y" value="0.2024"/>
+      <arg name="qf_theta" value="4.8214"/>
+      <arg name="poly_k" value="39.2949"/>
+      <arg name="T" value="29.8345"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv2-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv3-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -102,28 +101,28 @@
       <arg name="enable_logging" value="$(arg enable_logging)"/>
       <arg name="name_space" value="ugv3"/><!--group namespace-->
       <arg name="idx" value="3"/><!--idex and type of the agent-->
-      <arg name="role" value="1"/>
-      <arg name="x" value="8.5858"/><!--initial_pose-->
-      <arg name="y" value="1.4142"/>
+      <arg name="role" value="2"/>
+      <arg name="x" value="8"/><!--initial_pose-->
+      <arg name="y" value="2.4493e-16"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
       <arg name="Ri" value="2"/>
-      <arg name="alphai" value="0.7854"/>
-      <arg name="qi_x" value="9.9449"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="-0.40931"/>
-      <arg name="qi_theta" value="1.6511"/>
-      <arg name="qf_x" value="-8.9126"/>
-      <arg name="qf_y" value="-0.3581"/>
-      <arg name="qf_theta" value="1.6571"/>
-      <arg name="poly_k" value="40.0563"/>
-      <arg name="T" value="30.5521"/>
+      <arg name="alphai" value="1.5708"/>
+      <arg name="qi_x" value="9.0274"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="1.5019"/>
+      <arg name="qi_theta" value="1.7063"/>
+      <arg name="qf_x" value="-8.3838"/>
+      <arg name="qf_y" value="1.3389"/>
+      <arg name="qf_theta" value="4.8885"/>
+      <arg name="poly_k" value="39.6371"/>
+      <arg name="T" value="30.005"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv3-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv4-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -134,27 +133,27 @@
       <arg name="name_space" value="ugv4"/><!--group namespace-->
       <arg name="idx" value="4"/><!--idex and type of the agent-->
       <arg name="role" value="2"/>
-      <arg name="x" value="8.1522"/><!--initial_pose-->
-      <arg name="y" value="0.76537"/>
+      <arg name="x" value="8"/><!--initial_pose-->
+      <arg name="y" value="-0.82843"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
-      <arg name="Ri" value="2"/>
-      <arg name="alphai" value="1.1781"/>
-      <arg name="qi_x" value="10.8662"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="-0.086644"/>
-      <arg name="qi_theta" value="1.4082"/>
-      <arg name="qf_x" value="-9.0656"/>
-      <arg name="qf_y" value="-1.2161"/>
-      <arg name="qf_theta" value="1.5714"/>
-      <arg name="poly_k" value="41.3347"/>
-      <arg name="T" value="28.3689"/>
+      <arg name="Ri" value="2.1648"/>
+      <arg name="alphai" value="1.9635"/>
+      <arg name="qi_x" value="10.0348"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="0.077525"/>
+      <arg name="qi_theta" value="1.8285"/>
+      <arg name="qf_x" value="-11.0041"/>
+      <arg name="qf_y" value="1.222"/>
+      <arg name="qf_theta" value="4.617"/>
+      <arg name="poly_k" value="39.7391"/>
+      <arg name="T" value="31.2342"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv4-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv5-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -166,26 +165,26 @@
       <arg name="idx" value="5"/><!--idex and type of the agent-->
       <arg name="role" value="2"/>
       <arg name="x" value="8"/><!--initial_pose-->
-      <arg name="y" value="2.4493e-16"/>
+      <arg name="y" value="-2"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
-      <arg name="Ri" value="2"/>
-      <arg name="alphai" value="1.5708"/>
-      <arg name="qi_x" value="10.5902"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="-0.060202"/>
-      <arg name="qi_theta" value="1.7728"/>
-      <arg name="qf_x" value="-11.1649"/>
-      <arg name="qf_y" value="1.2106"/>
-      <arg name="qf_theta" value="1.6275"/>
-      <arg name="poly_k" value="41.7777"/>
-      <arg name="T" value="30.4475"/>
+      <arg name="Ri" value="2.8284"/>
+      <arg name="alphai" value="2.3562"/>
+      <arg name="qi_x" value="10.9654"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="-0.1605"/>
+      <arg name="qi_theta" value="1.7787"/>
+      <arg name="qf_x" value="-10.8741"/>
+      <arg name="qf_y" value="0.0055934"/>
+      <arg name="qf_theta" value="4.8326"/>
+      <arg name="poly_k" value="41.5036"/>
+      <arg name="T" value="29.4313"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv5-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv6-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -196,27 +195,27 @@
       <arg name="name_space" value="ugv6"/><!--group namespace-->
       <arg name="idx" value="6"/><!--idex and type of the agent-->
       <arg name="role" value="2"/>
-      <arg name="x" value="8.1522"/><!--initial_pose-->
-      <arg name="y" value="-0.76537"/>
+      <arg name="x" value="9.1716"/><!--initial_pose-->
+      <arg name="y" value="-2"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
-      <arg name="Ri" value="2"/>
-      <arg name="alphai" value="1.9635"/>
-      <arg name="qi_x" value="10.175"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="0.63449"/>
-      <arg name="qi_theta" value="1.8047"/>
-      <arg name="qf_x" value="-11.2835"/>
-      <arg name="qf_y" value="-0.31542"/>
-      <arg name="qf_theta" value="1.5978"/>
-      <arg name="poly_k" value="40.0937"/>
-      <arg name="T" value="29.8234"/>
+      <arg name="Ri" value="2.1648"/>
+      <arg name="alphai" value="2.7489"/>
+      <arg name="qi_x" value="10.4475"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="0.69476"/>
+      <arg name="qi_theta" value="1.599"/>
+      <arg name="qf_x" value="-8.8422"/>
+      <arg name="qf_y" value="-0.035664"/>
+      <arg name="qf_theta" value="4.5548"/>
+      <arg name="poly_k" value="39.9823"/>
+      <arg name="T" value="31.1352"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv6-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv7-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -227,27 +226,27 @@
       <arg name="name_space" value="ugv7"/><!--group namespace-->
       <arg name="idx" value="7"/><!--idex and type of the agent-->
       <arg name="role" value="2"/>
-      <arg name="x" value="8.5858"/><!--initial_pose-->
-      <arg name="y" value="-1.4142"/>
+      <arg name="x" value="10"/><!--initial_pose-->
+      <arg name="y" value="-2"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
       <arg name="Ri" value="2"/>
-      <arg name="alphai" value="2.3562"/>
-      <arg name="qi_x" value="7.9582"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="-0.15041"/>
-      <arg name="qi_theta" value="2.0071"/>
-      <arg name="qf_x" value="-8.0786"/>
-      <arg name="qf_y" value="0.33231"/>
-      <arg name="qf_theta" value="1.4087"/>
-      <arg name="poly_k" value="39.1038"/>
-      <arg name="T" value="29.9966"/>
+      <arg name="alphai" value="3.1416"/>
+      <arg name="qi_x" value="9.6853"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="1.2701"/>
+      <arg name="qi_theta" value="1.7093"/>
+      <arg name="qf_x" value="-12.1058"/>
+      <arg name="qf_y" value="-0.19923"/>
+      <arg name="qf_theta" value="4.1535"/>
+      <arg name="poly_k" value="39.9551"/>
+      <arg name="T" value="30.8611"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv7-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv8-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -258,12 +257,12 @@
       <arg name="name_space" value="ugv8"/><!--group namespace-->
       <arg name="idx" value="8"/><!--idex and type of the agent-->
       <arg name="role" value="3"/>
-      <arg name="x" value="9.2346"/><!--initial_pose-->
-      <arg name="y" value="-1.8478"/>
+      <arg name="x" value="10.8284"/><!--initial_pose-->
+      <arg name="y" value="-2"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
-      <arg name="Ri" value="2"/>
-      <arg name="alphai" value="2.7489"/>
+      <arg name="Ri" value="2.1648"/>
+      <arg name="alphai" value="3.5343"/>
       <arg name="qi_x" value="$(arg qi_x)"/><!--reference cubic polynomial path-->
       <arg name="qi_y" value="$(arg qi_y)"/>
       <arg name="qi_theta" value="$(arg qi_theta)"/>
@@ -272,13 +271,13 @@
       <arg name="qf_theta" value="$(arg qf_theta)"/>
       <arg name="poly_k" value="$(arg poly_k)"/>
       <arg name="T" value="$(arg T)"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv8-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv9-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -288,28 +287,28 @@
       <arg name="enable_logging" value="$(arg enable_logging)"/>
       <arg name="name_space" value="ugv9"/><!--group namespace-->
       <arg name="idx" value="9"/><!--idex and type of the agent-->
-      <arg name="role" value="3"/>
-      <arg name="x" value="10"/><!--initial_pose-->
+      <arg name="role" value="1"/>
+      <arg name="x" value="12"/><!--initial_pose-->
       <arg name="y" value="-2"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
-      <arg name="Ri" value="2"/>
-      <arg name="alphai" value="3.1416"/>
-      <arg name="qi_x" value="$(arg qi_x)"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="$(arg qi_y)"/>
-      <arg name="qi_theta" value="$(arg qi_theta)"/>
-      <arg name="qf_x" value="$(arg qf_x)"/>
-      <arg name="qf_y" value="$(arg qf_y)"/>
-      <arg name="qf_theta" value="$(arg qf_theta)"/>
-      <arg name="poly_k" value="$(arg poly_k)"/>
-      <arg name="T" value="$(arg T)"/>
+      <arg name="Ri" value="2.8284"/>
+      <arg name="alphai" value="3.927"/>
+      <arg name="qi_x" value="9.0837"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="-0.41851"/>
+      <arg name="qi_theta" value="1.725"/>
+      <arg name="qf_x" value="-10.9544"/>
+      <arg name="qf_y" value="-1.034"/>
+      <arg name="qf_theta" value="5.0284"/>
+      <arg name="poly_k" value="39.9298"/>
+      <arg name="T" value="28.5376"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv9-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv10-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -320,12 +319,12 @@
       <arg name="name_space" value="ugv10"/><!--group namespace-->
       <arg name="idx" value="10"/><!--idex and type of the agent-->
       <arg name="role" value="3"/>
-      <arg name="x" value="10.7654"/><!--initial_pose-->
-      <arg name="y" value="-1.8478"/>
+      <arg name="x" value="12"/><!--initial_pose-->
+      <arg name="y" value="-0.82843"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
-      <arg name="Ri" value="2"/>
-      <arg name="alphai" value="3.5343"/>
+      <arg name="Ri" value="2.1648"/>
+      <arg name="alphai" value="4.3197"/>
       <arg name="qi_x" value="$(arg qi_x)"/><!--reference cubic polynomial path-->
       <arg name="qi_y" value="$(arg qi_y)"/>
       <arg name="qi_theta" value="$(arg qi_theta)"/>
@@ -334,13 +333,13 @@
       <arg name="qf_theta" value="$(arg qf_theta)"/>
       <arg name="poly_k" value="$(arg poly_k)"/>
       <arg name="T" value="$(arg T)"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv10-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv11-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -351,27 +350,27 @@
       <arg name="name_space" value="ugv11"/><!--group namespace-->
       <arg name="idx" value="11"/><!--idex and type of the agent-->
       <arg name="role" value="2"/>
-      <arg name="x" value="11.4142"/><!--initial_pose-->
-      <arg name="y" value="-1.4142"/>
+      <arg name="x" value="12"/><!--initial_pose-->
+      <arg name="y" value="-4.8986e-16"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
       <arg name="Ri" value="2"/>
-      <arg name="alphai" value="3.927"/>
-      <arg name="qi_x" value="10.3556"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="-1.0816"/>
-      <arg name="qi_theta" value="1.4423"/>
-      <arg name="qf_x" value="-7.2061"/>
-      <arg name="qf_y" value="-1.9937"/>
-      <arg name="qf_theta" value="1.2246"/>
-      <arg name="poly_k" value="39.6994"/>
-      <arg name="T" value="31.5835"/>
+      <arg name="alphai" value="4.7124"/>
+      <arg name="qi_x" value="11.2669"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="-0.79184"/>
+      <arg name="qi_theta" value="1.9552"/>
+      <arg name="qf_x" value="-10.449"/>
+      <arg name="qf_y" value="0.035267"/>
+      <arg name="qf_theta" value="4.6933"/>
+      <arg name="poly_k" value="40.0066"/>
+      <arg name="T" value="30.1463"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv11-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv12-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -382,27 +381,27 @@
       <arg name="name_space" value="ugv12"/><!--group namespace-->
       <arg name="idx" value="12"/><!--idex and type of the agent-->
       <arg name="role" value="2"/>
-      <arg name="x" value="11.8478"/><!--initial_pose-->
-      <arg name="y" value="-0.76537"/>
+      <arg name="x" value="12"/><!--initial_pose-->
+      <arg name="y" value="0.82843"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
-      <arg name="Ri" value="2"/>
-      <arg name="alphai" value="4.3197"/>
-      <arg name="qi_x" value="8.6051"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="0.50623"/>
-      <arg name="qi_theta" value="1.7622"/>
-      <arg name="qf_x" value="-10.2201"/>
-      <arg name="qf_y" value="0.14448"/>
-      <arg name="qf_theta" value="1.7854"/>
-      <arg name="poly_k" value="40.191"/>
-      <arg name="T" value="28.7974"/>
+      <arg name="Ri" value="2.1648"/>
+      <arg name="alphai" value="5.1051"/>
+      <arg name="qi_x" value="9.8922"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="-0.096542"/>
+      <arg name="qi_theta" value="1.7302"/>
+      <arg name="qf_x" value="-9.1054"/>
+      <arg name="qf_y" value="-0.93406"/>
+      <arg name="qf_theta" value="4.9948"/>
+      <arg name="poly_k" value="39.9444"/>
+      <arg name="T" value="29.1401"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv12-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv13-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -414,26 +413,26 @@
       <arg name="idx" value="13"/><!--idex and type of the agent-->
       <arg name="role" value="2"/>
       <arg name="x" value="12"/><!--initial_pose-->
-      <arg name="y" value="-4.8986e-16"/>
+      <arg name="y" value="2"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
-      <arg name="Ri" value="2"/>
-      <arg name="alphai" value="4.7124"/>
-      <arg name="qi_x" value="9.7814"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="-1.0735"/>
-      <arg name="qi_theta" value="2.0551"/>
-      <arg name="qf_x" value="-10.1634"/>
-      <arg name="qf_y" value="0.6406"/>
-      <arg name="qf_theta" value="1.785"/>
-      <arg name="poly_k" value="39.9454"/>
-      <arg name="T" value="31.5357"/>
+      <arg name="Ri" value="2.8284"/>
+      <arg name="alphai" value="5.4978"/>
+      <arg name="qi_x" value="11.3649"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="-1.3427"/>
+      <arg name="qi_theta" value="1.3974"/>
+      <arg name="qf_x" value="-9.5241"/>
+      <arg name="qf_y" value="-0.74012"/>
+      <arg name="qf_theta" value="4.3766"/>
+      <arg name="poly_k" value="39.5844"/>
+      <arg name="T" value="30.1295"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv13-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv14-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -444,27 +443,27 @@
       <arg name="name_space" value="ugv14"/><!--group namespace-->
       <arg name="idx" value="14"/><!--idex and type of the agent-->
       <arg name="role" value="2"/>
-      <arg name="x" value="11.8478"/><!--initial_pose-->
-      <arg name="y" value="0.76537"/>
+      <arg name="x" value="10.8284"/><!--initial_pose-->
+      <arg name="y" value="2"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
-      <arg name="Ri" value="2"/>
-      <arg name="alphai" value="5.1051"/>
-      <arg name="qi_x" value="8.9535"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="-0.4819"/>
-      <arg name="qi_theta" value="1.7172"/>
-      <arg name="qf_x" value="-9.1177"/>
-      <arg name="qf_y" value="-0.24562"/>
-      <arg name="qf_theta" value="1.4935"/>
-      <arg name="poly_k" value="39.5757"/>
-      <arg name="T" value="30.1073"/>
+      <arg name="Ri" value="2.1648"/>
+      <arg name="alphai" value="5.8905"/>
+      <arg name="qi_x" value="10.2745"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="0.43579"/>
+      <arg name="qi_theta" value="1.9517"/>
+      <arg name="qf_x" value="-9.2864"/>
+      <arg name="qf_y" value="-1.036"/>
+      <arg name="qf_theta" value="5.0672"/>
+      <arg name="poly_k" value="40.0086"/>
+      <arg name="T" value="30.6054"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv14-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv15-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -475,27 +474,27 @@
       <arg name="name_space" value="ugv15"/><!--group namespace-->
       <arg name="idx" value="15"/><!--idex and type of the agent-->
       <arg name="role" value="2"/>
-      <arg name="x" value="11.4142"/><!--initial_pose-->
-      <arg name="y" value="1.4142"/>
+      <arg name="x" value="10"/><!--initial_pose-->
+      <arg name="y" value="2"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
       <arg name="Ri" value="2"/>
-      <arg name="alphai" value="5.4978"/>
-      <arg name="qi_x" value="10.9637"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="1.2787"/>
-      <arg name="qi_theta" value="1.9529"/>
-      <arg name="qf_x" value="-10.4178"/>
-      <arg name="qf_y" value="-1.5481"/>
-      <arg name="qf_theta" value="1.7961"/>
-      <arg name="poly_k" value="41.8599"/>
-      <arg name="T" value="30.6629"/>
+      <arg name="alphai" value="6.2832"/>
+      <arg name="qi_x" value="9.7284"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="1.7424"/>
+      <arg name="qi_theta" value="1.6089"/>
+      <arg name="qf_x" value="-11.406"/>
+      <arg name="qf_y" value="1.0719"/>
+      <arg name="qf_theta" value="4.6339"/>
+      <arg name="poly_k" value="41.6904"/>
+      <arg name="T" value="29.5458"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>
       <arg name="vmax" value="$(arg vmax)"/>
       <arg name="wmax" value="$(arg wmax)"/>
    </include><!--end of ugv15-->
-   <arg name="endless" value="$(arg endless)"/>
    <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv16-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
@@ -506,20 +505,21 @@
       <arg name="name_space" value="ugv16"/><!--group namespace-->
       <arg name="idx" value="16"/><!--idex and type of the agent-->
       <arg name="role" value="2"/>
-      <arg name="x" value="10.7654"/><!--initial_pose-->
-      <arg name="y" value="1.8478"/>
+      <arg name="x" value="9.1716"/><!--initial_pose-->
+      <arg name="y" value="2"/>
       <arg name="z" value="0.1"/>
       <arg name="yaw" value="1.5708"/>
-      <arg name="Ri" value="2"/>
-      <arg name="alphai" value="5.8905"/>
-      <arg name="qi_x" value="11.4027"/><!--reference cubic polynomial path-->
-      <arg name="qi_y" value="0.17327"/>
-      <arg name="qi_theta" value="1.7827"/>
-      <arg name="qf_x" value="-8.1356"/>
-      <arg name="qf_y" value="1.6345"/>
-      <arg name="qf_theta" value="1.6318"/>
-      <arg name="poly_k" value="41.0164"/>
-      <arg name="T" value="30.7953"/>
+      <arg name="Ri" value="2.1648"/>
+      <arg name="alphai" value="6.6759"/>
+      <arg name="qi_x" value="11.1084"/><!--reference cubic polynomial path-->
+      <arg name="qi_y" value="-0.91934"/>
+      <arg name="qi_theta" value="1.6115"/>
+      <arg name="qf_x" value="-10.5187"/>
+      <arg name="qf_y" value="-0.51373"/>
+      <arg name="qf_theta" value="4.3677"/>
+      <arg name="poly_k" value="39.4183"/>
+      <arg name="T" value="29.8824"/>
+      <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>
       <arg name="k2" value="$(arg k2)"/>

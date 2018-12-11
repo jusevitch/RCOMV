@@ -11,7 +11,8 @@ rng('shuffle')
 file_list = {'test_cubic', 'test_world_cubic','test_ruin_world_cubic'};
 % -------------------------- modify here ----------------------------
 file_name = file_list{1};
-file_name = 'eightTraj_squareFormation_15agents';
+
+file_name = 'circleTraj_squareFormation_8agents';
 % -------------------------------------------------------------------
 
 
@@ -27,7 +28,7 @@ paused = 'true';
 % size of the formation
 % k must be greater or equal to 5
 % -------------------------- modify here ----------------------------
-n = 16;    % number of agents
+n = 8;    % number of agents
 k = 7;    % number of neighbours for each agent 
 % -------------------------------------------------------------------
 
@@ -42,15 +43,16 @@ k = 7;    % number of neighbours for each agent
 lead_path_type = 'cubic';
 % -------------------------- modify here ----------------------------
 % intial/final locations
-lead_qi_x = 10;   lead_qi_y = 0; lead_qi_theta = pi/2;
-lead_qf_x = -10; lead_qf_y = 0; lead_qf_theta = pi /2;
+r = 10;
+lead_qi_x = r;   lead_qi_y = 0; lead_qi_theta = pi/2;
+lead_qf_x = -r; lead_qf_y = 0; lead_qf_theta = pi/2*3;
 % total travel time (in secs)
 T = 30;
 % polynomial paramter 
-poly_k = 40;
+poly_k = 4*r;
 % loop flag
 % if set true, switch the final/initial locations every T secs.
-endless = false;
+endless = true;
 % -------------------------------------------------------------------
 center_path = struct('qi_x',lead_qi_x, 'qi_y',lead_qi_y, 'qi_theta', lead_qi_theta,...
                      'qf_x',lead_qf_x, 'qf_y',lead_qf_y, 'qf_theta', lead_qf_theta,...
@@ -124,6 +126,7 @@ arg = argument(docNode, 0, 'k', num2str(k)); launch.appendChild(arg);
 arg = argument(docNode, 0, 'F', num2str(F)); launch.appendChild(arg);
 
 % add reference path 
+arg = argument(docNode, 0, 'path_type', lead_path_type); launch.appendChild(arg); 
 arg = argument(docNode, 0, 'qi_x', num2str(lead_qi_x)); launch.appendChild(arg); 
 launch.appendChild(docNode.createComment('reference cubic polynomial path'));
 arg = argument(docNode, 0, 'qi_y', num2str(lead_qi_y)); launch.appendChild(arg);
@@ -133,7 +136,11 @@ arg = argument(docNode, 0, 'qf_y', num2str(lead_qf_y)); launch.appendChild(arg);
 arg = argument(docNode, 0, 'qf_theta', num2str(lead_qf_theta)); launch.appendChild(arg);
 arg = argument(docNode, 0, 'poly_k', num2str(poly_k)); launch.appendChild(arg);
 arg = argument(docNode, 0, 'T', num2str(T)); launch.appendChild(arg);
-arg = argument(docNode, 0, 'endless', num2str(endless)); launch.appendChild(arg);
+if (endless)
+    arg = argument(docNode, 0, 'endless', "true"); launch.appendChild(arg);
+else
+    arg = argument(docNode, 0, 'endless', "false"); launch.appendChild(arg);
+end
 
 
 % add pid gains
@@ -211,6 +218,7 @@ for i = 1:n
    % arg: leader's inform state: reference path parameters
    % arg: other agents' inform state: reference path + random noise
     if (role == 3)
+        arg = argument(docNode, 1, 'path_type', '$(arg path_type)'); ugv.appendChild(arg); 
         arg = argument(docNode, 1, 'qi_x', '$(arg qi_x)'); ugv.appendChild(arg);
         ugv.appendChild(docNode.createComment('reference cubic polynomial path'));
         arg = argument(docNode, 1, 'qi_y', '$(arg qi_y)'); ugv.appendChild(arg);
@@ -220,18 +228,19 @@ for i = 1:n
         arg = argument(docNode, 1, 'qf_theta', '$(arg qf_theta)'); ugv.appendChild(arg);
         arg = argument(docNode, 1, 'poly_k', '$(arg poly_k)'); ugv.appendChild(arg);
         arg = argument(docNode, 1, 'T', '$(arg T)'); ugv.appendChild(arg);
-        arg = argument(docNode, 1, 'endless', '$(arg endless)'); launch.appendChild(arg);
+        arg = argument(docNode, 1, 'endless', '$(arg endless)'); ugv.appendChild(arg);
     else
-        arg = argument(docNode, 1, 'qi_x', num2str(lead_qi_x+randn)); ugv.appendChild(arg);
+        arg = argument(docNode, 1, 'path_type', '$(arg path_type)'); ugv.appendChild(arg); 
+        arg = argument(docNode, 1, 'qi_x', num2str(lead_qi_x+0.1*randn)); ugv.appendChild(arg);
         ugv.appendChild(docNode.createComment('reference cubic polynomial path'));
-        arg = argument(docNode, 1, 'qi_y', num2str(lead_qi_y+randn)); ugv.appendChild(arg);
-        arg = argument(docNode, 1, 'qi_theta', num2str(lead_qi_theta+randn*0.2)); ugv.appendChild(arg);
-        arg = argument(docNode, 1, 'qf_x', num2str(lead_qf_x+randn)); ugv.appendChild(arg);
-        arg = argument(docNode, 1, 'qf_y', num2str(lead_qf_y+randn)); ugv.appendChild(arg);
-        arg = argument(docNode, 1, 'qf_theta', num2str(lead_qf_theta+randn*0.2)); ugv.appendChild(arg);
-        arg = argument(docNode, 1, 'poly_k', num2str(poly_k+randn)); ugv.appendChild(arg);
-        arg = argument(docNode, 1, 'T', num2str(T+randn)); ugv.appendChild(arg);
-        arg = argument(docNode, 1, 'endless', '$(arg endless)'); launch.appendChild(arg);
+        arg = argument(docNode, 1, 'qi_y', num2str(lead_qi_y+0.1*randn)); ugv.appendChild(arg);
+        arg = argument(docNode, 1, 'qi_theta', num2str(lead_qi_theta+randn*0.05)); ugv.appendChild(arg);
+        arg = argument(docNode, 1, 'qf_x', num2str(lead_qf_x+0.1*randn)); ugv.appendChild(arg);
+        arg = argument(docNode, 1, 'qf_y', num2str(lead_qf_y+0.1*randn)); ugv.appendChild(arg);
+        arg = argument(docNode, 1, 'qf_theta', num2str(lead_qf_theta+randn*0.05)); ugv.appendChild(arg);
+        arg = argument(docNode, 1, 'poly_k', num2str(poly_k+0*randn)); ugv.appendChild(arg);
+        arg = argument(docNode, 1, 'T', num2str(T+0*randn)); ugv.appendChild(arg);
+        arg = argument(docNode, 1, 'endless', '$(arg endless)'); ugv.appendChild(arg);
     end
    
     % add controller parameters

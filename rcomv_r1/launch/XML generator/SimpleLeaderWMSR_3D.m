@@ -356,26 +356,26 @@ centers.z = zFinal;
 % xlabel('Time Step t')
 % ylabel('zMax - zMin')
 % 
-figure(2)
-subplot(3,1,1);
-plot(stepsVec,xFinal(:,norx), stepsVec, xFinal(:,malicious), '--r')
-xlim([0 steps])
-ylim([-40 40])
-ylabel('x')
-xlabel('Time Step t')
-
-subplot(3,1,2);
-plot(stepsVec,yFinal(:,norx), stepsVec, yFinal(:,malicious), '--r')
-xlim([0 steps])
-ylim([-40 40])
-ylabel('y')
-xlabel('Time Step t')
-
-subplot(3,1,3);
-plot(stepsVec,zFinal(:,norx), stepsVec, zFinal(:,malicious), '--r')
-xlim([0 steps])
-ylim([-30 30])
-ylabel('z')
-xlabel('Time Step t')
+% figure(2)
+% subplot(3,1,1);
+% plot(stepsVec,xFinal(:,norx), stepsVec, xFinal(:,malicious), '--r')
+% xlim([0 steps])
+% ylim([-40 40])
+% ylabel('x')
+% xlabel('Time Step t')
+% 
+% subplot(3,1,2);
+% plot(stepsVec,yFinal(:,norx), stepsVec, yFinal(:,malicious), '--r')
+% xlim([0 steps])
+% ylim([-40 40])
+% ylabel('y')
+% xlabel('Time Step t')
+% 
+% subplot(3,1,3);
+% plot(stepsVec,zFinal(:,norx), stepsVec, zFinal(:,malicious), '--r')
+% xlim([0 steps])
+% ylim([-30 30])
+% ylabel('z')
+% xlabel('Time Step t')
 
 end

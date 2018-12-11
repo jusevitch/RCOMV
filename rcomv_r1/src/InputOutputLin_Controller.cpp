@@ -32,7 +32,8 @@ InOutLinController::InOutLinController()
   nh_private_.param<double>("qf_x", qf.x, -5); nh_private_.param<double>("qf_y", qf.y, 0); nh_private_.param<double>("qf_theta", qf.theta, 4.71);
   nh_private_.param<double>("poly_k", poly_k, 20);
   nh_private_.param<double>("T", T, 15);
-  nh_private_.param<double>("endless", endless_flag, false);
+  nh_private_.param<bool>("endless", endless_flag, false);
+  even_cycle = false;
   //
   odometry_connected = false;
   initial_time = ros::Time().toSec();
@@ -78,6 +79,7 @@ void InOutLinController::odom_subCallback(const nav_msgs::Odometry::ConstPtr& ms
 
 void InOutLinController::trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs)
 {
+
   path_type = msgs->path_type;
   qi.x = msgs->qi_x;
   qi.y = msgs->qi_y;
@@ -85,9 +87,16 @@ void InOutLinController::trajectory_subCallback(const rcomv_r1::CubicPath::Const
   qf.x = msgs->qf_x;
   qf.y = msgs->qf_y;
   qf.theta = msgs->qf_theta;
-  //t0 = msgs->t0;
   T = msgs->T;
   poly_k = msgs->poly_k;
+
+  // if endless_flag is true and it's in a even number cycle, switch the qi and qf
+  if (endless_flag && even_cycle) {
+    pose temp_q = qi;
+    qi = qf;
+    qf = temp_q;
+    ROS_INFO("Even Cycle...");
+  }
 }
 
 // callback function to display the odometry reading
@@ -114,6 +123,7 @@ void InOutLinController::disCallback(const ros::TimerEvent& event) {
 // publisher callback function
 void InOutLinController::pubCallback(const ros::TimerEvent& event)
 {
+
   // Input/Output Linearization Algorithm
   double xd, yd, vd;
   double y1d, y2d, vy1d, vy2d;
@@ -173,13 +183,18 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
   cmd_vel.angular.z = std::max(-wmax, std::min(cmd_vel.angular.z, wmax));
 
   // endless_flag is false: stop when t > T for cubic polynomial path
-  // endless_flag is true: switch qi and qf, and inital t0
+  // endless_flag is true: reset t0 and odd_cycle flag
   if (path_type.compare(std::string("cubic")) == 0) {
-      if (t > T && !endless) {
+      if (t > T && !endless_flag) {
         cmd_vel.linear.x = 0;
         cmd_vel.angular.z = 0;
       }
-      if (t > T && endless) {
+      if (t > T && endless_flag && odometry_connected) {
+        if (even_cycle)
+            even_cycle = false;
+        else
+            even_cycle = true;
+
         pose temp_q = qi;
         qi = qf;
         qf = temp_q;
@@ -217,7 +232,7 @@ void InOutLinController::CubePolyPath(pose qi, pose qf, double k, double T, doub
   double alpha_x = k*cos(thetaf) - 3*xf;
   double alpha_y = k*sin(thetaf) - 3*yf;
   double beta_x = k*cos(thetai) + 3*xi;
-  double beta_y = k*sin(thetai) + 3*xf;
+  double beta_y = k*sin(thetai) + 3*yi;
 
   // center position
   xd = pow(s,3.0)*xf - pow((s-1),3.0)*xi + alpha_x*pow(s,2.0)*(s-1) + beta_x*s*pow((s-1),2.0);

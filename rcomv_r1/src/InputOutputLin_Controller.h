@@ -75,6 +75,7 @@ private:
   double poly_k;
   double T;  // total travel time
   bool endless_flag; // true: switch the final and inital locations every T secs
+  bool even_cycle; // true: it's in a even cycle, false: it's in a odd cycle
 
   bool odometry_connected; // flag of odometry
   double initial_time;
