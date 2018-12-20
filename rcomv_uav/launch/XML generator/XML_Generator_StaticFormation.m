@@ -6,38 +6,44 @@ clear all
 rng('shuffle')
 
 %% ------------------------ Set Parameters -------------------------------
-
-% name of the saved launch filef
+% name of the saved launch file
 file_list = {'test', 'test_world','test_ruin_world'};
 % -------------------------- modify here ----------------------------
 file_name = file_list{1};
-
+file_name='four test/test3';
 % -------------------------------------------------------------------
+
 
 % world description
 world_list = {'basic', 'terrain_copy', 'small_terrain', 'small_building',... 
                 'small_collapsed_building'};
-
 % -------------------------- modify here ----------------------------
-world_idx = 1;
+world_idx = 5;
 world_name = world_list{world_idx}';
 paused = 'true';
 % -------------------------------------------------------------------
 
+
 % size of the formation
 % k must be greater or equal to 5
 % -------------------------- modify here ----------------------------
-n = 30;    % number of agents
-k = 15;    % number of neighbours for each agent 
+n = 15;    % number of agents
+k = 7;    % number of neighbours for each agent 
 % -------------------------------------------------------------------
 
 % type of demo
+% demo = 1: 1D motion in y direction
+% demo = 2: 1D motion in z direction
+% demo = 3: 3D motion
+% -------------------------- modify here ----------------------------
 demo = 3;
+% -------------------------------------------------------------------
 
 % randomly generate agents
 [F, norx, lead, mali] = SimpleLeaderWMSR_3D(n, k);
 
-% leader static inform states (formation center location)
+
+% leaders' static inform states (formation center location)
 % -------------------------- modify here ----------------------------
 lead_x = 15;
 lead_y = -15;
@@ -46,17 +52,13 @@ center = struct('x',lead_x, 'y',lead_y, 'z', lead_z);
 % -------------------------------------------------------------------
 
 
-% pid gains
+
+% model specification of the uav 
 % -------------------------- modify here ----------------------------
-Kp1 = 0.4; Ki1 = 0; Kd1 = 0.1; % control gain for longitudinal control
-Kp2 = 4.0; Ki2 = 0; Kd2 = 1.5; % control gain for steering control
-% -------------------------------------------------------------------
-
-
-% model specifications of the ugv
-ugv_name = 'r1_sim';
-% ( The changing color feature is under development )
+mav_list = {'hummingbird', 'pelican', 'firefly'};
+mav_name= mav_list{3};
 model_base_color = {'Red', 'Black', 'Blue'};  % order: malicious, normal, leaders
+% -------------------------------------------------------------------
 
 % gazebo logging enable
 enable_logging = 'true';
@@ -68,11 +70,11 @@ docNode = com.mathworks.xml.XMLUtils.createDocument('launch');
 launch = docNode.getDocumentElement;
 
 % add arguments for gazebo
-arg = argument(docNode, 0, 'ugv_name', ugv_name); launch.appendChild(arg);
+arg = argument(docNode, 0, 'mav_name', mav_name); launch.appendChild(arg);
 arg = argument(docNode, 0, 'world_name', world_name); launch.appendChild(arg);
 arg = argument(docNode, 0, 'enable_logging', enable_logging); launch.appendChild(arg);
 arg = argument(docNode, 0, 'enable_ground_truth', 'true'); launch.appendChild(arg);
-arg = argument(docNode, 0, 'log_file', '$(arg ugv_name)'); launch.appendChild(arg);
+arg = argument(docNode, 0, 'log_file', '$(arg mav_name)'); launch.appendChild(arg);
 
 env = environment(docNode, 1, 'GAZEBO_MODEL_PATH', '${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models'); launch.appendChild(env);
 env = environment(docNode, 1, 'GAZEBO_RESOURCE_PATH', '${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models'); launch.appendChild(env);
@@ -86,9 +88,7 @@ world.appendChild(arg1);
 world.appendChild(arg2);
 launch.appendChild(world);
 
-% add wmsr node flag
-arg = argument(docNode, 0, 'wmsr_node', 'true'); launch.appendChild(arg);
-% add arguments for ugvs (read from variables defined in the above section)
+% add arguments for uavs (read from variables defined in the above section)
 arg = argument(docNode, 0, 'n', num2str(n)); launch.appendChild(arg);
 arg = argument(docNode, 0, 'k', num2str(k)); launch.appendChild(arg);
 arg = argument(docNode, 0, 'F', num2str(F)); launch.appendChild(arg);
@@ -97,54 +97,45 @@ arg = argument(docNode, 0, 'demo', num2str(demo)); launch.appendChild(arg);
 
 arg = argument(docNode, 0, 'lead_x', num2str(lead_x)); launch.appendChild(arg);
 arg = argument(docNode, 0, 'lead_y', num2str(lead_y)); launch.appendChild(arg);
-% arg = argument(docNode, 0, 'lead_z', num2str(lead_z)); launch.appendChild(arg);
-
-% add pid gains
-arg = argument(docNode, 0, 'Kp1', num2str(Kp1)); launch.appendChild(arg);
-arg = argument(docNode, 0, 'Ki1', num2str(Ki1)); launch.appendChild(arg);
-arg = argument(docNode, 0, 'Kd1', num2str(Kd1)); launch.appendChild(arg);
-arg = argument(docNode, 0, 'Kp2', num2str(Kp2)); launch.appendChild(arg);
-arg = argument(docNode, 0, 'Ki2', num2str(Ki2)); launch.appendChild(arg);
-arg = argument(docNode, 0, 'Kd2', num2str(Kd2)); launch.appendChild(arg);
+arg = argument(docNode, 0, 'lead_z', num2str(lead_z)); launch.appendChild(arg);
 
 % add the upper level switch node that turns on WMSR nodes, when all robots
 % are successfully spawned in Gazebo
 switchNode = docNode.createElement('node');
 switchNode.setAttribute('name', 'switch_node');
-switchNode.setAttribute('pkg', 'rcomv_r1');
+switchNode.setAttribute('pkg', 'rcomv_uav');
 switchNode.setAttribute('type','switch');
 switchNode.setAttribute('output','screen');
 switchNode.setAttribute('launch-prefix','xterm -e');
+%arg = argument(docNode, 1, 'n', '$(arg n)');
+%switchNode.appendChild(arg);
 launch.appendChild(switchNode);
 launch.appendChild(docNode.createComment('upper level switch node'));
 
-% include ugvs
+% include uavs
 for i = 1:n
    
-   % element handle for ugvs
-   ugv = docNode.createElement('include');
-   ugv.setAttribute('file', '$(find rcomv_r1)/launch/ugv_with_control.launch');
+   % element handle for uavs
+   uav = docNode.createElement('include');
+   uav.setAttribute('file', '$(find rcomv_uav)/launch/uav_with_control.launch');
    
    % add comment
-   ugv.appendChild(docNode.createComment(['start of ugv',num2str(i)]));
+   uav.appendChild(docNode.createComment(['start of uav',num2str(i)]));
    
-   %  wmsr node flag
-   arg = argument(docNode, 1, 'wmsr_node', '$(arg wmsr_node)'); ugv.appendChild(arg);
-
    % arg: formation size
-   arg = argument(docNode, 1, 'n', '$(arg n)'); ugv.appendChild(arg);
-   arg = argument(docNode, 1, 'k', '$(arg k)'); ugv.appendChild(arg);
-   arg = argument(docNode, 1, 'F', '$(arg F)'); ugv.appendChild(arg);
+   arg = argument(docNode, 1, 'n', '$(arg n)'); uav.appendChild(arg);
+   arg = argument(docNode, 1, 'k', '$(arg k)'); uav.appendChild(arg);
+   arg = argument(docNode, 1, 'F', '$(arg F)'); uav.appendChild(arg);
   
-   % arg: ugv model name
-   arg = argument(docNode, 1, 'ugv_name', '$(arg ugv_name)'); ugv.appendChild(arg);
+   % arg: uav model name
+   arg = argument(docNode, 1, 'mav_name', '$(arg mav_name)'); uav.appendChild(arg);
    % arg: enable logging in gazebo
-   arg = argument(docNode, 1, 'enable_logging', '$(arg enable_logging)'); ugv.appendChild(arg);
+   arg = argument(docNode, 1, 'enable_logging', '$(arg enable_logging)'); uav.appendChild(arg);
    % arg: namespace
-   arg = argument(docNode, 1, 'name_space', ['ugv',num2str(i)]); ugv.appendChild(arg);
+   arg = argument(docNode, 1, 'name_space', ['uav',num2str(i)]); uav.appendChild(arg);
    
    % arg: idx, role
-   arg = argument(docNode, 1, 'idx', num2str(i)); ugv.appendChild(arg);
+   arg = argument(docNode, 1, 'idx', num2str(i)); uav.appendChild(arg);
    if (sum(mali == i))
        role = 1;
    elseif (sum(lead == i))
@@ -152,39 +143,31 @@ for i = 1:n
    else
        role = 2;
    end
-   arg = argument(docNode, 1, 'role', num2str(role)); ugv.appendChild(arg);
+   arg = argument(docNode, 1, 'role', num2str(role)); uav.appendChild(arg);
    
    % arg: model base color
-   % arg = argument(docNode, 1, 'color', model_base_color{role}); ugv.appendChild(arg);
+   arg = argument(docNode, 1, 'color', model_base_color{role}); uav.appendChild(arg);
    
    % arg: initial pose
-   [x,y,~] = initPose(i, n, center); 
-   arg = argument(docNode, 1, 'x', num2str(x)); ugv.appendChild(arg);
-   arg = argument(docNode, 1, 'y', num2str(y)); ugv.appendChild(arg);
-   %arg = argument(docNode, 1, 'z', num2str(z)); ugv.appendChild(arg);
+   [x,y,z] = initPose(i, n, center); 
+   arg = argument(docNode, 1, 'x', num2str(x)); uav.appendChild(arg);
+   arg = argument(docNode, 1, 'y', num2str(y)); uav.appendChild(arg);
+   arg = argument(docNode, 1, 'z', num2str(z)); uav.appendChild(arg);
    
    % arg: leader's inform state (the consensus state)
-   arg = argument(docNode, 1, 'lead_x', '$(arg lead_x)'); ugv.appendChild(arg);
-   arg = argument(docNode, 1, 'lead_y', '$(arg lead_y)'); ugv.appendChild(arg);
-   %arg = argument(docNode, 1, 'lead_z', '$(arg lead_z)'); ugv.appendChild(arg);
+   arg = argument(docNode, 1, 'lead_x', '$(arg lead_x)'); uav.appendChild(arg);
+   arg = argument(docNode, 1, 'lead_y', '$(arg lead_y)'); uav.appendChild(arg);
+   arg = argument(docNode, 1, 'lead_z', '$(arg lead_z)'); uav.appendChild(arg);
    
   
    % arg: demo
-   arg = argument(docNode, 1, 'demo', '$(arg demo)'); ugv.appendChild(arg);
+   arg = argument(docNode, 1, 'demo', '$(arg demo)'); uav.appendChild(arg);
    
-   % arg: pid gains
-    arg = argument(docNode, 1, 'Kp1', '$(arg Kp1)'); ugv.appendChild(arg);
-    arg = argument(docNode, 1, 'Ki1', '$(arg Ki1)'); ugv.appendChild(arg);
-    arg = argument(docNode, 1, 'Kd1', '$(arg Kd1)'); ugv.appendChild(arg);
-    arg = argument(docNode, 1, 'Kp2', '$(arg Kp2)'); ugv.appendChild(arg);
-    arg = argument(docNode, 1, 'Ki2', '$(arg Ki2)'); ugv.appendChild(arg);
-    arg = argument(docNode, 1, 'Kd2', '$(arg Kd2)'); ugv.appendChild(arg);
-   
-   % append the ugv  include element the the launch file
-   launch.appendChild(ugv);
+   % append the uav  include element the the launch file
+   launch.appendChild(uav);
    
    % add comment
-   launch.appendChild(docNode.createComment(['end of ugv',num2str(i)]));
+   launch.appendChild(docNode.createComment(['end of uav',num2str(i)]));
 end
 
 % store the XML file

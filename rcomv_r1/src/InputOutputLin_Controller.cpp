@@ -5,6 +5,7 @@
 InOutLinController::InOutLinController()
 :nh_private_("~")
 {
+  // ------------------------------ Set Parameters -----------------------------
   // Initialize the parameters (constant, from the launch file)
   // syntax: nh_private_.param<type>
   // ("parameter name in launch file", variable to be assigned, default value);
@@ -39,6 +40,7 @@ InOutLinController::InOutLinController()
   initial_time = ros::Time().toSec();
 
 
+  // ------------------------------ Set Pubs/Subs -----------------------------
   // Publisher := cmd_vel_mux/input/teleop
   pub = nh.advertise<geometry_msgs::Twist>("cmd_vel_mux/input/teleop", 10);
   // frequency: 50 Hz
@@ -48,6 +50,7 @@ InOutLinController::InOutLinController()
 
   //Subscriber := current states
   odom_sub = nh.subscribe("odom", 10, &InOutLinController::odom_subCallback, this);
+
   //Subscriber := reference trajectory parameters
   trajectory_sub = nh.subscribe("ref", 10, &InOutLinController::trajectory_subCallback, this);
 
@@ -221,11 +224,12 @@ double QuaternionToYaw(const nav_msgs::Odometry &msgs)
   return yaw;
 }
 
+// helper function
+// return the reference trajectory and velocities for any arbitrary cubic polynomial trajectory 
 void InOutLinController::CubePolyPath(pose qi, pose qf, double k, double T, double t,
                   double &xd, double &yd, double &vd, double &wd) {
   // uniform time law
   double s = t/T;
-  // angle between body frame and
   // parameters of the polynomial
   double xi = qi.x, yi = qi.y, thetai = qi.theta;
   double xf = qf.x, yf = qf.y, thetaf = qf.theta;
@@ -265,7 +269,7 @@ void InOutLinController::CubePolyPath(pose qi, pose qf, double k, double T, doub
   vel_y = vel_y + wd*Ri*cos(theta+alphai);
   accel_x = accel_x - wd*wd*Ri*cos(theta+alphai); // ignore d(wd) / dt
   accel_y = accel_y - wd*wd*Ri*sin(theta+alphai); // ignore d(wd) / dt
-  // update accel ???
+  // update accel
   vd = hypot(vel_x, vel_y);
   wd = (accel_y*vel_x - accel_x*vel_y) / pow(vd,2.0);
 }

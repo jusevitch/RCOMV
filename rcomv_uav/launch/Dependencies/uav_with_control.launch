@@ -1,0 +1,72 @@
+<launch>
+
+	<arg name="mav_name" default="firefly"/>
+  <arg name="enable_logging" default="false" />
+  <arg name="enable_ground_truth" default="true" />
+  <arg name="log_file" default="$(arg mav_name)" />
+	<arg name="name_space" default="$(arg mav_name)" />
+
+	<arg name="x" default = "0" />
+	<arg name="y" default = "0" />
+	<arg name="z" default = "0.1" />
+	<arg name="n" default="15" />
+	<arg name="k" default="7" />
+	<arg name="idx" default="1" />
+	<arg name="role" default="2" />
+	<arg name="F" default="0" />
+	<arg name="demo" default="2" />
+
+  	<arg name="color" default="Black" />
+
+	<arg name="lead_x" default="6" />
+	<arg name="lead_y" default="6" />
+	<arg name="lead_z" default="10" />
+
+
+<group ns="$(arg name_space)">
+	<!-- uav robot node -->
+	<include file="$(find rotors_gazebo)/launch/spawn_mav.launch">
+					<arg name="namespace" value="$(arg name_space)" />  <!-- namespace -->
+      		<arg name="mav_name" value="$(arg mav_name)" />
+      		<arg name="model" value="$(find rcomv_uav)/urdf/mav_generic_odometry_sensor.gazebo" />
+      		<arg name="enable_logging" value="$(arg enable_logging)" />
+      		<arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
+      		<arg name="log_file" value="$(arg log_file)"/>
+      		<arg name="x" value="$(arg x)"/>
+      		<arg name="y" value="$(arg y)"/>
+					<arg name="z" value="$(arg z)"/>
+					<arg name="color" value="$(arg color)" />
+  </include>
+
+	<!-- controller node -->
+    <node name="lee_position_controller_node" pkg="rotors_control" 	 type="lee_position_controller_node" output="screen">
+      	<rosparam command="load" file="$(find rotors_gazebo)/resource/lee_controller_$(arg mav_name).yaml" />
+     	 	<rosparam command="load" file="$(find rotors_gazebo)/resource/$(arg mav_name).yaml" />  <!--model configuration -->
+     	 	<remap from="odometry" to="odometry_sensor1/odometry" />
+   	</node>
+
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+
+	<!-- WMSR node -->
+	<node name="wmsr_node" pkg="rcomv_uav" type="wmsr_node" >
+		<param name="n" value="$(arg n)" />
+		<param name="k" value="$(arg k)" />
+		<param name="F" value="$(arg F)" />
+		<param name="idx" value="$(arg idx)" />
+		<param name="role" value="$(arg role)" />
+
+		<param name="x" value="$(arg x)" />
+		<param name="y" value="$(arg y)" />
+		<param name="z" value="$(arg z)" />
+
+		<param name="demo" value="$(arg demo)" />
+
+		<param name="cx" value="$(arg lead_x)" />
+		<param name="cy" value="$(arg lead_y)" />
+		<param name="cz" value="$(arg lead_z)" />
+	</node>
+</group>
+
+
+</launch>

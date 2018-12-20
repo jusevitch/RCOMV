@@ -5,13 +5,12 @@ clear all
 % seed the random generator
 rng('shuffle')
 
-%% Variables
+%% ------------------------ Set Parameters -------------------------------
 
 % name of the saved launch filef
 file_list = {'test_cubic', 'test_world_cubic','test_ruin_world_cubic'};
 % -------------------------- modify here ----------------------------
 file_name = file_list{1};
-
 file_name = 'eightTraj_circleFormation_8agents_smallWorld';
 % -------------------------------------------------------------------
 
@@ -88,6 +87,7 @@ initPose = @(idx,n,center) circle_formation(idx, n, center);
 
 % model specifications of the ugv
 ugv_name = 'r1_sim';
+% ( The changing color feature is under development )
 model_base_color = {'Red', 'Black', 'Blue'};  % order: malicious, normal, leaders
 
 % gazebo logging enable
@@ -290,7 +290,7 @@ function arg = argument(dn, type, name, default)
 end
 
 
-% create environment  argument
+% create environment argument
 function env = environment(dn, type, name, default)
     % type=0: default attribute
     % type=1: value attribute

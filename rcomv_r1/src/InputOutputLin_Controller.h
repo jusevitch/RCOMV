@@ -51,7 +51,7 @@ private:
   void pubCallback(const ros::TimerEvent& event);
   void disCallback(const ros::TimerEvent& event);  // display callback function
   void odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs);
-  void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs); // to be determined)
+  void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs);
 
   // private variables
   // controller paramters
@@ -59,7 +59,7 @@ private:
   double k1, k2; // control gains
   double vmax, wmax; // maximum velocity, and angular velocity
 
-  double Ri, alphai; // relative distance from the center (in the body fixed frame)
+  double Ri, alphai; // offset from the center (in the body fixed frame)
 
   std::string path_type;
   double t0; // initial time
