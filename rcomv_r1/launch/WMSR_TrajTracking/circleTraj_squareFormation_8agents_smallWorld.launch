@@ -31,7 +31,7 @@
    <arg default="2" name="vmax"/>
    <arg default="4" name="wmax"/>
    <node launch-prefix="xterm -e" name="switch_node" output="screen" pkg="rcomv_r1" type="switch"/><!--upper level switch node-->
-   <include file="$(find rcomv_r1)/launch/ugv_with_InOutLin_control.launch"><!--start of ugv1-->
+   <include file="$(find rcomv_r1)/launch/Dependencies/ugv_with_InOutLin_control.launch"><!--start of ugv1-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>
       <arg name="n" value="$(arg n)"/><!--size of the formation-->
       <arg name="k" value="$(arg k)"/>
