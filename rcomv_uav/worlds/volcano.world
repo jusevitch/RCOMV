@@ -30,10 +30,10 @@
               <texture>
                 <diffuse>file://media/materials/textures/grass_diffusespecular.png</diffuse>
                 <normal>file://media/materials/textures/flat_normal.png</normal>
-                <size>1</size>
+                <size>10</size>
               </texture>
               <texture>
-                <diffuse>file://media/materials/textures/fungus_diffusespecular.png</diffuse>
+                <diffuse>file://media/materials/textures/terrain.png</diffuse>
                 <normal>file://media/materials/textures/flat_normal.png</normal>
                 <size>1</size>
               </texture>
@@ -42,8 +42,8 @@
                 <fade_dist>5</fade_dist>
               </blend>
               <blend>
-                <min_height>4</min_height>
-                <fade_dist>5</fade_dist>
+                <min_height>10</min_height>
+                <fade_dist>10</fade_dist>
               </blend>
               <uri>file://media/dem/mtsthelens_129.dem</uri>
               <size>150 150 50</size>
