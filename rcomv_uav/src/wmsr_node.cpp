@@ -25,6 +25,9 @@ WMSRNode::WMSRNode()
     nh_private_.param<double>("cy", cy, 6);
     nh_private_.param<double>("cz", cz, 10);
 
+    nh_private_.param<float>("rc", rc, 60);
+    nh_private_.param<float>("rp", rp, 20);
+
     // Initialize msgs
     inform_states.header.stamp = ros::Time::now();
     if (demo == 3 && role == 3) {
@@ -42,6 +45,8 @@ WMSRNode::WMSRNode()
     mali_states.point.x = x0;
     mali_states.point.y = y0;
     mali_states.point.z = z0;
+
+    G.resize(n);
 
 
     // Publisher: output
@@ -107,6 +112,14 @@ WMSRNode::WMSRNode()
                          boost::bind(&WMSRNode::ref_subCallback, this, _1, i-1)) );
 
       ROS_INFO("sub_idx at: [%d] with topic name: ", sub_idx);
+
+      state_msgs obs_state;
+      state_lists.push_back(obs_state);
+
+      std::string sub2_topic = "/uav" + std::to_string(sub_idx) + "/odom";
+      states_subs.push_back(nh.subscribe<state_msgs>(sub2_topic, 10, boost::bind(&WMSRNode::state_subCallback, this, _1, i-1)) ) ;
+
+      
     }
 
       ROS_INFO_STREAM("Started uav"<<idx<<" WMSR Node.");
@@ -129,6 +142,11 @@ void WMSRNode::ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_id
 {
   ref_lists[list_idx].header = msgs->header;
   ref_lists[list_idx].point = msgs->point;
+}
+
+void WMSRNode::state_subCallback(const state_msgs::ConstPtr& msgs, const int list_idx){
+  state_lists[list_idx].header=msgs->header;
+  state_lists[list_idx].pose=msgs->pose;
 }
 
 // Reference Publisher Callback
@@ -327,6 +345,28 @@ double FilterOutlier(std::vector<double> &list, const int k, const double inform
   valid_size++;
 
   return 1.0 / double(valid_size);
+}
+double calculate_norm(const state_msgs &state1, const state_msgs &state2){
+  double val;
+  val = sqrt((state1.pose.pose.position.x - state2.pose.pose.position.x)*(state1.pose.pose.position.x - state2.pose.pose.position.x)) + ((state1.pose.pose.position.y - state2.pose.pose.position.y)*(state1.pose.pose.position.y - state2.pose.pose.position.y));
+  return val;
+}
+
+std::vector<Matrix> Calc_Adjacency(const std::vector<state_msgs> &state_lists, std::vector<Matrix> &G, float rc, float rp, int n){
+  G.resize(2);
+  G.at(0).resize(n,std::vector<int>(n));
+  G.at(1).resize(n,std::vector<int>(n));
+  double val;
+  for (int i=0; i<n; i++){
+    for (int j=0; j<n; j++){
+      val=calculate_norm(state_lists.at(i),state_lists.at(j));
+      if (val<rc)
+	G[0][i][j]=1;
+      if (val<rp)
+	G[1][i][j]=1;
+    }
+  }
+  return G;
 }
 
 

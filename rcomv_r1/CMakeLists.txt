@@ -61,7 +61,7 @@ add_message_files(
    DIRECTORY msg
    FILES
    ParametricPath.msg
-	 CubicPath.msg
+   CubicPath.msg
  )
 
 ## Generate services in the 'srv' folder
