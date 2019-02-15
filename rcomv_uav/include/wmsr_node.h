@@ -78,6 +78,10 @@ private:
   void ref_pubCallback(const ros::TimerEvent& event);
   void out_pubCallback(const ros::TimerEvent& event);
   void state_subCallback(const state_msgs::ConstPtr& msgs, const int list_idx);
+
+  // vector for odometry
+  
+  std::vector<state_msgs> swarm_odom;
   
 
   // private variables for intermediate calculations
@@ -91,6 +95,7 @@ private:
   int demo; // 1: x dir 1D motion,  2: z dir 1D motion, 3: 3D motion
   double cx, cy, cz;
   float rc, rp; // communication radius and proximity radius
+  std::vector<float> tau;
 
   // Some Helper functions
   ref_msgs WMSRAlgorithm(const std::vector<ref_msgs> &list);

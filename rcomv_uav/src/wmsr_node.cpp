@@ -369,6 +369,22 @@ std::vector<Matrix> Calc_Adjacency(const std::vector<state_msgs> &state_lists, s
   return G;
 }
 
+std::vector<int> get_in_neighbours(const Matrix &Q, int agent){
+  auto agents_no = Q.size();
+  std::vector<int> neighbours;
+  for (int i=0; i<agents_no; i++){
+    if (Q[agent][i] == 1)
+	  neighbours.push_back(i);
+  }
+  return neighbours;
+}
+
+filtered_barrier_function(std::vector<state_msgs> &swarm_odom, Matrix &G, std::vector<float> &tau, int F, int rc){
+
+  yidot = swarm_odom.at(1) - swarm_odom.at(0);
+
+  
+}
 
 // main function
 int main(int argc, char **argv) {
