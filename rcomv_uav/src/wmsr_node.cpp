@@ -441,6 +441,24 @@ tiny_msgs WMSRNode::psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_
   return output;
   
 }
+
+void WMSRNode::populate_velocity_vector(std::vector<tiny_msgs> &yidot){
+  for (int i=0; i<n;i++){
+    yidot.push_back(calc_vec(swarm_odom[i],prev_odom[i]));
+  }
+}
+
+std::vector<Neigh> WMSRNode::multiply_vectors(const std::vector<tiny_msgs> &vec1, const std::vector<tiny_msgs> &vec2, const std::vector<int> neigh){
+  std::vector<Neigh> output;
+  Neigh sample;
+  for (int i=0; i<vec1.size(); i++){
+    sample.val=(vec1[i].x*vec2[i].x) + (vec1[i].y*vec2[i].y) + (vec1[i].z*vec2[i].z);
+    sample.id=neigh[i];
+    output.push_back(sample);
+  }
+  return output;
+}
+
 void WMSRNode::filtered_barrier_function(int iteration){
   if (iteration!=0){
     WMSRNode::save_state_vector();
@@ -449,18 +467,41 @@ void WMSRNode::filtered_barrier_function(int iteration){
   else WMSRNode::save_state_vector();
   auto agents_no = swarm_odom.size();
   std::vector<tiny_msgs> yidot;
+  WMSRNode::populate_velocity_vector(yidot);
   for (int i=0; i<agents_no; i++){
-    yidot[i] = calc_vec(swarm_odom[i],prev_odom[i]);
     // only 2D for the time being
     std::vector<int> neigh_list;
     neigh_list= get_in_neighbours(G.at(0), i);
+    std::vector<tiny_msgs> grad_vector;
+    std::vector<tiny_msgs> diff_vector;
+    std::vector<Neigh> vel_grad;
+    std::vector<int> f_neigh;
+    std::vector<int> u_neigh;
     for (int j=0; j<neigh_list.size(); j++){
       tiny_msgs tau_ij = calc_vec(swarm_odom[i],swarm_odom[neigh_list[j]]);
-      
-      
+      grad_vector.push_back(psi_gradient(i,neigh_list[j],tau_ij));	
+      diff_vector.push_back(calc_vec(yidot[i],yidot[neigh_list[j]]));
+    }
+    vel_grad = WMSRNode::multiply_vectors(grad_vector,diff_vector,neigh_list);
+
+    //sort in_neighbours with the vel_grad vector
+    std::sort(vel_grad.begin(), vel_grad.end(), 
+               [](const Neigh &i, const Neigh &j) { return i.val > j.val; } );
+    if (F<vel_grad.size()){
+      for(int k=0; k<vel_grad.size();k++){
+	if (k<F)
+	  f_neigh.push_back(vel_grad[k].id);
+	else
+	  u_neigh.push_back(vel_grad[k].id);
+      }
       
     }
-  }
+    else{
+      for (int k=0; k<vel_grad.size();k++){
+	f_neigh.push_back(vel_grad[k].id);
+      }
+    }
+  }  
 }
 
 // main function

@@ -27,7 +27,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-
+#include <iterator>
 
 // define aliases for msgs types, topic names
 //typedef Eigen::Vector3d ref_msgs;
@@ -35,7 +35,10 @@ typedef geometry_msgs::PointStamped ref_msgs;
 typedef geometry_msgs::Point tiny_msgs;
 typedef nav_msgs::Odometry state_msgs;
 typedef std::vector<std::vector<int>> Matrix;
-
+struct Neigh{
+  double val;
+  int id;
+};
 // define the WMSR Node class
 class WMSRNode
 {
@@ -113,6 +116,8 @@ private:
   float psi_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent, const tiny_msgs &tau_ij);
   tiny_msgs psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_ij);
   double self_norm(const tiny_msgs &tiny);
+  void populate_velocity_vector(std::vector<tiny_msgs> &yidot);
+  std::vector<Neigh> multiply_vectors(const std::vector<tiny_msgs> &vec1,const std::vector<tiny_msgs> &vec2, const std::vector<int> neigh);
 }; // end of class
 
 // Helper functions
