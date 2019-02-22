@@ -32,6 +32,7 @@
 // define aliases for msgs types, topic names
 //typedef Eigen::Vector3d ref_msgs;
 typedef geometry_msgs::PointStamped ref_msgs;
+typedef geometry_msgs::Point tiny_msgs;
 typedef nav_msgs::Odometry state_msgs;
 typedef std::vector<std::vector<int>> Matrix;
 
@@ -82,6 +83,7 @@ private:
   // vector for odometry
   
   std::vector<state_msgs> swarm_odom;
+  std::vector<state_msgs> prev_odom;
   
 
   // private variables for intermediate calculations

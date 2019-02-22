@@ -48,7 +48,6 @@ WMSRNode::WMSRNode()
 
     G.resize(n);
 
-
     // Publisher: output
     output_pub = nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>(
               mav_msgs::default_topics::COMMAND_TRAJECTORY, 10);
@@ -145,7 +144,6 @@ void WMSRNode::ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_id
 }
 
 void WMSRNode::state_subCallback(const state_msgs::ConstPtr& msgs, const int list_idx){
-  state_lists[list_idx].header=msgs->header;
   state_lists[list_idx].pose=msgs->pose;
 }
 
@@ -379,9 +377,23 @@ std::vector<int> get_in_neighbours(const Matrix &Q, int agent){
   return neighbours;
 }
 
-filtered_barrier_function(std::vector<state_msgs> &swarm_odom, Matrix &G, std::vector<float> &tau, int F, int rc){
-
-  yidot = swarm_odom.at(1) - swarm_odom.at(0);
+tiny_msgs calc_vec(const state_msgs &state1, const state_msgs &state2){
+  tiny_msgs tiny;
+  tiny.x = state1.pose.pose.position.x - state2.pose.pose.position.x;
+  tiny.y = state1.pose.pose.position.y - state2.pose.pose.position.y;
+}
+filtered_barrier_function(){
+  auto agents_no = swarm_odom.size();
+  std::vector<tiny_msgs> yidot;
+  for (int i=0; i<agents_no; i++){
+    yidot[i] = calc_vec(&swarm_odom[i],&prev_odom[i]);
+    // only 2D for the time being
+    std::vector<int> neigh_list = get_in_neighbours(&G.at(0), i);
+    // for (int j=0; j<neigh_list.size(); j++){
+      
+      
+    // }
+  }
 
   
 }
