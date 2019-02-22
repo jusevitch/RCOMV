@@ -82,8 +82,8 @@ private:
 
   // vector for odometry
   
-  std::vector<state_msgs> swarm_odom;
-  std::vector<state_msgs> prev_odom;
+  std::vector<tiny_msgs> swarm_odom;
+  std::vector<tiny_msgs> prev_odom;
   
 
   // private variables for intermediate calculations
@@ -103,9 +103,16 @@ private:
   ref_msgs WMSRAlgorithm(const std::vector<ref_msgs> &list);
   void Formation();
 
-  std::vector<Matrix> Calc_Adjacency(const std::vector<state_msgs> &state_lists, std::vector<Matrix> &G, float rc, float rp, int n){}
+  std::vector<Matrix> Calc_Adjacency(const std::vector<state_msgs> &state_lists, std::vector<Matrix> &G, float rc, float rp, int n);
   double calculate_norm(const state_msgs &state1, const state_msgs &state2);
-
+  std::vector<int> get_in_neighbours(const Matrix &Q, int agent);
+  tiny_msgs calc_vec(const tiny_msgs &state1, const tiny_msgs &state2);
+  std::vector<tiny_msgs> populate_state_vector();
+  std::vector<tiny_msgs> save_state_vector();
+  void filtered_barrier_function(int iteration);
+  float psi_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent, const tiny_msgs &tau_ij);
+  tiny_msgs psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_ij);
+  double self_norm(const tiny_msgs &tiny);
 }; // end of class
 
 // Helper functions

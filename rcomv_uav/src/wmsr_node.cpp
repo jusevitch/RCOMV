@@ -344,20 +344,29 @@ double FilterOutlier(std::vector<double> &list, const int k, const double inform
 
   return 1.0 / double(valid_size);
 }
-double calculate_norm(const state_msgs &state1, const state_msgs &state2){
+double WMSRNode::calculate_norm(const state_msgs &state1, const state_msgs &state2){
   double val;
-  val = sqrt((state1.pose.pose.position.x - state2.pose.pose.position.x)*(state1.pose.pose.position.x - state2.pose.pose.position.x)) + ((state1.pose.pose.position.y - state2.pose.pose.position.y)*(state1.pose.pose.position.y - state2.pose.pose.position.y));
+  double xs=state1.pose.pose.position.x - state2.pose.pose.position.x;
+  double ys=state1.pose.pose.position.y - state2.pose.pose.position.y;
+  double zs=state1.pose.pose.position.z - state2.pose.pose.position.z;
+  val = sqrt( (xs*xs)+ (ys*ys) + (zs*zs));
+  return val;
+}
+double WMSRNode::self_norm(const tiny_msgs &tiny){
+  double val;
+  val = sqrt((tiny.x*tiny.x) + (tiny.y*tiny.y) + (tiny.z*tiny.z));
   return val;
 }
 
-std::vector<Matrix> Calc_Adjacency(const std::vector<state_msgs> &state_lists, std::vector<Matrix> &G, float rc, float rp, int n){
+std::vector<Matrix> WMSRNode::Calc_Adjacency(const std::vector<state_msgs> &state_lists, std::vector<Matrix> &G, float rc, float rp, int n){
   G.resize(2);
   G.at(0).resize(n,std::vector<int>(n));
   G.at(1).resize(n,std::vector<int>(n));
+
   double val;
   for (int i=0; i<n; i++){
     for (int j=0; j<n; j++){
-      val=calculate_norm(state_lists.at(i),state_lists.at(j));
+      val=WMSRNode::calculate_norm(state_lists.at(i),state_lists.at(j));
       if (val<rc)
 	G[0][i][j]=1;
       if (val<rp)
@@ -367,7 +376,7 @@ std::vector<Matrix> Calc_Adjacency(const std::vector<state_msgs> &state_lists, s
   return G;
 }
 
-std::vector<int> get_in_neighbours(const Matrix &Q, int agent){
+std::vector<int> WMSRNode::get_in_neighbours(const Matrix &Q, int agent){
   auto agents_no = Q.size();
   std::vector<int> neighbours;
   for (int i=0; i<agents_no; i++){
@@ -377,25 +386,81 @@ std::vector<int> get_in_neighbours(const Matrix &Q, int agent){
   return neighbours;
 }
 
-tiny_msgs calc_vec(const state_msgs &state1, const state_msgs &state2){
+tiny_msgs WMSRNode::calc_vec(const tiny_msgs &state1, const tiny_msgs &state2){
   tiny_msgs tiny;
-  tiny.x = state1.pose.pose.position.x - state2.pose.pose.position.x;
-  tiny.y = state1.pose.pose.position.y - state2.pose.pose.position.y;
+  tiny.x = state1.x - state2.x;
+  tiny.y = state1.y - state2.y;
+  tiny.z = state1.z - state2.z;
+  return tiny;
 }
-filtered_barrier_function(){
+
+std::vector<tiny_msgs> WMSRNode::populate_state_vector(){
+  for(int i=0; i < state_lists.size(); i++){
+    swarm_odom[i].x = state_lists[i].pose.pose.position.x;
+    swarm_odom[i].y = state_lists[i].pose.pose.position.y;
+    swarm_odom[i].z = state_lists[i].pose.pose.position.z;
+  }
+}
+
+std::vector<tiny_msgs> WMSRNode::save_state_vector(){
+  for(int i=0; i < swarm_odom.size(); i++){
+    prev_odom[i].x = swarm_odom[i].x;
+    prev_odom[i].y = swarm_odom[i].y;
+    prev_odom[i].z = swarm_odom[i].z;
+  }
+}
+
+
+float WMSRNode::psi_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent, const tiny_msgs &tau_ij){
+  float mu=1000;
+  float output;
+  tiny_msgs tiny=WMSRNode::calc_vec(m_agent,n_agent);
+  float rshat = rp - WMSRNode::self_norm(tau_ij);
+  output = WMSRNode::self_norm(tiny) / (rshat - WMSRNode::self_norm(tiny) + (rshat*rshat)/mu);
+  return output;
+  
+}
+tiny_msgs WMSRNode::psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_ij){
+  //use rp
+  float h=0.001;
+  std::vector<tiny_msgs> perturb(6);
+  for (int i; i<6; i++){
+    perturb.push_back(swarm_odom[m_agent]);
+  }
+  perturb[0].x+=h;
+  perturb[1].x-=h;
+  perturb[2].y+=h;
+  perturb[2].y-=h;
+  perturb[3].z+=h;
+  perturb[3].z-=h;
+ 
+  tiny_msgs output;
+  output.x = (WMSRNode::psi_helper(perturb[0],swarm_odom[n_agent],tau_ij) - WMSRNode::psi_helper(perturb[1],swarm_odom[n_agent],tau_ij))/(2*h);
+  output.y = (WMSRNode::psi_helper(perturb[2],swarm_odom[n_agent],tau_ij) - WMSRNode::psi_helper(perturb[3],swarm_odom[n_agent],tau_ij))/(2*h);
+  output.z = (WMSRNode::psi_helper(perturb[4],swarm_odom[n_agent],tau_ij) - WMSRNode::psi_helper(perturb[5],swarm_odom[n_agent],tau_ij))/(2*h);
+  return output;
+  
+}
+void WMSRNode::filtered_barrier_function(int iteration){
+  if (iteration!=0){
+    WMSRNode::save_state_vector();
+    WMSRNode::populate_state_vector();
+  }
+  else WMSRNode::save_state_vector();
   auto agents_no = swarm_odom.size();
   std::vector<tiny_msgs> yidot;
   for (int i=0; i<agents_no; i++){
-    yidot[i] = calc_vec(&swarm_odom[i],&prev_odom[i]);
+    yidot[i] = calc_vec(swarm_odom[i],prev_odom[i]);
     // only 2D for the time being
-    std::vector<int> neigh_list = get_in_neighbours(&G.at(0), i);
-    // for (int j=0; j<neigh_list.size(); j++){
+    std::vector<int> neigh_list;
+    neigh_list= get_in_neighbours(G.at(0), i);
+    for (int j=0; j<neigh_list.size(); j++){
+      tiny_msgs tau_ij = calc_vec(swarm_odom[i],swarm_odom[neigh_list[j]]);
       
       
-    // }
+      
+    }
   }
-
-  
 }
 
 // main function
