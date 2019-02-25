@@ -39,6 +39,10 @@ struct Neigh{
   double val;
   int id;
 };
+struct NLists{
+  std::vector<int> f_neigh;
+  std::vector<int> u_neigh;
+};
 // define the WMSR Node class
 class WMSRNode
 {
@@ -118,6 +122,7 @@ private:
   double self_norm(const tiny_msgs &tiny);
   void populate_velocity_vector(std::vector<tiny_msgs> &yidot);
   std::vector<Neigh> multiply_vectors(const std::vector<tiny_msgs> &vec1,const std::vector<tiny_msgs> &vec2, const std::vector<int> neigh);
+  NLists velocity_filter(int i, std::vector<tiny_msgs> &yidot);
 }; // end of class
 
 // Helper functions

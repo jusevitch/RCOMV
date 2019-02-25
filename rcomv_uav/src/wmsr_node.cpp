@@ -459,24 +459,13 @@ std::vector<Neigh> WMSRNode::multiply_vectors(const std::vector<tiny_msgs> &vec1
   return output;
 }
 
-void WMSRNode::filtered_barrier_function(int iteration){
-  if (iteration!=0){
-    WMSRNode::save_state_vector();
-    WMSRNode::populate_state_vector();
-  }
-  else WMSRNode::save_state_vector();
-  auto agents_no = swarm_odom.size();
-  std::vector<tiny_msgs> yidot;
-  WMSRNode::populate_velocity_vector(yidot);
-  for (int i=0; i<agents_no; i++){
-    // only 2D for the time being
+NLists WMSRNode::velocity_filter(int i, std::vector<tiny_msgs> &yidot){
     std::vector<int> neigh_list;
     neigh_list= get_in_neighbours(G.at(0), i);
     std::vector<tiny_msgs> grad_vector;
     std::vector<tiny_msgs> diff_vector;
     std::vector<Neigh> vel_grad;
-    std::vector<int> f_neigh;
-    std::vector<int> u_neigh;
+    NLists nlist;
     for (int j=0; j<neigh_list.size(); j++){
       tiny_msgs tau_ij = calc_vec(swarm_odom[i],swarm_odom[neigh_list[j]]);
       grad_vector.push_back(psi_gradient(i,neigh_list[j],tau_ij));	
@@ -490,18 +479,39 @@ void WMSRNode::filtered_barrier_function(int iteration){
     if (F<vel_grad.size()){
       for(int k=0; k<vel_grad.size();k++){
 	if (k<F)
-	  f_neigh.push_back(vel_grad[k].id);
+	  nlist.f_neigh.push_back(vel_grad[k].id);
 	else
-	  u_neigh.push_back(vel_grad[k].id);
+	  nlist.u_neigh.push_back(vel_grad[k].id);
       }
       
     }
     else{
       for (int k=0; k<vel_grad.size();k++){
-	f_neigh.push_back(vel_grad[k].id);
+	nlist.f_neigh.push_back(vel_grad[k].id);
       }
     }
-  }  
+}
+
+void WMSRNode::filtered_barrier_function(int iteration){
+  if (iteration!=0){
+    WMSRNode::save_state_vector();
+    WMSRNode::populate_state_vector();
+  }
+  else WMSRNode::save_state_vector();
+  auto agents_no = swarm_odom.size();
+  std::vector<tiny_msgs> yidot;
+  WMSRNode::populate_velocity_vector(yidot);
+  for (int i=0; i<agents_no; i++){// this is where the filter_function starts
+    NLists nlist;
+    nlist=velocity_filter(i, yidot);
+
+   //this is where the filter function ends
+    
+
+    
+  }
+
+  
 }
 
 // main function
