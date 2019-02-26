@@ -394,19 +394,33 @@ tiny_msgs WMSRNode::calc_vec(const tiny_msgs &state1, const tiny_msgs &state2){
   return tiny;
 }
 
-std::vector<tiny_msgs> WMSRNode::populate_state_vector(){
+void WMSRNode::populate_state_vector(){
   for(int i=0; i < state_lists.size(); i++){
-    swarm_odom[i].x = state_lists[i].pose.pose.position.x;
-    swarm_odom[i].y = state_lists[i].pose.pose.position.y;
-    swarm_odom[i].z = state_lists[i].pose.pose.position.z;
+    swarm_odom[i].x = state_lists[i].pose.pose.position.x - tau[0][i];
+    swarm_odom[i].y = state_lists[i].pose.pose.position.y - tau[1][i];
+    swarm_odom[i].z = state_lists[i].pose.pose.position.z - tau[2][i];
   }
 }
 
-std::vector<tiny_msgs> WMSRNode::save_state_vector(){
+void WMSRNode::save_state_vector(){
   for(int i=0; i < swarm_odom.size(); i++){
-    prev_odom[i].x = swarm_odom[i].x;
-    prev_odom[i].y = swarm_odom[i].y;
-    prev_odom[i].z = swarm_odom[i].z;
+    prev_odom[i].x = swarm_odom[i].x - tau[0][i];
+    prev_odom[i].y = swarm_odom[i].y - tau[1][i];
+    prev_odom[i].z = swarm_odom[i].z - tau[2][i];
+  }
+}
+
+void WMSRNode::make_tau_vector(){
+  tau.resize(3);
+  tau.at(0).resize(n);
+  tau.at(1).resize(n);
+  tau.at(2).resize(n);
+  double res = 2*3.14/n;
+  for(int i=0; i < n; i++){
+    double ang=i*res;
+    tau[0][i]=5*std::cos(ang)*std::cos(ang);
+    tau[1][i]=5*std::cos(ang)*std::sin(ang);
+    tau[2][i]=5*std::sin(ang);
   }
 }
 
@@ -459,13 +473,14 @@ std::vector<Neigh> WMSRNode::multiply_vectors(const std::vector<tiny_msgs> &vec1
   return output;
 }
 
-NLists WMSRNode::velocity_filter(int i, std::vector<tiny_msgs> &yidot){
+NLists WMSRNode::velocity_filter(int i, std::vector<tiny_msgs> &yidot ){
     std::vector<int> neigh_list;
-    neigh_list= get_in_neighbours(G.at(0), i);
+    neigh_list=get_in_neighbours(G.at(0), i);
     std::vector<tiny_msgs> grad_vector;
     std::vector<tiny_msgs> diff_vector;
     std::vector<Neigh> vel_grad;
     NLists nlist;
+    if !neigh_list.empty(){
     for (int j=0; j<neigh_list.size(); j++){
       tiny_msgs tau_ij = calc_vec(swarm_odom[i],swarm_odom[neigh_list[j]]);
       grad_vector.push_back(psi_gradient(i,neigh_list[j],tau_ij));	
@@ -489,7 +504,7 @@ NLists WMSRNode::velocity_filter(int i, std::vector<tiny_msgs> &yidot){
       for (int k=0; k<vel_grad.size();k++){
 	nlist.f_neigh.push_back(vel_grad[k].id);
       }
-    }
+    }}
 }
 
 void WMSRNode::filtered_barrier_function(int iteration){
@@ -497,15 +512,25 @@ void WMSRNode::filtered_barrier_function(int iteration){
     WMSRNode::save_state_vector();
     WMSRNode::populate_state_vector();
   }
-  else WMSRNode::save_state_vector();
+  else {
+    WMSRNode::make_tau_vector();
+    WMSRNode::save_state_vector();
+  }
   auto agents_no = swarm_odom.size();
   std::vector<tiny_msgs> yidot;
   WMSRNode::populate_velocity_vector(yidot);
   for (int i=0; i<agents_no; i++){// this is where the filter_function starts
+
     NLists nlist;
     nlist=velocity_filter(i, yidot);
-
+    if !nlist.u_neigh.empty(){
+	for (int j=0; j<nlist.u_neigh.size(); j++){
+	  tiny_msgs tau_ij = calc_vec(swarm_odom[i],swarm_odom[nlist.u_neigh[j]]);
+    }
+	
+      }
    //this is where the filter function ends
+    
     
 
     
