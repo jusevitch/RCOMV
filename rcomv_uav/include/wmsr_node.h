@@ -121,7 +121,7 @@ private:
   double self_norm(const tiny_msgs &tiny);
   void populate_velocity_vector(std::vector<tiny_msgs> &yidot);
   std::vector<Neigh> multiply_vectors(const std::vector<tiny_msgs> &vec1,const std::vector<tiny_msgs> &vec2, const std::vector<int> neigh);
-  NLists velocity_filter(int i, std::vector<tiny_msgs> &yidot, std:vector<int> neigh_list);
+  NLists velocity_filter(int i, std::vector<tiny_msgs> &yidot);
   void make_tau_vector();
 }; // end of class
 

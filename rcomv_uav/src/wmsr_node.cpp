@@ -473,14 +473,14 @@ std::vector<Neigh> WMSRNode::multiply_vectors(const std::vector<tiny_msgs> &vec1
   return output;
 }
 
-NLists WMSRNode::velocity_filter(int i, std::vector<tiny_msgs> &yidot ){
+NLists WMSRNode::velocity_filter(int i, std::vector<tiny_msgs> &yidot){
     std::vector<int> neigh_list;
     neigh_list=get_in_neighbours(G.at(0), i);
     std::vector<tiny_msgs> grad_vector;
     std::vector<tiny_msgs> diff_vector;
     std::vector<Neigh> vel_grad;
     NLists nlist;
-    if !neigh_list.empty(){
+    if (!neigh_list.empty()){
     for (int j=0; j<neigh_list.size(); j++){
       tiny_msgs tau_ij = calc_vec(swarm_odom[i],swarm_odom[neigh_list[j]]);
       grad_vector.push_back(psi_gradient(i,neigh_list[j],tau_ij));	
@@ -523,9 +523,9 @@ void WMSRNode::filtered_barrier_function(int iteration){
 
     NLists nlist;
     nlist=velocity_filter(i, yidot);
-    if !nlist.u_neigh.empty(){
+    if (!nlist.u_neigh.empty()){
 	for (int j=0; j<nlist.u_neigh.size(); j++){
-	  tiny_msgs tau_ij = calc_vec(swarm_odom[i],swarm_odom[nlist.u_neigh[j]]);
+	  tiny_msgs tau_ij = calc_vec(swarm_odom[i],swarm_odom[nlist.u_neigh[j]]);}
     }
 	
       }
