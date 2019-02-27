@@ -28,6 +28,9 @@ WMSRNode::WMSRNode()
     nh_private_.param<float>("rc", rc, 60);
     nh_private_.param<float>("rp", rp, 20);
 
+    nh_private_.param<float>("ds", ds, 2);
+    nh_private_.param<float>("dc", dc, 5);
+
     // Initialize msgs
     inform_states.header.stamp = ros::Time::now();
     if (demo == 3 && role == 3) {
@@ -45,8 +48,11 @@ WMSRNode::WMSRNode()
     mali_states.point.x = x0;
     mali_states.point.y = y0;
     mali_states.point.z = z0;
+    role_list[idx]=role;
 
     G.resize(n);
+    state_lists.resize(n);
+    make_tau_vector();
 
     // Publisher: output
     output_pub = nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>(
@@ -94,6 +100,12 @@ WMSRNode::WMSRNode()
     ref_pub_timer = nh.createTimer(ros::Duration(0.1),
                 &WMSRNode::ref_pubCallback, this);
 
+    
+      state_msgs obs_state;
+
+      std::string sub2_topic = "/uav" + std::to_string(idx) + "/odom";
+      states_subs.push_back(nh.subscribe<state_msgs>(sub2_topic, 10, boost::bind(&WMSRNode::state_subCallback, this, _1, idx-1)) ) ;
+
 
     // Subscribers: (and msgs list to hold the msgs from subscibed topics)
     for (int i = 1; i <= k; i++) {
@@ -112,11 +124,6 @@ WMSRNode::WMSRNode()
 
       ROS_INFO("sub_idx at: [%d] with topic name: ", sub_idx);
 
-      state_msgs obs_state;
-      state_lists.push_back(obs_state);
-
-      std::string sub2_topic = "/uav" + std::to_string(sub_idx) + "/odom";
-      states_subs.push_back(nh.subscribe<state_msgs>(sub2_topic, 10, boost::bind(&WMSRNode::state_subCallback, this, _1, i-1)) ) ;
 
       
     }
@@ -358,7 +365,7 @@ double WMSRNode::self_norm(const tiny_msgs &tiny){
   return val;
 }
 
-std::vector<Matrix> WMSRNode::Calc_Adjacency(const std::vector<state_msgs> &state_lists, std::vector<Matrix> &G, float rc, float rp, int n){
+void WMSRNode::Calc_Adjacency(){
   G.resize(2);
   G.at(0).resize(n,std::vector<int>(n));
   G.at(1).resize(n,std::vector<int>(n));
@@ -373,7 +380,6 @@ std::vector<Matrix> WMSRNode::Calc_Adjacency(const std::vector<state_msgs> &stat
 	G[1][i][j]=1;
     }
   }
-  return G;
 }
 
 std::vector<int> WMSRNode::get_in_neighbours(const Matrix &Q, int agent){
@@ -404,17 +410,26 @@ tiny_msgs WMSRNode::calc_fvec(const std::vector<float> &state1, const std::vecto
 
 void WMSRNode::populate_state_vector(){
   for(int i=0; i < state_lists.size(); i++){
-    swarm_odom[i].x = state_lists[i].pose.pose.position.x - tau[i][0];
-    swarm_odom[i].y = state_lists[i].pose.pose.position.y - tau[i][1];
-    swarm_odom[i].z = state_lists[i].pose.pose.position.z - tau[i][2];
+    swarm_tau[i].x = state_lists[i].pose.pose.position.x - tau[i][0];
+    swarm_tau[i].y = state_lists[i].pose.pose.position.y - tau[i][1];
+    swarm_tau[i].z = state_lists[i].pose.pose.position.z - tau[i][2];
+
+    
+    swarm_odom[i].x = state_lists[i].pose.pose.position.x;
+    swarm_odom[i].y = state_lists[i].pose.pose.position.y;
+    swarm_odom[i].z = state_lists[i].pose.pose.position.z;
   }
 }
 
 void WMSRNode::save_state_vector(){
   for(int i=0; i < swarm_odom.size(); i++){
-    prev_odom[i].x = swarm_odom[i].x - tau[i][0];
-    prev_odom[i].y = swarm_odom[i].y - tau[i][1];
-    prev_odom[i].z = swarm_odom[i].z - tau[i][2];
+    prev_tau[i].x = swarm_odom[i].x - tau[i][0];
+    prev_tau[i].y = swarm_odom[i].y - tau[i][1];
+    prev_tau[i].z = swarm_odom[i].z - tau[i][2];
+
+    prev_odom[i].x = swarm_odom[i].x;
+    prev_odom[i].y = swarm_odom[i].y;
+    prev_odom[i].z = swarm_odom[i].z;
   }
 }
 
@@ -424,9 +439,9 @@ void WMSRNode::make_tau_vector(){
   for(int i=0; i < n; i++){
     double ang=i*res;
     tau.at(i).resize(3);
-    tau[i][0]=5*std::cos(ang)*std::cos(ang);
-    tau[i][1]=5*std::cos(ang)*std::sin(ang);
-    tau[i][2]=5*std::sin(ang);
+    tau[i][0]=5*std::cos(ang);
+    tau[i][1]=5*std::sin(ang);
+    tau[i][2]=0;
   }
 }
 
@@ -453,6 +468,41 @@ tiny_msgs WMSRNode::psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_
   float h=0.001;
   std::vector<tiny_msgs> perturb(6);
   for (int i; i<6; i++){
+    perturb.push_back(swarm_tau[m_agent]);
+  }
+  perturb[0].x+=h;
+  perturb[1].x-=h;
+  perturb[2].y+=h;
+  perturb[2].y-=h;
+  perturb[3].z+=h;
+  perturb[3].z-=h;
+ 
+  tiny_msgs output;
+  output.x = (psi_helper(perturb[0],swarm_tau[n_agent],tau_ij) - psi_helper(perturb[1],swarm_tau[n_agent],tau_ij))/(2*h);
+  output.y = (psi_helper(perturb[2],swarm_tau[n_agent],tau_ij) - psi_helper(perturb[3],swarm_tau[n_agent],tau_ij))/(2*h);
+  output.z = (psi_helper(perturb[4],swarm_tau[n_agent],tau_ij) - psi_helper(perturb[5],swarm_tau[n_agent],tau_ij))/(2*h);
+  return output;
+  
+}
+
+float WMSRNode::psi_col_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent){
+  tiny_msgs vecij = calc_vec(m_agent,n_agent);
+  double val=self_norm(vecij);
+  double mu2=10000;
+  float output;
+  if (val <= dc){
+    output =  ((val - dc)*(val-dc)) / (val - ds + ((ds-dc)*(ds-dc))) / mu2;
+  }
+  else if (val < ds)
+    output = mu2;
+  else
+    output = 0.0;
+}
+
+tiny_msgs WMSRNode::psi_col_gradient(int m_agent, int n_agent){
+  float h=0.001;
+  std::vector<tiny_msgs> perturb(6);
+  for (int i; i<6; i++){
     perturb.push_back(swarm_odom[m_agent]);
   }
   perturb[0].x+=h;
@@ -463,16 +513,16 @@ tiny_msgs WMSRNode::psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_
   perturb[3].z-=h;
  
   tiny_msgs output;
-  output.x = (WMSRNode::psi_helper(perturb[0],swarm_odom[n_agent],tau_ij) - WMSRNode::psi_helper(perturb[1],swarm_odom[n_agent],tau_ij))/(2*h);
-  output.y = (WMSRNode::psi_helper(perturb[2],swarm_odom[n_agent],tau_ij) - WMSRNode::psi_helper(perturb[3],swarm_odom[n_agent],tau_ij))/(2*h);
-  output.z = (WMSRNode::psi_helper(perturb[4],swarm_odom[n_agent],tau_ij) - WMSRNode::psi_helper(perturb[5],swarm_odom[n_agent],tau_ij))/(2*h);
+  output.x = (psi_col_helper(perturb[0],swarm_odom[n_agent]) - psi_col_helper(perturb[1],swarm_odom[n_agent]))/(2*h);
+  output.y = (psi_col_helper(perturb[2],swarm_odom[n_agent]) - psi_col_helper(perturb[3],swarm_odom[n_agent]))/(2*h);
+  output.z = (psi_col_helper(perturb[4],swarm_odom[n_agent]) - psi_col_helper(perturb[5],swarm_odom[n_agent]))/(2*h);
   return output;
   
 }
 
 void WMSRNode::populate_velocity_vector(std::vector<tiny_msgs> &yidot){
   for (int i=0; i<n;i++){
-    yidot.push_back(calc_vec(swarm_odom[i],prev_odom[i]));
+    yidot.push_back(calc_vec(swarm_tau[i],prev_tau[i]));
   }
 }
 
@@ -529,61 +579,116 @@ NLists WMSRNode::velocity_filter(int i,const std::vector<tiny_msgs> &yidot){
     }
 }
 
-void WMSRNode::filtered_barrier_function(int iteration){
+void WMSRNode::filtered_barrier_function(int iteration, int i){
   if (iteration!=0){
-    WMSRNode::save_state_vector();
-    WMSRNode::populate_state_vector();
+    save_state_vector();
+    populate_state_vector();
   }
   else {
-    WMSRNode::make_tau_vector();
-    WMSRNode::save_state_vector();
+    save_state_vector();
   }
-  auto agents_no = swarm_odom.size();
-  barrier_out.resize(agents_no);
   std::vector<tiny_msgs> yidot;
-  WMSRNode::populate_velocity_vector(yidot);
-  for (int i=0; i<agents_no; i++){// this is where the filter_function starts
-
-    NLists nlist;
-    nlist=velocity_filter(i, yidot);
-    tiny_msgs psi_gradient_sum;
-    psi_gradient_sum.x=0; psi_gradient_sum.y=0; psi_gradient_sum.z=0;
-    if (!nlist.u_neigh.empty()){
-	for (int j=0; j<nlist.u_neigh.size(); j++){
-	  tiny_msgs tau_ij = calc_fvec(tau[i],tau[nlist.u_neigh[j]]);
-	  tiny_msgs grad_ij = psi_gradient(i,nlist.u_neigh[j],tau_ij);
-	  psi_gradient_sum=add_vectors(psi_gradient_sum,grad_ij);
-        }
+  populate_velocity_vector(yidot);
+  
+  NLists nlist;
+  nlist=velocity_filter(i, yidot);
+  tiny_msgs psi_gradient_sum;
+  psi_gradient_sum.x=0; psi_gradient_sum.y=0; psi_gradient_sum.z=0;
+  if (!nlist.u_neigh.empty()){
+     for (int j=0; j<nlist.u_neigh.size(); j++){
+	tiny_msgs tau_ij = calc_fvec(tau[i],tau[nlist.u_neigh[j]]);
+	tiny_msgs grad_ij = psi_gradient(i,nlist.u_neigh[j],tau_ij);
+	psi_gradient_sum=add_vectors(psi_gradient_sum,grad_ij);
+     }
 	
-    }
+  }
+  std::vector<int> Glist;
+  Glist=G[1][i];
+  for (int j=0; j<nlist.f_neigh.size(); j++){
+    Glist[nlist.f_neigh[j]]=0;
+  }
 
-
-    std::vector<int> Glist;
-    Glist=G[1][i];
-    for (int j=0; j<nlist.f_neigh.size(); j++){
-       Glist[nlist.f_neigh[j]]=0;
-    }
-
-    //Get the sum of Glist
+  //Get the sum of Glist
     
-    float gain = -100.0; //% Makes barrier function converge faster.
-    barrier_out[i] = multiply_scalar_vec(gain,psi_gradient_sum); 
+  float gain = -100.0; //% Makes barrier function converge faster.
+  barrier_out[i] = multiply_scalar_vec(gain,psi_gradient_sum); 
 
-    if (self_norm(barrier_out[i]) >=50){
-      barrier_out[i] = multiply_scalar_vec(20.00f / self_norm(barrier_out[i]), barrier_out[i]);
-    }
-    //Find a way to get the malicious agents
-    //if isfield(args,'misbehaving_agents')
-    //    misbehaving_agents = args.misbehaving_agents;
-    //else
-    //    misbehaving_agents = [];
-    //end
-    
+  if (self_norm(barrier_out[i]) >=50){
+    barrier_out[i] = multiply_scalar_vec(20.00f / self_norm(barrier_out[i]), barrier_out[i]);
+  }
+ 
+    //Just check if i's role is 1 in the role_list and change the barrier_out vector accordingly.
     //for ii=misbehaving_agents    
     //    outvector(ii*2-1:ii*2,1) = [0,80*cos(args.tt/20 + 2)];    
 
-   
+}
+
+void WMSRNode::filtered_barrier_collision(int iteration, int i){
+  if (iteration!=0){
+    save_state_vector();
+    populate_state_vector();
   }
+  else {
+    save_state_vector();
+  }
+  std::vector<tiny_msgs> yidot;
+  populate_velocity_vector(yidot);
+
+
+  //BLOCK ABOUT MALICIOUS AGENTS
+  // for zz=1:length(misbehaving_agents)
+    
+
+  //   % Malicious agents go full speed in random direction
+    
+  //   ii = misbehaving_agents(zz);
+    
+  //   if state_vector(2*ii-1:2*ii,1) - prior_state_vector(2*ii-1:2*ii,1) == 0
+  //       % This should only run on timestep 1.
+  //       v = rand(2,1) - [.5;.5];
+  //       outvector(ii*2-1:ii*2,1) = v/norm(v,2)*umax;
+  //   else
+  //       % Determines direction from prior step
+  //       v = state_vector(2*ii-1:2*ii,1) - prior_state_vector(2*ii-1:2*ii,1);
+  //       outvector(ii*2-1:ii*2,1) = v/norm(v,2)*umax;
+  //   end
+    
+  //   if norm(outvector(ii*2-1:ii*2,1),2) >= umax
+  //       outvector(ii*2-1:ii*2,1) = outvector(ii*2-1:ii*2,1)/norm(outvector(ii*2-1:ii*2,1),2)*umax;
+  //   end
+  //   end
+
+  tiny_msgs psi_gradient_sum, psi_collision_sum;
+  psi_gradient_sum.x=0; psi_gradient_sum.y=0; psi_gradient_sum.z=0;
+  psi_collision_sum.x=0; psi_collision_sum.y=0; psi_collision_sum.z=0;
+  std::vector<int> neigh_list;
+  neigh_list=get_in_neighbours(G.at(0), i);
+  if (!neigh_list.empty()){
+    for (int j=0; j<neigh_list.size(); j++){
+      tiny_msgs grad_vector=psi_col_gradient(i,j);
+      psi_collision_sum=add_vectors(psi_collision_sum,grad_vector);      
+    }
+  }
+   NLists nlist;
+   nlist=velocity_filter(i,yidot);
+
+   if (!nlist.u_neigh.empty()){
+     for (int j=0; j<nlist.u_neigh.size(); j++){
+       tiny_msgs tau_ij = calc_fvec(tau[i],tau[j]);
+       tiny_msgs grad_vector=psi_gradient(i,j,tau_ij);
+       psi_gradient_sum = add_vectors(psi_gradient_sum, grad_vector);
+     }
+   }
+
+   
+
+  
+
+  
+
+  
+
+  
 
   
 }

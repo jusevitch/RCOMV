@@ -79,7 +79,8 @@ private:
   ref_msgs mali_states; // reference location for malicious agents
 
   //message for state
-  std::vector<state_msgs> state_lists; 
+  std::vector<state_msgs> state_lists;
+  std::vector<int> role_list;
 
   // Callback Functions
   void ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_idx);
@@ -90,7 +91,9 @@ private:
   // vector for odometry
   
   std::vector<tiny_msgs> swarm_odom;
+  std::vector<tiny_msgs> swarm_tau;
   std::vector<tiny_msgs> prev_odom;
+  std::vector<tiny_msgs> prev_tau;
   std::vector<tiny_msgs> barrier_out;
 
   // private variables for intermediate calculations
@@ -104,21 +107,27 @@ private:
   int demo; // 1: x dir 1D motion,  2: z dir 1D motion, 3: 3D motion
   double cx, cy, cz;
   float rc, rp; // communication radius and proximity radius
+  float ds, dc; // safety distance for collision avoidance & distance where barrier function starts being applied
   std::vector<std::vector<float>> tau;
  
   // Some Helper functions
   ref_msgs WMSRAlgorithm(const std::vector<ref_msgs> &list);
   void Formation();
 
-  std::vector<Matrix> Calc_Adjacency(const std::vector<state_msgs> &state_lists, std::vector<Matrix> &G, float rc, float rp, int n);
+  void Calc_Adjacency();
   double calculate_norm(const state_msgs &state1, const state_msgs &state2);
   std::vector<int> get_in_neighbours(const Matrix &Q, int agent);
   tiny_msgs calc_vec(const tiny_msgs &state1,const tiny_msgs &state2);
   void populate_state_vector();
   void save_state_vector();
-  void filtered_barrier_function(int iteration);
+  void filtered_barrier_function(int iteration, int idx);
+  void filtered_barrier_collision(int iteration, int idx);
+
   float psi_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent, const tiny_msgs &tau_ij);
   tiny_msgs psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_ij);
+  float psi_col_helper(const tiny_msgs &m_agent, const tiny_msgs  &n_agent); //internally uses ds,dc
+  tiny_msgs psi_col_gradient(int m_agent, int n_agent);
+
   double self_norm(const tiny_msgs &tiny);
   void populate_velocity_vector(std::vector<tiny_msgs> &yidot);
   std::vector<Neigh> multiply_vectors(const std::vector<tiny_msgs> &vec1,const std::vector<tiny_msgs> &vec2, const std::vector<int> neigh);
