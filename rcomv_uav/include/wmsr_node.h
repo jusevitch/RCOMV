@@ -113,7 +113,7 @@ private:
   std::vector<Matrix> Calc_Adjacency(const std::vector<state_msgs> &state_lists, std::vector<Matrix> &G, float rc, float rp, int n);
   double calculate_norm(const state_msgs &state1, const state_msgs &state2);
   std::vector<int> get_in_neighbours(const Matrix &Q, int agent);
-  tiny_msgs calc_vec(const tiny_msgs &state1, const tiny_msgs &state2);
+  tiny_msgs calc_vec(const tiny_msgs &state1,const tiny_msgs &state2);
   void populate_state_vector();
   void save_state_vector();
   void filtered_barrier_function(int iteration);
@@ -125,7 +125,8 @@ private:
   NLists velocity_filter(int i, const std::vector<tiny_msgs> &yidot);
   void make_tau_vector();
   tiny_msgs add_vectors(tiny_msgs &a, tiny_msgs &b);
-  tiny_msgs multiply_scalar_vec(const float gain, const std::vector<tiny_msgs> &vec);
+  tiny_msgs multiply_scalar_vec(const float gain, const tiny_msgs &vec);
+  tiny_msgs calc_fvec(const std::vector<float> &state1, const std::vector<float> &state2);
 }; // end of class
 
 // Helper functions
