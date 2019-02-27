@@ -434,6 +434,14 @@ float WMSRNode::psi_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent, c
   return output;
   
 }
+
+tiny_msgs WMSRNode::add_vectors(tiny_msgs &a, tiny_msgs &b){
+  tiny_msgs result;
+  result.x = a.x + b.x;
+  result.y = a.y + b.y;
+  result.z = a.z + b.z;
+  return result;
+}
 tiny_msgs WMSRNode::psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_ij){
   //use rp
   float h=0.001;
@@ -473,7 +481,15 @@ std::vector<Neigh> WMSRNode::multiply_vectors(const std::vector<tiny_msgs> &vec1
   return output;
 }
 
-NLists WMSRNode::velocity_filter(int i, std::vector<tiny_msgs> &yidot){
+tiny_msgs WMSRNode::multiply_scalar_vec(const float gain, const std::vector<tiny_msgs> &vec){
+   tiny_msgs result;
+   result.x = gain*vec.x;
+   result.y = gain*vec.y;
+   result.z = gain*vec.z;
+   return result;
+}
+
+NLists WMSRNode::velocity_filter(int i,const std::vector<tiny_msgs> &yidot){
     std::vector<int> neigh_list;
     neigh_list=get_in_neighbours(G.at(0), i);
     std::vector<tiny_msgs> grad_vector;
@@ -482,9 +498,9 @@ NLists WMSRNode::velocity_filter(int i, std::vector<tiny_msgs> &yidot){
     NLists nlist;
     if (!neigh_list.empty()){
         for (int j=0; j<neigh_list.size(); j++){
-             tiny_msgs tau_ij = calc_vec(swarm_odom[i],swarm_odom[neigh_list[j]]);
+	     tiny_msgs tau_ij = calc_vec(tau[i],tau[neigh_list[j]]); //calculating tauij 
              grad_vector.push_back(psi_gradient(i,neigh_list[j],tau_ij));	
-            diff_vector.push_back(calc_vec(yidot[i],yidot[neigh_list[j]]));
+             diff_vector.push_back(calc_vec(yidot[i],yidot[neigh_list[j]]));
          }
         vel_grad = WMSRNode::multiply_vectors(grad_vector,diff_vector,neigh_list);
 
@@ -517,19 +533,50 @@ void WMSRNode::filtered_barrier_function(int iteration){
     WMSRNode::save_state_vector();
   }
   auto agents_no = swarm_odom.size();
+  barrier_out.resize(agents_no);
   std::vector<tiny_msgs> yidot;
   WMSRNode::populate_velocity_vector(yidot);
   for (int i=0; i<agents_no; i++){// this is where the filter_function starts
 
     NLists nlist;
     nlist=velocity_filter(i, yidot);
+    tiny_msgs psi_gradient_sum;
+    psi_gradient_sum.x=0; psi_gradient_sum.y=0; psi_gradient_sum.z=0;
     if (!nlist.u_neigh.empty()){
 	for (int j=0; j<nlist.u_neigh.size(); j++){
-	  tiny_msgs tau_ij = calc_vec(swarm_odom[i],swarm_odom[nlist.u_neigh[j]]);
+	  tiny_msgs tau_ij = calc_vec(tau[i],tau[neigh_list[j]]);
+	  psi_gradient_sum=add_vectors(psi_gradient_sum,psi_gradient(i,nlist.u_neigh[j],tau_ij));
         }
 	
     }
-   //this is where the filter function ends
+
+
+    //Aprox_filtered_i = Aprox(ii,:);
+    //Aprox_filtered_i(1,filtered_list) = zeros(1,length(filtered_list));
+    //Lprox_filtered_i = -Aprox_filtered_i;
+    //Lprox_filtered_i(1,ii) = sum(Aprox_filtered_i);
+    
+    float gain = -100.0; //% Makes barrier function converge faster.
+    barrier_out[i] = multiply_scalar_vec(gain,psi_gradient_sum); 
+		    //outvector(ii*2-1:ii*2,1) = -Psi_gradient_sum*gain; % Works for gradient filtering. No Laplacian Term -- converges, but really slow
+    
+    //if norm(outvector(ii*2-1:ii*2,1),2) >= 50
+    //    outvector(ii*2-1:ii*2,1) = outvector(ii*2-1:ii*2,1)/norm(outvector(ii*2-1:ii*2,1),2)*20;
+    //end
+    if (self_norm(barrier_out[i]) >=50){
+      barrier_out[i] = multiply_scalar_vec(20.00f / self_norm(barrier_out[i]), barrier_out[i]);
+    }
+    
+    //if isfield(args,'misbehaving_agents')
+    //    misbehaving_agents = args.misbehaving_agents;
+    //else
+    //    misbehaving_agents = [];
+    //end
+    
+    //for ii=misbehaving_agents    
+    //    outvector(ii*2-1:ii*2,1) = [0,80*cos(args.tt/20 + 2)];    
+
+   
   }
 
   

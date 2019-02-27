@@ -91,6 +91,7 @@ private:
   
   std::vector<tiny_msgs> swarm_odom;
   std::vector<tiny_msgs> prev_odom;
+  std::vector<tiny_msgs> barrier_out;
 
   // private variables for intermediate calculations
   //int weight_x, weight_y, weight_z;   // weights for the neighbor agents
@@ -121,8 +122,10 @@ private:
   double self_norm(const tiny_msgs &tiny);
   void populate_velocity_vector(std::vector<tiny_msgs> &yidot);
   std::vector<Neigh> multiply_vectors(const std::vector<tiny_msgs> &vec1,const std::vector<tiny_msgs> &vec2, const std::vector<int> neigh);
-  NLists velocity_filter(int i, std::vector<tiny_msgs> &yidot);
+  NLists velocity_filter(int i, const std::vector<tiny_msgs> &yidot);
   void make_tau_vector();
+  tiny_msgs add_vectors(tiny_msgs &a, tiny_msgs &b);
+  tiny_msgs multiply_scalar_vec(const float gain, const std::vector<tiny_msgs> &vec);
 }; // end of class
 
 // Helper functions
