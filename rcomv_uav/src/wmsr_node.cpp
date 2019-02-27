@@ -367,9 +367,9 @@ std::vector<Matrix> WMSRNode::Calc_Adjacency(const std::vector<state_msgs> &stat
   for (int i=0; i<n; i++){
     for (int j=0; j<n; j++){
       val=WMSRNode::calculate_norm(state_lists.at(i),state_lists.at(j));
-      if (val<rc)
+      if (val<rc) // communication radius 
 	G[0][i][j]=1;
-      if (val<rp)
+      if (val<rp) // proximity radius
 	G[1][i][j]=1;
     }
   }
@@ -551,22 +551,21 @@ void WMSRNode::filtered_barrier_function(int iteration){
     }
 
 
-    //Aprox_filtered_i = Aprox(ii,:);
-    //Aprox_filtered_i(1,filtered_list) = zeros(1,length(filtered_list));
-    //Lprox_filtered_i = -Aprox_filtered_i;
-    //Lprox_filtered_i(1,ii) = sum(Aprox_filtered_i);
+    std::vector<int> Glist;
+    Glist=G[1][i];
+    for (int j=0; j<nlist.f_neigh.size(); j++){
+       Glist[nlist.f_neigh[j]]=0;
+    }
+
+    //Get the sum of Glist
     
     float gain = -100.0; //% Makes barrier function converge faster.
     barrier_out[i] = multiply_scalar_vec(gain,psi_gradient_sum); 
-		    //outvector(ii*2-1:ii*2,1) = -Psi_gradient_sum*gain; % Works for gradient filtering. No Laplacian Term -- converges, but really slow
-    
-    //if norm(outvector(ii*2-1:ii*2,1),2) >= 50
-    //    outvector(ii*2-1:ii*2,1) = outvector(ii*2-1:ii*2,1)/norm(outvector(ii*2-1:ii*2,1),2)*20;
-    //end
+
     if (self_norm(barrier_out[i]) >=50){
       barrier_out[i] = multiply_scalar_vec(20.00f / self_norm(barrier_out[i]), barrier_out[i]);
     }
-    
+    //Find a way to get the malicious agents
     //if isfield(args,'misbehaving_agents')
     //    misbehaving_agents = args.misbehaving_agents;
     //else
