@@ -134,6 +134,7 @@ private:
   NLists velocity_filter(int i, const std::vector<tiny_msgs> &yidot);
   void make_tau_vector();
   tiny_msgs add_vectors(tiny_msgs &a, tiny_msgs &b);
+  tiny_msgs subtract_vectors(tiny_msgs &a, tiny_msgs &b);
   tiny_msgs multiply_scalar_vec(const float gain, const tiny_msgs &vec);
   tiny_msgs calc_fvec(const std::vector<float> &state1, const std::vector<float> &state2);
 }; // end of class

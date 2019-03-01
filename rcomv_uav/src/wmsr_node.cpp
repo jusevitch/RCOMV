@@ -463,6 +463,14 @@ tiny_msgs WMSRNode::add_vectors(tiny_msgs &a, tiny_msgs &b){
   result.z = a.z + b.z;
   return result;
 }
+
+tiny_msgs WMSRNode::subtract_vectors(tiny_msgs &a, tiny_msgs &b){
+  tiny_msgs result;
+  result.x = a.x - b.x;
+  result.y = a.y - b.y;
+  result.z = a.z - b.z;
+  return result;
+}
 tiny_msgs WMSRNode::psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_ij){
   //use rp
   float h=0.001;
@@ -616,6 +624,14 @@ void WMSRNode::filtered_barrier_function(int iteration, int i){
   if (self_norm(barrier_out[i]) >=50){
     barrier_out[i] = multiply_scalar_vec(20.00f / self_norm(barrier_out[i]), barrier_out[i]);
   }
+
+  if (role_list[i]==1){
+    tiny_msgs malic;
+    malic.x=0;
+    malic.y=80*std::cos(iteration/20 + 2);
+    malic.z=0;
+    barrier_out[i]=malic;
+  }
  
     //Just check if i's role is 1 in the role_list and change the barrier_out vector accordingly.
     //for ii=misbehaving_agents    
@@ -658,6 +674,17 @@ void WMSRNode::filtered_barrier_collision(int iteration, int i){
   //   end
   //   end
 
+  if (iteration==0){
+    
+  }
+  else{
+    barrier_out[i]=subtract_vectors(swarm_odom[i], prev_odom[i]);
+    barrier_out[i]=multiply_scalar_vec(1.00f/(20*self_norm(barrier_out[i])), barrier_out[i]);
+  }
+     if (self_norm(barrier_out[i]) >=50){
+     barrier_out[i] = multiply_scalar_vec(1.00f / (50.0*self_norm(barrier_out[i])), barrier_out[i]);
+  }
+
   tiny_msgs psi_gradient_sum, psi_collision_sum;
   psi_gradient_sum.x=0; psi_gradient_sum.y=0; psi_gradient_sum.z=0;
   psi_collision_sum.x=0; psi_collision_sum.y=0; psi_collision_sum.z=0;
@@ -679,6 +706,15 @@ void WMSRNode::filtered_barrier_collision(int iteration, int i){
        psi_gradient_sum = add_vectors(psi_gradient_sum, grad_vector);
      }
    }
+
+   float gain=10.0;
+   barrier_out[i] = add_vectors(psi_gradient_sum, psi_collision_sum);
+   barrier_out[i] = multiply_scalar_vec(gain,barrier_out[i]);
+
+   if (self_norm(barrier_out[i]) >=50){
+     barrier_out[i] = multiply_scalar_vec(1.00f / (50.0*self_norm(barrier_out[i])), barrier_out[i]);
+  }
+   
 
    
 
