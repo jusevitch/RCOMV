@@ -109,6 +109,7 @@ private:
   float rc, rp; // communication radius and proximity radius
   float ds, dc; // safety distance for collision avoidance & distance where barrier function starts being applied
   std::vector<std::vector<float>> tau;
+  float umax;
  
   // Some Helper functions
   ref_msgs WMSRAlgorithm(const std::vector<ref_msgs> &list);
