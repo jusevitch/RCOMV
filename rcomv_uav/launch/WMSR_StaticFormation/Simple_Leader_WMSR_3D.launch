@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
   <arg name="mav_name" default="firefly"/>
   <arg name="world_name" default="basic"/>
@@ -7,6 +8,7 @@
 
   <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models"/>
   <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models"/>
+
   
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find rotors_gazebo)/worlds/$(arg world_name).world" />
@@ -25,6 +27,11 @@
 	<arg name="cx" default="6" />
 	<arg name="cy" default="6" />
 	<arg name="cz" default="10" />
+	<node name="graph" pkg="state_graph_builder" type="builder">
+	    <param name="n" value="$(arg n)" />
+	</node>
+
+
 
 	<!-- uav 1 -->
 	<include file="$(find rcomv_uav)/launch/uav_with_control.launch">

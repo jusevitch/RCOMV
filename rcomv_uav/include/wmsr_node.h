@@ -33,7 +33,6 @@
 //typedef Eigen::Vector3d ref_msgs;
 typedef geometry_msgs::PointStamped ref_msgs;
 typedef geometry_msgs::Point tiny_msgs;
-typedef nav_msgs::Odometry state_msgs;
 typedef std::vector<std::vector<int>> Matrix;
 struct Neigh{
   double val;
@@ -79,17 +78,17 @@ private:
   ref_msgs mali_states; // reference location for malicious agents
 
   //message for state
-  std::vector<state_msgs> state_lists;
+  std::vector<ref_msgs> state_lists;
   std::vector<int> role_list;
 
   // Callback Functions
   void ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_idx);
   void ref_pubCallback(const ros::TimerEvent& event);
   void out_pubCallback(const ros::TimerEvent& event);
-  void state_subCallback(const state_msgs::ConstPtr& msgs, const int list_idx);
+  void state_subCallback(const ref_msgs::ConstPtr& msgs, const int list_idx);
 
   // vector for odometry
-  
+
   std::vector<tiny_msgs> swarm_odom;
   std::vector<tiny_msgs> swarm_tau;
   std::vector<tiny_msgs> prev_odom;
@@ -110,13 +109,13 @@ private:
   float ds, dc; // safety distance for collision avoidance & distance where barrier function starts being applied
   std::vector<std::vector<float>> tau;
   float umax;
- 
+
   // Some Helper functions
   ref_msgs WMSRAlgorithm(const std::vector<ref_msgs> &list);
   void Formation();
 
   void Calc_Adjacency();
-  double calculate_norm(const state_msgs &state1, const state_msgs &state2);
+  double calculate_norm(const ref_msgs &state1, const ref_msgs &state2);
   std::vector<int> get_in_neighbours(const Matrix &Q, int agent);
   tiny_msgs calc_vec(const tiny_msgs &state1,const tiny_msgs &state2);
   void populate_state_vector();

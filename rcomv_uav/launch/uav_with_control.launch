@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
 
 	<arg name="mav_name" default="firefly"/>
@@ -16,7 +17,7 @@
 	<arg name="F" default="0" />
 	<arg name="demo" default="2" />
 
-  	<arg name="color" default="Black" />
+  	<!--arg name="color" default="Black" /-->
 
 	<arg name="lead_x" default="6" />
 	<arg name="lead_y" default="6" />
@@ -35,7 +36,7 @@
       		<arg name="x" value="$(arg x)"/>
       		<arg name="y" value="$(arg y)"/>
 					<arg name="z" value="$(arg z)"/>
-					<arg name="color" value="$(arg color)" />
+					<!--arg name="color" value="$(arg color)" /-->
   </include>
 
 	<!-- controller node -->

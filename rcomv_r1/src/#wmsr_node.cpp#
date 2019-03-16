@@ -99,8 +99,9 @@ WMSRNode::WMSRNode()
     ref_pub_timer = nh.createTimer(ros::Duration(0.1),
                 &WMSRNode::ref_pubCallback, this);
 
-    twist_msgs obs_vel;
-    std::string sub3_topic = "/ugv" + std::to_string(idx) + "/cmd_vel_mux/input/teleop"; 
+    //twist_msgs obs_vel;
+    //std::string sub3_topic = "/ugv" + std::to_string(idx) + "/cmd_vel_mux/input/teleop";
+    
 
 
     // Subscribers: (msgs list to hold the msgs from subscibed topics)
