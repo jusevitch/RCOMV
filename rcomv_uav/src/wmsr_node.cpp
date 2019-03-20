@@ -49,7 +49,6 @@ WMSRNode::WMSRNode()
     role_list[idx]=role;
     umax=50.0;
 
-    G.resize(n);
     state_lists.resize(n);
     make_tau_vector();
 
