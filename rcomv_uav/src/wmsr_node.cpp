@@ -1,5 +1,3 @@
-
-
 #include "wmsr_node.h"
 
 // Constructor
@@ -102,10 +100,13 @@ WMSRNode::WMSRNode()
                 &WMSRNode::ref_pubCallback, this);
 
 // gotta change this
-      ref_msgs obs_state;
+      // ref_msgs obs_state;
+      //
+      // for (int i=1; i<=n+1; i++){
+      //   std::string sub2_topic = "/uav" + std::to_string(i) + "/ground_truth/position";
+      //   states_subs.push_back(nh.subscribe<ref_msgs>(sub2_topic, 10, boost::bind(&WMSRNode::state_subCallback, this, _1, i)) ) ;
+      // }
 
-      std::string sub2_topic = "/uav" + std::to_string(idx) + "/ground_truth/position";
-      states_subs.push_back(nh.subscribe<ref_msgs>(sub2_topic, 10, boost::bind(&WMSRNode::state_subCallback, this, _1, idx-1)) ) ;
 
 
     // Subscribers: (and msgs list to hold the msgs from subscibed topics)
@@ -701,19 +702,6 @@ void WMSRNode::filtered_barrier_collision(int iteration, int i){
       barrier_out[i] = multiply_scalar_vec(umax / self_norm(barrier_out[i]), barrier_out[i]);
     }
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 // main function

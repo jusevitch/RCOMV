@@ -27,8 +27,8 @@ paused = 'true';
 % size of the formation
 % k must be greater or equal to 5
 % -------------------------- modify here ----------------------------
-n = 15;    % number of agents
-k = 7;    % number of neighbours for each agent 
+n = 5;    % number of agents
+k = 5;    % number of neighbours for each agent 
 % -------------------------------------------------------------------
 
 % type of demo
@@ -41,7 +41,6 @@ demo = 3;
 
 % randomly generate agents
 [F, norx, lead, mali] = SimpleLeaderWMSR_3D(n, k);
-
 
 % leaders' static inform states (formation center location)
 % -------------------------- modify here ----------------------------
