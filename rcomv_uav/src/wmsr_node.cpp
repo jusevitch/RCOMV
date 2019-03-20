@@ -601,7 +601,7 @@ void WMSRNode::filtered_barrier_function(int iteration, int i){
     malic.x=0;
     malic.y=80*std::cos(iteration/20 + 2);
     malic.z=0;
-    barrier_out[i]=malic;
+    barrier_out=malic;
   }
   else{
     std::vector<tiny_msgs> yidot;
@@ -627,10 +627,10 @@ void WMSRNode::filtered_barrier_function(int iteration, int i){
     //Get the sum of Glist
 
     float gain = -100.0; //% Makes barrier function converge faster.
-    barrier_out[i] = multiply_scalar_vec(gain,psi_gradient_sum);
+    barrier_out = multiply_scalar_vec(gain,psi_gradient_sum);
 
-    if (self_norm(barrier_out[i]) >=50){
-      barrier_out[i] = multiply_scalar_vec(20.00f / self_norm(barrier_out[i]), barrier_out[i]);
+    if (self_norm(barrier_out) >=50){
+      barrier_out = multiply_scalar_vec(20.00f / self_norm(barrier_out), barrier_out);
     }
 
       //Just check if i's role is 1 in the role_list and change the barrier_out vector accordingly.
@@ -659,14 +659,14 @@ void WMSRNode::filtered_barrier_collision(int iteration, int i){
       rand_num.x = dis(e) - 0.5f;
       rand_num.y = dis(e) - 0.5f;
       rand_num.z = 0;
-      barrier_out[i] = multiply_scalar_vec(umax / self_norm(rand_num), barrier_out[i]);
+      barrier_out = multiply_scalar_vec(umax / self_norm(rand_num), barrier_out);
     }
     else{
-      barrier_out[i]=subtract_vectors(swarm_odom[i], prev_odom[i]);
-      barrier_out[i]=multiply_scalar_vec(umax / self_norm(barrier_out[i]), barrier_out[i]);
+      barrier_out=subtract_vectors(swarm_odom[i], prev_odom[i]);
+      barrier_out=multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
     }
-      if (self_norm(barrier_out[i]) >=umax){
-      barrier_out[i] = multiply_scalar_vec(umax / self_norm(barrier_out[i]), barrier_out[i]);
+      if (self_norm(barrier_out) >=umax){
+      barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
     }
   }
   else{
@@ -694,11 +694,11 @@ void WMSRNode::filtered_barrier_collision(int iteration, int i){
     }
 
     float gain=-10.0;
-    barrier_out[i] = add_vectors(psi_gradient_sum, psi_collision_sum);
-    barrier_out[i] = multiply_scalar_vec(gain,barrier_out[i]);
+    barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
+    barrier_out = multiply_scalar_vec(gain,barrier_out);
 
-    if (self_norm(barrier_out[i]) >=umax){
-      barrier_out[i] = multiply_scalar_vec(umax / self_norm(barrier_out[i]), barrier_out[i]);
+    if (self_norm(barrier_out) >=umax){
+      barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
     }
   }
 }

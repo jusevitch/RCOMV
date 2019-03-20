@@ -93,7 +93,7 @@ private:
   std::vector<tiny_msgs> swarm_tau;
   std::vector<tiny_msgs> prev_odom;
   std::vector<tiny_msgs> prev_tau;
-  std::vector<tiny_msgs> barrier_out;
+  tiny_msgs barrier_out;
 
   // private variables for intermediate calculations
   //int weight_x, weight_y, weight_z;   // weights for the neighbor agents

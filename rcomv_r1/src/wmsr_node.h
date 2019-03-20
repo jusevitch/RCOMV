@@ -34,6 +34,7 @@
 //typedef Eigen::Vector3d ref_msgs;
 typedef geometry_msgs::PoseStamped ref_msgs;
 typedef geometry_msgs::Point tiny_msgs;
+typedef geometry_msgs::Pose pose_msgs;
 typedef nav_msgs::Odometry state_msgs;
 typedef geometry_msgs::Twist twist_msgs;
 typedef std::vector<std::vector<int>> Matrix;
@@ -67,7 +68,8 @@ private:
   // ROS  Publishers and Timers
   ros::Publisher ref_pub;  // publish reference to other neighbor WMSR Nodes
   ros::Publisher output_pub; // publish the goal to the robot
-  ros::Timer ref_pub_timer, out_pub_timer;
+  ros::Publisher new_pub;
+  ros::Timer ref_pub_timer, out_pub_timer, new_pub_timer;
 
   // ROS  Subscribers
   std::vector<ros::Subscriber> ref_subs; // subscribe references from neighbor WMSR nodes
@@ -82,7 +84,7 @@ private:
   ref_msgs mali_states; // reference location for malicious agents
 
   //message for states
-  std::vector<ref_msgs> state_lists;
+  std::vector<pose_msgs> state_lists;
   //std::vector<twist_msgs> twist_lists;
   std::vector<int> role_list;
 
@@ -90,6 +92,7 @@ private:
   void ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_idx);
   void ref_pubCallback(const ros::TimerEvent& event);
   void out_pubCallback(const ros::TimerEvent& event);
+  void new_pubCallback(const ros::TimerEvent& event);
   void state_subCallback(const state_msgs::ConstPtr& msgs, const int list_idx);
 
   // vector for odometry in the barrier functions
@@ -97,7 +100,7 @@ private:
   std::vector<tiny_msgs> swarm_tau;
   std::vector<tiny_msgs> prev_odom;
   std::vector<tiny_msgs> prev_tau;
-  std::vector<tiny_msgs> barrier_out;
+  tiny_msgs barrier_out;
 
   // private variables for intermediate calculations
   //int weight_x, weight_y, weight_z;   // weights for the neighbor agents
@@ -114,14 +117,16 @@ private:
   float ds, dc; // safety distance for collision avoidance & distance where barrier function starts being applied
   std::vector<std::vector<float>> tau;
   float umax;
+  uint iteration=0;
 
   // Some Helper functions
   // WMSR Algorithm
   ref_msgs WMSRAlgorithm(const std::vector<ref_msgs> &list);
   // Compute the acutal location of the agent by adding its offset to the center location
   void Formation();
-   
-   double calculate_norm(const ref_msgs &state1, const ref_msgs &state2);
+
+  void Calc_Adjacency();
+   double calculate_norm(const pose_msgs &state1, const pose_msgs &state2);
   std::vector<int> get_in_neighbours(const Matrix &Q, int agent);
   tiny_msgs calc_vec(const tiny_msgs &state1,const tiny_msgs &state2);
   void populate_state_vector();

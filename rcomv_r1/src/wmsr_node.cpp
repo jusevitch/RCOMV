@@ -65,6 +65,10 @@ WMSRNode::WMSRNode()
     out_pub_timer = nh.createTimer(ros::Duration(0.1),
                 &WMSRNode::out_pubCallback, this);
 
+    new_pub=nh.advertise<tiny_msgs>("barrier",10);
+    new_pub_timer = nh.createTimer(ros::Duration(0.1),
+				   &WMSRNode::new_pubCallback,this);
+
 
     // Subscriber: subscribe the switch topic
     switch_sub = nh.subscribe("/switch", 10, &WMSRNode::switch_subCallback, this);
@@ -96,12 +100,14 @@ WMSRNode::WMSRNode()
     // frequency: 10 Hz
     ref_pub_timer = nh.createTimer(ros::Duration(0.1),
                 &WMSRNode::ref_pubCallback, this);
+    
 
     twist_msgs obs_vel;
     for (int i=1; i<=n+1; i++){
            std::string sub3_topic = "/ugv" + std::to_string(idx) + "/odom"; 
            states_subs.push_back(nh.subscribe<state_msgs>(sub3_topic, 10, boost::bind(&WMSRNode::state_subCallback, this, _1, i)) ) ;
     }
+    filtered_barrier_collision(iteration,idx);
 
 
     // Subscribers: (msgs list to hold the msgs from subscibed topics)
@@ -145,9 +151,14 @@ void WMSRNode::ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_id
 }
 
 void WMSRNode::state_subCallback(const state_msgs::ConstPtr& msgs, const int list_idx){
-  state_lists[list_idx].point=msgs->pose.pose.position;
+  state_lists[list_idx].position=msgs->pose.pose.position;
+  state_lists[list_idx].orientation=msgs->pose.pose.orientation;
 }
 
+void WMSRNode::new_pubCallback(const ros::TimerEvent& event){
+  new_pub.publish(barrier_out);
+    
+}
 // inform states Publisher Callback
 void WMSRNode::ref_pubCallback(const ros::TimerEvent& event)
 {
@@ -184,6 +195,7 @@ void WMSRNode::ref_pubCallback(const ros::TimerEvent& event)
   }
 
 }
+
 
 // Output Publisher Callback
 void WMSRNode::out_pubCallback(const ros::TimerEvent& event)
@@ -331,11 +343,11 @@ double FilterOutlier(std::vector<double> &list, const int k, const double inform
   return 1.0 / double(valid_size);
 }
 
-double WMSRNode::calculate_norm(const ref_msgs &state1, const ref_msgs &state2){
+double WMSRNode::calculate_norm(const pose_msgs &state1, const pose_msgs &state2){
   double val;
-  double xs=state1.point.x - state2.point.x;
-  double ys=state1.point.y - state2.point.y;
-  double zs=state1.point.z - state2.point.z;
+  double xs=state1.position.x - state2.position.x;
+  double ys=state1.position.y - state2.position.y;
+  double zs=state1.position.z - state2.position.z;
   val = sqrt( (xs*xs)+ (ys*ys) + (zs*zs));
   return val;
 }
@@ -390,14 +402,14 @@ tiny_msgs WMSRNode::calc_fvec(const std::vector<float> &state1, const std::vecto
 
 void WMSRNode::populate_state_vector(){
   for(int i=0; i < state_lists.size(); i++){
-    swarm_tau[i].x = state_lists[i].point.x - tau[i][0];
-    swarm_tau[i].y = state_lists[i].point.y - tau[i][1];
-    swarm_tau[i].z = state_lists[i].point.z - tau[i][2];
+    swarm_tau[i].x = state_lists[i].position.x - tau[i][0];
+    swarm_tau[i].y = state_lists[i].position.y - tau[i][1];
+    swarm_tau[i].z = state_lists[i].position.z - tau[i][2];
 
 
-    swarm_odom[i].x = state_lists[i].point.x;
-    swarm_odom[i].y = state_lists[i].point.y;
-    swarm_odom[i].z = state_lists[i].point.z;
+    swarm_odom[i].x = state_lists[i].position.x;
+    swarm_odom[i].y = state_lists[i].position.y;
+    swarm_odom[i].z = state_lists[i].position.z;
   }
 }
 
@@ -580,7 +592,7 @@ void WMSRNode::filtered_barrier_function(int iteration, int i){
     malic.x=0;
     malic.y=80*std::cos(iteration/20 + 2);
     malic.z=0;
-    barrier_out[i]=malic;
+    barrier_out=malic;
   }
   else{
     std::vector<tiny_msgs> yidot;
@@ -606,10 +618,10 @@ void WMSRNode::filtered_barrier_function(int iteration, int i){
     //Get the sum of Glist
 
     float gain = -100.0; //% Makes barrier function converge faster.
-    barrier_out[i] = multiply_scalar_vec(gain,psi_gradient_sum);
+    barrier_out = multiply_scalar_vec(gain,psi_gradient_sum);
 
-    if (self_norm(barrier_out[i]) >=50){
-      barrier_out[i] = multiply_scalar_vec(20.00f / self_norm(barrier_out[i]), barrier_out[i]);
+    if (self_norm(barrier_out) >=50){
+      barrier_out = multiply_scalar_vec(20.00f / self_norm(barrier_out), barrier_out);
     }
 
       //Just check if i's role is 1 in the role_list and change the barrier_out vector accordingly.
@@ -638,14 +650,14 @@ void WMSRNode::filtered_barrier_collision(int iteration, int i){
       rand_num.x = dis(e) - 0.5f;
       rand_num.y = dis(e) - 0.5f;
       rand_num.z = 0;
-      barrier_out[i] = multiply_scalar_vec(umax / self_norm(rand_num), barrier_out[i]);
+      barrier_out = multiply_scalar_vec(umax / self_norm(rand_num), barrier_out);
     }
     else{
-      barrier_out[i]=subtract_vectors(swarm_odom[i], prev_odom[i]);
-      barrier_out[i]=multiply_scalar_vec(umax / self_norm(barrier_out[i]), barrier_out[i]);
+      barrier_out=subtract_vectors(swarm_odom[i], prev_odom[i]);
+      barrier_out=multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
     }
-      if (self_norm(barrier_out[i]) >=umax){
-      barrier_out[i] = multiply_scalar_vec(umax / self_norm(barrier_out[i]), barrier_out[i]);
+      if (self_norm(barrier_out) >=umax){
+      barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
     }
   }
   else{
@@ -673,13 +685,14 @@ void WMSRNode::filtered_barrier_collision(int iteration, int i){
     }
 
     float gain=-10.0;
-    barrier_out[i] = add_vectors(psi_gradient_sum, psi_collision_sum);
-    barrier_out[i] = multiply_scalar_vec(gain,barrier_out[i]);
+    barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
+    barrier_out = multiply_scalar_vec(gain,barrier_out);
 
-    if (self_norm(barrier_out[i]) >=umax){
-      barrier_out[i] = multiply_scalar_vec(umax / self_norm(barrier_out[i]), barrier_out[i]);
+    if (self_norm(barrier_out) >=umax){
+      barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
     }
   }
+  iteration+=1;
 }
 
 // main function
