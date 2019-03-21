@@ -145,7 +145,7 @@ private:
   tiny_msgs add_vectors(const tiny_msgs &a, const tiny_msgs &b);
   tiny_msgs subtract_vectors(const tiny_msgs &a, const tiny_msgs &b);
   tiny_msgs multiply_scalar_vec(const float gain, const tiny_msgs &vec);
-  tiny_msgs calc_fvec(const std::vector<float> &state1, const std::vector<float> &state2);
+  tiny_msgs calc_fvec(int i, int j);
 
 }; // end of class
 

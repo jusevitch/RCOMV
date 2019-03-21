@@ -66,6 +66,7 @@ WMSRNode::WMSRNode()
                 &WMSRNode::out_pubCallback, this);
 
 
+
     // Subscriber: subscribe the switch topic
     switch_sub = nh.subscribe("/switch", 10, &WMSRNode::switch_subCallback, this);
     // wait until receiving the turn on signal
@@ -102,9 +103,6 @@ WMSRNode::WMSRNode()
         states_subs.push_back(nh.subscribe<state_msgs>(sub3_topic, 10, boost::bind(&WMSRNode::state_subCallback, this, _1, i)) ) ;
     }
 
-    Calc_Adjacency();
-   filtered_barrier_collision(idx);
-
 
     // Subscribers: (msgs list to hold the msgs from subscibed topics)
     for (int i = 1; i <= k; i++) {
@@ -123,6 +121,11 @@ WMSRNode::WMSRNode()
       ROS_INFO("sub_idx at: [%d] with topic name: ", sub_idx);
     }
 
+    
+    new_pub=nh.advertise<tiny_msgs>("barrier",10);
+    new_pub_timer = nh.createTimer(ros::Duration(0.1),
+				   &WMSRNode::new_pubCallback,this);
+
 
     ROS_INFO_STREAM("Started ugv"<<idx<<" WMSR Node.");
   }
@@ -134,6 +137,16 @@ WMSRNode::~WMSRNode()
   ros::shutdown();
 }
 
+
+void WMSRNode::new_pubCallback(const ros::TimerEvent& event){
+  Calc_Adjacency();
+  // populate_state_vector();
+  // for (int i=0; i<n; i++){
+  //   ROS_INFO("Swarm x %lf", swarm_odom[i].x);
+  //   ROS_INFO("Swarm y %lf",swarm_odom[i].y);
+  // }
+  // //filtered_barrier_collision(idx);
+}
 // Switch signal Subscriber Callback Function
 void WMSRNode::switch_subCallback(const std_msgs::Bool::ConstPtr& msg){
   switch_signal.data = msg->data;
@@ -148,6 +161,7 @@ void WMSRNode::ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_id
 {
   ref_lists[list_idx].header = msgs->header;
   ref_lists[list_idx].pose = msgs->pose;
+    
 }
 
 // inform states Publisher Callback
@@ -164,6 +178,9 @@ void WMSRNode::ref_pubCallback(const ros::TimerEvent& event)
   // implement WMSR algorithm to update inform states
   else if (role == 2) {
     inform_states = WMSRNode::WMSRAlgorithm(ref_lists);
+    
+    ROS_INFO("Swarm x %lf", inform_states.pose.position.x);
+    ROS_INFO("Swarm y %lf", inform_states.pose.position.y);
     ref_pub.publish(inform_states);    // publish inform states to other WMSR node
   }
   // Malicious nodes
@@ -381,11 +398,11 @@ tiny_msgs WMSRNode::calc_vec(const tiny_msgs& state1, const tiny_msgs& state2){
   return tiny;
 }
 
-tiny_msgs WMSRNode::calc_fvec(const std::vector<float> &state1, const std::vector<float> &state2){
+tiny_msgs WMSRNode::calc_fvec(int i, int j){
   tiny_msgs tiny;
-  tiny.x = state1[0] - state2[0];
-  tiny.y = state1[1] - state2[1];
-  tiny.z = state1[2] - state2[2];
+  tiny.x = tau[i][0] - tau[j][0];
+  tiny.y = tau[i][1] - tau[j][1];
+  tiny.z = tau[i][2] - tau[j][2];
   return tiny;
 }
 
@@ -548,7 +565,7 @@ NLists WMSRNode::velocity_filter(int i,const std::vector<tiny_msgs> &yidot){
     NLists nlist;
     if (!neigh_list.empty()){
         for (int j=0; j<neigh_list.size(); j++){
-          tiny_msgs tau_ij = calc_fvec(tau[i],tau[neigh_list[j]]); //calculating tauij
+          tiny_msgs tau_ij = calc_fvec(i,neigh_list[j]); //calculating tauij
           grad_vector.push_back(psi_gradient(i,neigh_list[j],tau_ij));
           diff_vector.push_back(calc_vec(yidot[i],yidot[neigh_list[j]]));
          }
@@ -599,7 +616,7 @@ void WMSRNode::filtered_barrier_function(int iteration, int i){
     psi_gradient_sum.x=0; psi_gradient_sum.y=0; psi_gradient_sum.z=0;
     if (!nlist.u_neigh.empty()){
       for (int j=0; j<nlist.u_neigh.size(); j++){
-        tiny_msgs tau_ij = calc_fvec(tau[i],tau[nlist.u_neigh[j]]);
+        tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
         tiny_msgs grad_ij = psi_gradient(i,nlist.u_neigh[j],tau_ij);
         psi_gradient_sum=add_vectors(psi_gradient_sum,grad_ij);
       }
@@ -665,30 +682,32 @@ void WMSRNode::filtered_barrier_collision(int i){
     neigh_list=get_in_neighbours(G.at(0), i);
     if (!neigh_list.empty()){
       for (int j=0; j<neigh_list.size(); j++){
-        tiny_msgs grad_vector=psi_col_gradient(i,j);
+        tiny_msgs grad_vector=psi_col_gradient(i,neigh_list[j]);
         psi_collision_sum=add_vectors(psi_collision_sum,grad_vector);
       }
     }
     NLists nlist;
     nlist=velocity_filter(i,yidot);
+    ROS_INFO("Hello [%ld]", nlist.u_neigh.size());
 
     if (!nlist.u_neigh.empty()){
       for (int j=0; j<nlist.u_neigh.size(); j++){
-	tau[i];
-	tau[j];
-        //tiny_msgs tau_ij = calc_fvec(tau[i],tau[j]);
-        //tiny_msgs grad_vector=psi_gradient(i,j,tau_ij);
-        //psi_gradient_sum = add_vectors(psi_gradient_sum, grad_vector);
+	//tau[i];
+	//tau[j];
+	ROS_INFO("Hello [%d]",nlist.u_neigh[j]);
+        tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
+        tiny_msgs grad_vector=psi_gradient(i,nlist.u_neigh[j],tau_ij);
+        psi_gradient_sum = add_vectors(psi_gradient_sum, grad_vector);
       }
     }
 
-    // float gain=-10.0;
-    // barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
-    // barrier_out = multiply_scalar_vec(gain,barrier_out);
+    float gain=-10.0;
+    barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
+    barrier_out = multiply_scalar_vec(gain,barrier_out);
 
-    // if (self_norm(barrier_out) >=umax){
-    //   barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
-    // }
+    if (self_norm(barrier_out) >=umax){
+      barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
+    }
   }
   iteration+=1;
 }
