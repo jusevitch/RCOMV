@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
    <arg default="r1_sim" name="ugv_name"/>
-   <arg default="basic" name="world_name"/>
+   <arg default="empty_world" name="world_name"/>
    <arg default="true" name="enable_logging"/>
    <arg default="true" name="enable_ground_truth"/>
    <arg default="$(arg ugv_name)" name="log_file"/>

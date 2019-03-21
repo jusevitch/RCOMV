@@ -86,6 +86,7 @@ private:
   void ref_pubCallback(const ros::TimerEvent& event);
   void out_pubCallback(const ros::TimerEvent& event);
   void state_subCallback(const ref_msgs::ConstPtr& msgs, const int list_idx);
+  void new_pubCallback(const ros::TimerEvent& event);
 
   // vector for odometry
 

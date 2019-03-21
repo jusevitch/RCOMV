@@ -1,4 +1,3 @@
-
 #ifndef WMSR_NODE_H
 #define WMSR_NODE_H
 
@@ -86,7 +85,6 @@ private:
   //message for states
   std::vector<pose_msgs> state_lists;
   //std::vector<twist_msgs> twist_lists;
-  std::vector<int> role_list;
 
   // Callback Functions
   void ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_idx);
@@ -128,11 +126,11 @@ private:
   void Calc_Adjacency();
    double calculate_norm(const pose_msgs &state1, const pose_msgs &state2);
   std::vector<int> get_in_neighbours(const Matrix &Q, int agent);
-  tiny_msgs calc_vec(const tiny_msgs &state1,const tiny_msgs &state2);
+  tiny_msgs calc_vec(const tiny_msgs& state1, const tiny_msgs& state2);
   void populate_state_vector();
   void save_state_vector();
   void filtered_barrier_function(int iteration, int idx);
-  void filtered_barrier_collision(int iteration, int idx);
+  void filtered_barrier_collision(int idx);
 
   float psi_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent, const tiny_msgs &tau_ij);
   tiny_msgs psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_ij);
@@ -144,8 +142,8 @@ private:
   std::vector<Neigh> multiply_vectors(const std::vector<tiny_msgs> &vec1,const std::vector<tiny_msgs> &vec2, const std::vector<int> neigh);
   NLists velocity_filter(int i, const std::vector<tiny_msgs> &yidot);
   void make_tau_vector();
-  tiny_msgs add_vectors(tiny_msgs &a, tiny_msgs &b);
-  tiny_msgs subtract_vectors(tiny_msgs &a, tiny_msgs &b);
+  tiny_msgs add_vectors(const tiny_msgs &a, const tiny_msgs &b);
+  tiny_msgs subtract_vectors(const tiny_msgs &a, const tiny_msgs &b);
   tiny_msgs multiply_scalar_vec(const float gain, const tiny_msgs &vec);
   tiny_msgs calc_fvec(const std::vector<float> &state1, const std::vector<float> &state2);
 
