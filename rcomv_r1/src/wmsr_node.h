@@ -21,7 +21,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
-#include <state_graph_builder.builder.h>
+#include <state_graph_builder/graph.h>
+#include <state_graph_builder/posegraph.h>
 
 #include <stdlib.h>
 #include <math.h>
@@ -75,7 +76,7 @@ private:
   std::vector<ros::Subscriber> ref_subs; // subscribe references from neighbor WMSR nodes
 
   //ROS Subscriber to build the adjacency matrix
-  std::vector<ros::Subscriber> states_subs;
+  ros::Subscriber states_sub;
 
   // messages
   ref_msgs inform_states; // reference center location
@@ -93,6 +94,7 @@ private:
   void out_pubCallback(const ros::TimerEvent& event);
   void new_pubCallback(const ros::TimerEvent& event);
   void state_subCallback(const state_msgs::ConstPtr& msgs, const int list_idx);
+  void graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs);
 
   // vector for odometry in the barrier functions
   std::vector<tiny_msgs> swarm_odom;

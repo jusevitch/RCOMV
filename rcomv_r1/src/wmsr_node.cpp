@@ -98,10 +98,7 @@ WMSRNode::WMSRNode()
     ref_pub_timer = nh.createTimer(ros::Duration(0.1),
                 &WMSRNode::ref_pubCallback, this);
 
-    for (int i=1; i<=n+1; i++){
-        std::string sub3_topic = "/ugv" + std::to_string(idx) + "/odom"; 
-        states_subs.push_back(nh.subscribe<state_msgs>(sub3_topic, 10, boost::bind(&WMSRNode::state_subCallback, this, _1, i-1)) ) ;
-    }
+    states_sub = nh.subscribe<state_graph_builder::posegraph>("/graph",10,&WMSRNode::graph_subCallback, this);
 
 
     // Subscribers: (msgs list to hold the msgs from subscibed topics)
@@ -127,6 +124,9 @@ WMSRNode::WMSRNode()
                &WMSRNode::new_pubCallback,this);
 
     while(ros::ok){
+      Calc_Adjacency();
+      populate_state_vector();
+      //filtered_barrier_collision(idx);
       ros::spinOnce();
     }
 
@@ -162,6 +162,15 @@ void WMSRNode::state_subCallback(const state_msgs::ConstPtr& msgs, const int lis
   state_lists[list_idx].orientation=msgs->pose.pose.orientation;
   
     ROS_INFO("[%d, %lf]", list_idx,state_lists[list_idx].position.x);
+}
+
+void WMSRNode::graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs){
+  state_lists = msgs->poses;
+
+  for (int i=0; i<n; i++){
+    
+    //ROS_INFO("[%d, %lf]", i,state_lists[i].position.x);
+  }
 }
 //  Subscriber Callback Function: subscribes reference paths of other WMSR nodes 
 void WMSRNode::ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_idx)
@@ -376,7 +385,7 @@ void WMSRNode::Calc_Adjacency(){
   for (int i=0; i<n; i++){
     for (int j=0; j<n; j++){
       val=WMSRNode::calculate_norm(state_lists.at(i),state_lists.at(j));
-      ROS_INFO("Adjacency val: %lf", val);
+      //ROS_INFO("Adjacency val: %lf", val);
       if (val<rc) // communication radius
 	G[0][i][j]=1;
       if (val<rp) // proximity radius

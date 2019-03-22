@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   cmake_modules
   message_generation
+  state_graph_builder
 )
 
 
@@ -114,7 +115,7 @@ add_message_files(
 catkin_package(
    INCLUDE_DIRS  ${Eigen_INCLUDE_DIRS}
 #  LIBRARIES r1_gazebo
-   CATKIN_DEPENDS rospy roscpp std_msgs geometry_msgs sensor_msgs nav_msgs tf message_runtime
+   CATKIN_DEPENDS rospy state_graph_builder roscpp std_msgs geometry_msgs sensor_msgs nav_msgs tf message_runtime
    DEPENDS Eigen
 )
 
