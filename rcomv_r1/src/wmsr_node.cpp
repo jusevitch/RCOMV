@@ -100,7 +100,7 @@ WMSRNode::WMSRNode()
 
     for (int i=1; i<=n+1; i++){
         std::string sub3_topic = "/ugv" + std::to_string(idx) + "/odom"; 
-        states_subs.push_back(nh.subscribe<state_msgs>(sub3_topic, 10, boost::bind(&WMSRNode::state_subCallback, this, _1, i)) ) ;
+        states_subs.push_back(nh.subscribe<state_msgs>(sub3_topic, 10, boost::bind(&WMSRNode::state_subCallback, this, _1, i-1)) ) ;
     }
 
 
@@ -123,8 +123,12 @@ WMSRNode::WMSRNode()
 
     
     new_pub=nh.advertise<tiny_msgs>("barrier",10);
-    new_pub_timer = nh.createTimer(ros::Duration(0.1),
-				   &WMSRNode::new_pubCallback,this);
+    new_pub_timer = nh.createTimer(ros::Duration(0.5),
+               &WMSRNode::new_pubCallback,this);
+
+    while(ros::ok){
+      ros::spinOnce();
+    }
 
 
     ROS_INFO_STREAM("Started ugv"<<idx<<" WMSR Node.");
@@ -140,7 +144,7 @@ WMSRNode::~WMSRNode()
 
 void WMSRNode::new_pubCallback(const ros::TimerEvent& event){
   Calc_Adjacency();
-  // populate_state_vector();
+  populate_state_vector();
   // for (int i=0; i<n; i++){
   //   ROS_INFO("Swarm x %lf", swarm_odom[i].x);
   //   ROS_INFO("Swarm y %lf",swarm_odom[i].y);
@@ -153,8 +157,11 @@ void WMSRNode::switch_subCallback(const std_msgs::Bool::ConstPtr& msg){
 }
 
 void WMSRNode::state_subCallback(const state_msgs::ConstPtr& msgs, const int list_idx){
+  //ROS_INFO("I heard [%lf]:", msgs->pose.pose.position.x);
   state_lists[list_idx].position=msgs->pose.pose.position;
   state_lists[list_idx].orientation=msgs->pose.pose.orientation;
+  
+    ROS_INFO("[%d, %lf]", list_idx,state_lists[list_idx].position.x);
 }
 //  Subscriber Callback Function: subscribes reference paths of other WMSR nodes 
 void WMSRNode::ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_idx)
@@ -178,9 +185,6 @@ void WMSRNode::ref_pubCallback(const ros::TimerEvent& event)
   // implement WMSR algorithm to update inform states
   else if (role == 2) {
     inform_states = WMSRNode::WMSRAlgorithm(ref_lists);
-    
-    ROS_INFO("Swarm x %lf", inform_states.pose.position.x);
-    ROS_INFO("Swarm y %lf", inform_states.pose.position.y);
     ref_pub.publish(inform_states);    // publish inform states to other WMSR node
   }
   // Malicious nodes
@@ -372,6 +376,7 @@ void WMSRNode::Calc_Adjacency(){
   for (int i=0; i<n; i++){
     for (int j=0; j<n; j++){
       val=WMSRNode::calculate_norm(state_lists.at(i),state_lists.at(j));
+      ROS_INFO("Adjacency val: %lf", val);
       if (val<rc) // communication radius
 	G[0][i][j]=1;
       if (val<rp) // proximity radius
@@ -413,6 +418,9 @@ void WMSRNode::populate_state_vector(){
     swarm_tau[i].x = state_lists[i].position.x - tau[i][0];
     swarm_tau[i].y = state_lists[i].position.y - tau[i][1];
     swarm_tau[i].z = state_lists[i].position.z - tau[i][2];
+
+    
+    ROS_INFO("Swarm odom, [%d, %lf]", i,state_lists[i].position.x);
 
 
     swarm_odom[i].x = state_lists[i].position.x;

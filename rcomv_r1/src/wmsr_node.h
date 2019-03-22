@@ -21,6 +21,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
+#include <state_graph_builder.builder.h>
 
 #include <stdlib.h>
 #include <math.h>
