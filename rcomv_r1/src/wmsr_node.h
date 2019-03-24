@@ -101,6 +101,7 @@ private:
   std::vector<tiny_msgs> swarm_tau;
   std::vector<tiny_msgs> prev_odom;
   std::vector<tiny_msgs> prev_tau;
+  std::vector<tiny_msgs> yidot;
   tiny_msgs barrier_out;
 
   // private variables for intermediate calculations
@@ -128,7 +129,7 @@ private:
 
   void Calc_Adjacency();
    double calculate_norm(const pose_msgs &state1, const pose_msgs &state2);
-  std::vector<int> get_in_neighbours(const Matrix &Q, int agent);
+  std::vector<int> get_in_neighbours(int rad_type, int agent);
   tiny_msgs calc_vec(const tiny_msgs& state1, const tiny_msgs& state2);
   void populate_state_vector();
   void save_state_vector();
@@ -141,9 +142,9 @@ private:
   tiny_msgs psi_col_gradient(int m_agent, int n_agent);
 
   double self_norm(const tiny_msgs &tiny);
-  void populate_velocity_vector(std::vector<tiny_msgs> &yidot);
+  void populate_velocity_vector();
   std::vector<Neigh> multiply_vectors(const std::vector<tiny_msgs> &vec1,const std::vector<tiny_msgs> &vec2, const std::vector<int> neigh);
-  NLists velocity_filter(int i, const std::vector<tiny_msgs> &yidot);
+  NLists velocity_filter(int i);
   void make_tau_vector();
   tiny_msgs add_vectors(const tiny_msgs &a, const tiny_msgs &b);
   tiny_msgs subtract_vectors(const tiny_msgs &a, const tiny_msgs &b);

@@ -30,8 +30,8 @@ WMSRNode::WMSRNode()
     nh_private_.param<double>("cy", cy, 6);
 
     
-    nh_private_.param<float>("rc", rc, 60);
-    nh_private_.param<float>("rp", rp, 20);
+    nh_private_.param<float>("rc", rc, 30);
+    nh_private_.param<float>("rp", rp, 10);
 
     nh_private_.param<float>("ds", ds, 2);
     nh_private_.param<float>("dc", dc, 5);
@@ -124,9 +124,6 @@ WMSRNode::WMSRNode()
                &WMSRNode::new_pubCallback,this);
 
     while(ros::ok){
-      Calc_Adjacency();
-      populate_state_vector();
-      //filtered_barrier_collision(idx);
       ros::spinOnce();
     }
 
@@ -144,12 +141,11 @@ WMSRNode::~WMSRNode()
 
 void WMSRNode::new_pubCallback(const ros::TimerEvent& event){
   Calc_Adjacency();
-  populate_state_vector();
   // for (int i=0; i<n; i++){
   //   ROS_INFO("Swarm x %lf", swarm_odom[i].x);
   //   ROS_INFO("Swarm y %lf",swarm_odom[i].y);
   // }
-  // //filtered_barrier_collision(idx);
+  filtered_barrier_collision(idx);
 }
 // Switch signal Subscriber Callback Function
 void WMSRNode::switch_subCallback(const std_msgs::Bool::ConstPtr& msg){
@@ -386,19 +382,29 @@ void WMSRNode::Calc_Adjacency(){
     for (int j=0; j<n; j++){
       val=WMSRNode::calculate_norm(state_lists.at(i),state_lists.at(j));
       //ROS_INFO("Adjacency val: %lf", val);
-      if (val<rc) // communication radius
-	G[0][i][j]=1;
-      if (val<rp) // proximity radius
-	G[1][i][j]=1;
+      if(i==j){
+	G[0][i][j]=0;
+	G[1][i][j]=0;
+      }
+      else{
+	if (val<rc)
+	  G[0][i][j]=1;// communication radius
+	else
+	  G[0][i][j]=0;
+	if (val<rp)
+	  G[1][i][j]=1;// proximity radius
+	else
+	  G[1][i][j]=0;
+      }
     }
   }
 }
 
-std::vector<int> WMSRNode::get_in_neighbours(const Matrix &Q, int agent){
-  auto agents_no = Q.size();
+std::vector<int> WMSRNode::get_in_neighbours(int rad_type, int agent){
+  int agents_no = G[rad_type].size();
   std::vector<int> neighbours;
   for (int i=0; i<agents_no; i++){
-    if (Q[agent][i] == 1)
+    if (G[rad_type][agent][i] == 1)
 	  neighbours.push_back(i);
   }
   return neighbours;
@@ -429,7 +435,7 @@ void WMSRNode::populate_state_vector(){
     swarm_tau[i].z = state_lists[i].position.z - tau[i][2];
 
     
-    ROS_INFO("Swarm odom, [%d, %lf]", i,state_lists[i].position.x);
+    //ROS_INFO("Swarm odom, [%d, %lf]", i,state_lists[i].position.x);
 
 
     swarm_odom[i].x = state_lists[i].position.x;
@@ -547,9 +553,10 @@ tiny_msgs WMSRNode::psi_col_gradient(int m_agent, int n_agent){
 
 }
 
-void WMSRNode::populate_velocity_vector(std::vector<tiny_msgs> &yidot){
+void WMSRNode::populate_velocity_vector(){
   yidot.resize(n);
   for (int i=0; i<n;i++){
+    
     yidot[i]=calc_vec(swarm_tau[i],prev_tau[i]);
   }
 }
@@ -573,9 +580,9 @@ tiny_msgs WMSRNode::multiply_scalar_vec(const float gain, const tiny_msgs &vec){
    return result;
 }
 
-NLists WMSRNode::velocity_filter(int i,const std::vector<tiny_msgs> &yidot){
+NLists WMSRNode::velocity_filter(int i){
     std::vector<int> neigh_list;
-    neigh_list=get_in_neighbours(G.at(0), i);
+    neigh_list=get_in_neighbours(1, i);
     std::vector<tiny_msgs> grad_vector;
     std::vector<tiny_msgs> diff_vector;
     std::vector<Neigh> vel_grad;
@@ -584,9 +591,14 @@ NLists WMSRNode::velocity_filter(int i,const std::vector<tiny_msgs> &yidot){
         for (int j=0; j<neigh_list.size(); j++){
           tiny_msgs tau_ij = calc_fvec(i,neigh_list[j]); //calculating tauij
           grad_vector.push_back(psi_gradient(i,neigh_list[j],tau_ij));
+	  ROS_INFO("At [%d], yidot %lf, yidot_neigh %lf", j, yidot[i].x, yidot[neigh_list[j]].x);
           diff_vector.push_back(calc_vec(yidot[i],yidot[neigh_list[j]]));
+	  //ROS_INFO("At [%d], grad_vector %lf, diff_vector %lf", j, grad_vector[j].x, diff_vector[j].x);
          }
         vel_grad = WMSRNode::multiply_vectors(grad_vector,diff_vector,neigh_list);
+    	// for (int k=0; k<vel_grad.size(); k++){
+    	//   ROS_INFO("vel_grad: %d, %lf", k, vel_grad[k].val);
+    	// }
 
         //sort in_neighbours with the vel_grad vector
         std::sort(vel_grad.begin(), vel_grad.end(),
@@ -624,11 +636,10 @@ void WMSRNode::filtered_barrier_function(int iteration, int i){
     barrier_out=malic;
   }
   else{
-    std::vector<tiny_msgs> yidot;
-    populate_velocity_vector(yidot);
+    populate_velocity_vector();
 
     NLists nlist;
-    nlist=velocity_filter(i, yidot);
+    nlist=velocity_filter(i);
     tiny_msgs psi_gradient_sum;
     psi_gradient_sum.x=0; psi_gradient_sum.y=0; psi_gradient_sum.z=0;
     if (!nlist.u_neigh.empty()){
@@ -669,9 +680,8 @@ void WMSRNode::filtered_barrier_collision(int i){
     populate_state_vector();
     save_state_vector();
   }
-  std::vector<tiny_msgs> yidot;
-  populate_velocity_vector(yidot);
-
+  populate_velocity_vector();
+  
   if (role==1){
     if (iteration==0){
       tiny_msgs rand_num;
@@ -696,7 +706,7 @@ void WMSRNode::filtered_barrier_collision(int i){
     psi_collision_sum.x=0; psi_collision_sum.y=0; psi_collision_sum.z=0;
 
     std::vector<int> neigh_list;
-    neigh_list=get_in_neighbours(G.at(0), i);
+    neigh_list=get_in_neighbours(1, i);
     if (!neigh_list.empty()){
       for (int j=0; j<neigh_list.size(); j++){
         tiny_msgs grad_vector=psi_col_gradient(i,neigh_list[j]);
@@ -704,27 +714,27 @@ void WMSRNode::filtered_barrier_collision(int i){
       }
     }
     NLists nlist;
-    nlist=velocity_filter(i,yidot);
-    ROS_INFO("Hello [%ld]", nlist.u_neigh.size());
+    //nlist=velocity_filter(i);
+    // ROS_INFO("Hello [%ld]", nlist.u_neigh.size());
 
-    if (!nlist.u_neigh.empty()){
-      for (int j=0; j<nlist.u_neigh.size(); j++){
-	//tau[i];
-	//tau[j];
-	ROS_INFO("Hello [%d]",nlist.u_neigh[j]);
-        tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
-        tiny_msgs grad_vector=psi_gradient(i,nlist.u_neigh[j],tau_ij);
-        psi_gradient_sum = add_vectors(psi_gradient_sum, grad_vector);
-      }
-    }
+    // if (!nlist.u_neigh.empty()){
+    //   for (int j=0; j<nlist.u_neigh.size(); j++){
+    // 	//tau[i];
+    // 	//tau[j];
+    // 	ROS_INFO("Hello [%d]",nlist.u_neigh[j]);
+    //     tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
+    //     tiny_msgs grad_vector=psi_gradient(i,nlist.u_neigh[j],tau_ij);
+    //     psi_gradient_sum = add_vectors(psi_gradient_sum, grad_vector);
+    //   }
+    // }
 
-    float gain=-10.0;
-    barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
-    barrier_out = multiply_scalar_vec(gain,barrier_out);
+    // float gain=-10.0;
+    // barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
+    // barrier_out = multiply_scalar_vec(gain,barrier_out);
 
-    if (self_norm(barrier_out) >=umax){
-      barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
-    }
+    // if (self_norm(barrier_out) >=umax){
+    //   barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
+    // }
   }
   iteration+=1;
 }
