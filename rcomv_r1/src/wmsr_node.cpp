@@ -470,17 +470,6 @@ void WMSRNode::make_tau_vector(){
   }
 }
 
-
-float WMSRNode::psi_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent, const tiny_msgs &tau_ij){
-  float mu=1000;
-  float output;
-  tiny_msgs tiny=WMSRNode::calc_vec(m_agent,n_agent);
-  float rshat = rp - WMSRNode::self_norm(tau_ij);
-  output = WMSRNode::self_norm(tiny) / (rshat - WMSRNode::self_norm(tiny) + (rshat*rshat)/mu);
-  return output;
-
-}
-
 tiny_msgs WMSRNode::add_vectors(const tiny_msgs &a, const tiny_msgs &b){
   tiny_msgs result;
   result.x = a.x + b.x;
@@ -496,6 +485,23 @@ tiny_msgs WMSRNode::subtract_vectors(const tiny_msgs &a, const tiny_msgs &b){
   result.z = a.z - b.z;
   return result;
 }
+
+
+float WMSRNode::psi_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent, const tiny_msgs &tau_ij){
+
+  //Reference MATLAB code
+  // mu1 = 1000; % What should this be? not sure
+  // yij = y_i - y_j;
+  // rshat = rs - norm(tauij,2);
+  // outscalar = norm(yij,2)^2 / (rshat - norm(yij,2) + rshat^2/mu1);
+  float mu=1000;
+  float output;
+  tiny_msgs tiny=WMSRNode::calc_vec(m_agent,n_agent);
+  float rshat = rp - WMSRNode::self_norm(tau_ij);
+  output = WMSRNode::self_norm(tiny) / (rshat - WMSRNode::self_norm(tiny) + (rshat*rshat)/mu);
+  return output;
+
+}
 tiny_msgs WMSRNode::psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_ij){
   //use rp
   float h=0.001;
@@ -506,9 +512,9 @@ tiny_msgs WMSRNode::psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_
   perturb[0].x+=h;
   perturb[1].x-=h;
   perturb[2].y+=h;
-  perturb[2].y-=h;
-  perturb[3].z+=h;
-  perturb[3].z-=h;
+  perturb[3].y-=h;
+  perturb[4].z+=h;
+  perturb[5].z-=h;
 
   tiny_msgs output;
   output.x = (psi_helper(perturb[0],swarm_tau[n_agent],tau_ij) - psi_helper(perturb[1],swarm_tau[n_agent],tau_ij))/(2*h);
@@ -523,8 +529,19 @@ float WMSRNode::psi_col_helper(const tiny_msgs &m_agent, const  tiny_msgs &n_age
   double val=self_norm(vecij);
   double mu2=10000;
   float output;
+
+  // //Reference MATLAB code
+  // if norm(xij,2) <= norm(dc,2)
+  //   mu2 = 10000; % What should this be? Not sure.
+    
+  //   outscalar = (norm(xij,2) - dc)^2 / (norm(xij,2) - ds + (ds - dc)^2/mu2);
+  // elseif norm(xij,2) < ds
+  //    outscalar = mu2;
+  // else
+  //    outscalar = 0;
+  // end
   if (val <= dc){
-    output =  ((val - dc)*(val-dc)) / (val - ds + ((ds-dc)*(ds-dc))) / mu2;
+    output =  ((val - dc)*(val-dc)) / ((val - ds + ((ds-dc)*(ds-dc))) / mu2);
   }
   else if (val < ds)
     output = mu2;
@@ -532,7 +549,7 @@ float WMSRNode::psi_col_helper(const tiny_msgs &m_agent, const  tiny_msgs &n_age
     output = 0.0;
 }
 
-tiny_msgs WMSRNode::psi_col_gradient(int m_agent, int n_agent){
+tiny_msgs WMSRNode::psi_col_gradient(int m_agent, int n_agent){ //this is supposed to only take the state vector
   float h=0.001;
   std::vector<tiny_msgs> perturb(6);
   for (int i; i<6; i++){
@@ -541,14 +558,18 @@ tiny_msgs WMSRNode::psi_col_gradient(int m_agent, int n_agent){
   perturb[0].x+=h;
   perturb[1].x-=h;
   perturb[2].y+=h;
-  perturb[2].y-=h;
-  perturb[3].z+=h;
-  perturb[3].z-=h;
+  perturb[3].y-=h;
+  perturb[4].z+=h;
+  perturb[5].z-=h;
+
 
   tiny_msgs output;
   output.x = (psi_col_helper(perturb[0],swarm_odom[n_agent]) - psi_col_helper(perturb[1],swarm_odom[n_agent]))/(2*h);
+  
   output.y = (psi_col_helper(perturb[2],swarm_odom[n_agent]) - psi_col_helper(perturb[3],swarm_odom[n_agent]))/(2*h);
+  
   output.z = (psi_col_helper(perturb[4],swarm_odom[n_agent]) - psi_col_helper(perturb[5],swarm_odom[n_agent]))/(2*h);
+  //std::cout << "Output" << output << std::endl;
   return output;
 
 }
@@ -591,32 +612,38 @@ NLists WMSRNode::velocity_filter(int i){
         for (int j=0; j<neigh_list.size(); j++){
           tiny_msgs tau_ij = calc_fvec(i,neigh_list[j]); //calculating tauij
           grad_vector.push_back(psi_gradient(i,neigh_list[j],tau_ij));
-	  ROS_INFO("At [%d], yidot %lf, yidot_neigh %lf", j, yidot[i].x, yidot[neigh_list[j]].x);
-          diff_vector.push_back(calc_vec(yidot[i],yidot[neigh_list[j]]));
+	  diff_vector.push_back(calc_vec(yidot[i],yidot[neigh_list[j]]));
 	  //ROS_INFO("At [%d], grad_vector %lf, diff_vector %lf", j, grad_vector[j].x, diff_vector[j].x);
          }
         vel_grad = WMSRNode::multiply_vectors(grad_vector,diff_vector,neigh_list);
     	// for (int k=0; k<vel_grad.size(); k++){
-    	//   ROS_INFO("vel_grad: %d, %lf", k, vel_grad[k].val);
+    	//   ROS_INFO("vel_grad: %d, %lf", k, vel_grad[k].val); // noticed vel_grad to be a very tiny value in the order of 10^-4
     	// }
 
         //sort in_neighbours with the vel_grad vector
         std::sort(vel_grad.begin(), vel_grad.end(),
-                  [](const Neigh &i, const Neigh &j) { return i.val > j.val; } );
+                  [](const Neigh &i, const Neigh &j) { return i.val < j.val; } );
+
+	// for (int k=0; k<vel_grad.size(); k++){
+    	//   ROS_INFO("vel_grad: %d, %lf %d", k, vel_grad[k].val,F); // just want to check my sorting OK IT WORKS
+    	// }
         if (F<vel_grad.size()){//filter out the highest multiples of the velocities and gradient of the velocities
             for(int k=0; k<vel_grad.size();k++){
-              if (k<F)
+              if (k<F) // take into account the Fth value as value
               nlist.f_neigh.push_back(vel_grad[k].id);
               else
               nlist.u_neigh.push_back(vel_grad[k].id);
             }
+	    nlist.filtered_only=0;
         }
         else{
             for (int k=0; k<vel_grad.size();k++){//the in-neighbours are even less than F, return a filtered list
               nlist.f_neigh.push_back(vel_grad[k].id);
             }
+	    nlist.filtered_only=1;
         }
     }
+    return nlist;
 }
 
 void WMSRNode::filtered_barrier_function(int iteration, int i){
@@ -705,6 +732,8 @@ void WMSRNode::filtered_barrier_collision(int i){
     psi_gradient_sum.x=0; psi_gradient_sum.y=0; psi_gradient_sum.z=0;
     psi_collision_sum.x=0; psi_collision_sum.y=0; psi_collision_sum.z=0;
 
+    //-----------------------Collision sum-------------------------------//
+
     std::vector<int> neigh_list;
     neigh_list=get_in_neighbours(1, i);
     if (!neigh_list.empty()){
@@ -713,28 +742,29 @@ void WMSRNode::filtered_barrier_collision(int i){
         psi_collision_sum=add_vectors(psi_collision_sum,grad_vector);
       }
     }
+
+    //verified to be correct
+
+    //--------------------------Gradient sum----------------------------//
+
+    
     NLists nlist;
-    //nlist=velocity_filter(i);
-    // ROS_INFO("Hello [%ld]", nlist.u_neigh.size());
+    nlist=velocity_filter(i);
+    if (nlist.filtered_only==0){
+      for (int j=0; j<nlist.u_neigh.size(); j++){
+        tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
+        tiny_msgs grad_vector=psi_gradient(i,nlist.u_neigh[j],tau_ij);
+        psi_gradient_sum = add_vectors(psi_gradient_sum, grad_vector);
+      }
+    }    
 
-    // if (!nlist.u_neigh.empty()){
-    //   for (int j=0; j<nlist.u_neigh.size(); j++){
-    // 	//tau[i];
-    // 	//tau[j];
-    // 	ROS_INFO("Hello [%d]",nlist.u_neigh[j]);
-    //     tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
-    //     tiny_msgs grad_vector=psi_gradient(i,nlist.u_neigh[j],tau_ij);
-    //     psi_gradient_sum = add_vectors(psi_gradient_sum, grad_vector);
-    //   }
-    // }
+    float gain=-10.0;
+    barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
+    barrier_out = multiply_scalar_vec(gain,barrier_out);
 
-    // float gain=-10.0;
-    // barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
-    // barrier_out = multiply_scalar_vec(gain,barrier_out);
-
-    // if (self_norm(barrier_out) >=umax){
-    //   barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
-    // }
+    if (self_norm(barrier_out) >=umax){
+      barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
+    }
   }
   iteration+=1;
 }

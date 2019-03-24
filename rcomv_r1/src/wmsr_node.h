@@ -45,6 +45,7 @@ struct Neigh{
   int id;
 };
 struct NLists{
+  int filtered_only;
   std::vector<int> f_neigh;
   std::vector<int> u_neigh;
 };
