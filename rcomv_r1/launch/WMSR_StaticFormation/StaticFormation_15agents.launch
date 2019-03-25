@@ -26,7 +26,7 @@
    <arg default="1.5" name="Kd2"/>
    <node launch-prefix="xterm -e" name="switch_node" output="screen" pkg="rcomv_r1" type="switch"/><!--upper level switch node-->
    <node name="builder_node" type="builder" pkg="state_graph_builder">
-     <!--arg name="n" value="$(arg n)"/-->
+     <param name="n" value="$(arg n)"/>
    </node>
    <include file="$(find rcomv_r1)/launch/ugv_with_control.launch"><!--start of ugv1-->
       <arg name="wmsr_node" value="$(arg wmsr_node)"/>

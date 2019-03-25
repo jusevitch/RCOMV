@@ -27,6 +27,7 @@ PIDController::PIDController()
   nh_private_.param<double>("Kp1", Kp1, 0); nh_private_.param<double>("Kp2", Kp2, 0);
   nh_private_.param<double>("Kd1", Kd1, 0); nh_private_.param<double>("Kd2", Kd2, 0);
   nh_private_.param<double>("Ki1", Ki1, 0); nh_private_.param<double>("Ki2", Ki2, 0);
+  nh_private_.param<double>("Kpb1", Kpb1, 0); nh_private_.param<double>("Kpb2", Kpb2, 0);
 
 
   // Publisher := cmd_vel_mux/input/teleop
@@ -40,6 +41,8 @@ PIDController::PIDController()
   odom_sub = nh.subscribe("odom", 10, &PIDController::odom_subCallback, this);
   //Subscriber := reference states
   path_sub = nh.subscribe("ref", 10, &PIDController::path_subCallback, this);
+
+  bar_sub = nh.subscribe("barrier", 10, &PIDController::bar_subCallback, this);
 }
 
 // destructor
@@ -66,6 +69,12 @@ void PIDController::path_subCallback(const geometry_msgs::PoseStamped::ConstPtr&
 {
   goal.x = msgs->pose.position.x;
   goal.y = msgs->pose.position.y;
+}
+
+void PIDController::bar_subCallback(const geometry_msgs::Point::ConstPtr& msgs){
+ 
+  barrier.x=msgs->x;
+  barrier.y=msgs->y;
 }
 
 // callback function to display the odometry reading
@@ -127,9 +136,30 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   int_error.dis += (error.dis) * dt;
   int_error.yaw += (error.yaw) * dt;
 
+  //------------------------------Barrier functions ----------------------------------//
+
+  //compute direction of barrier vector
+  barErr.yaw = fmod(atan2(barrier.y, barrier.x) + 2*M_PI, 2*M_PI);
+  barErr.yaw = findDifference(yaw,barErr.yaw);
+  //compute 
+  barErr.dis =  std::sqrt((barrier.x*barrier.x) + (barrier.y*barrier.y));
+
+  //if difference > M_PI/4 assuming the domain of find difference is -Pi to Pi
+  if (barErr.yaw > fabs(M_PI/4)){
+    barCmd.dis = 0;
+    barCmd.yaw = -Kpb2*barErr.yaw;
+  }
+  else{
+    barCmd.dis = Kpb1*barErr.dis;
+    barCmd.yaw = -Kpb2*barErr.yaw;
+  }
+  
+  
+  
+
   // compute the output
-  cmd_vel.linear.x = Kp1*error.dis + Ki1*int_error.dis + Kd1*d_error.dis;
-  cmd_vel.angular.z = Kp2*error.yaw + Ki2*int_error.yaw + Kd2*d_error.yaw;
+  cmd_vel.linear.x = Kp1*error.dis + Ki1*int_error.dis + Kd1*d_error.dis + barCmd.dis;
+  cmd_vel.angular.z = Kp2*error.yaw + Ki2*int_error.yaw + Kd2*d_error.yaw + barCmd.yaw;
   // limit the output
   cmd_vel.linear.x = std::max(-MAX_LIN_V, std::min(cmd_vel.linear.x, MAX_LIN_V));
   cmd_vel.angular.z = std::max(-MAX_ANG_V, std::min(cmd_vel.angular.z, MAX_ANG_V));

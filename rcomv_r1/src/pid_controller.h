@@ -6,6 +6,7 @@
 
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Point.h>
 #include <nav_msgs/Odometry.h>
 #include <mav_msgs/eigen_mav_msgs.h>
 #include <tf/transform_broadcaster.h>
@@ -51,12 +52,14 @@ private:
   // subscriber
   ros::Subscriber odom_sub;
   ros::Subscriber path_sub;
+  ros::Subscriber bar_sub;
 
   // callback funcrions
   void pubCallback(const ros::TimerEvent& event);
   void disCallback(const ros::TimerEvent& event);
   void odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs);
   void path_subCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs);
+  void bar_subCallback(const geometry_msgs::Point::ConstPtr& msgs);
 
   //private variables
   errorStr lst_error; // derivative of errors
@@ -68,6 +71,11 @@ private:
   goalStr goal;
   double MAX_LIN_V, MAX_ANG_V;
   bool odometry_connected;
+  geometry_msgs::Point barrier;
+  errorStr barErr;
+  errorStr barCmd;
+  double Kpb1, Kpb2;
+  
 
   //EigenOdometry odometry; //
 
