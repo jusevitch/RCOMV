@@ -72,7 +72,6 @@ void PIDController::path_subCallback(const geometry_msgs::PoseStamped::ConstPtr&
 }
 
 void PIDController::bar_subCallback(const geometry_msgs::Point::ConstPtr& msgs){
- 
   barrier.x=msgs->x;
   barrier.y=msgs->y;
 }
@@ -95,6 +94,8 @@ void PIDController::disCallback(const ros::TimerEvent& event) {
   ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"goal position at ["<<goal.x<<", "<<goal.y<<"]");
   ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"cmd lin vel: "<<cmd_vel.linear.x<<"|| cmd ang vel: "<<cmd_vel.angular.z);
   ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"velocity is "<<vx<<"|| yaw rate is "<<dot_yaw);
+  ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"Barrier_msgs" <<  barrier.x);
+  
 }
 
 // publisher callback function
