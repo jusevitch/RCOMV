@@ -16,7 +16,7 @@ WMSRNode::WMSRNode()
     nh_private_.param<int>("n", n, 15);
     nh_private_.param<int>("k", k, 7);
 
-    nh_private_.param<int>("idx", idx, 1);
+    nh_private_.param<int>("idx", idx, 8);
     nh_private_.param<int>("role", role, 2);
 
     nh_private_.param<int>("F", F, 0);
