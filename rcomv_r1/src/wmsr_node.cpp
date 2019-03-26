@@ -542,10 +542,11 @@ float WMSRNode::psi_col_helper(const tiny_msgs &m_agent, const  tiny_msgs &n_age
   //    outscalar = 0;
   // end
   if (val <= dc){
-    output =  ((val - dc)*(val-dc)) / ((val - ds + ((ds-dc)*(ds-dc))) / mu2);
+    if (val >=ds)
+      output =  ((val - dc)*(val-dc)) / (val - ds + ((ds-dc)*(ds-dc))/mu2);
+    else
+      output = mu2;      
   }
-  else if (val < ds)
-    output = mu2;
   else
     output = 0.0;
 }
