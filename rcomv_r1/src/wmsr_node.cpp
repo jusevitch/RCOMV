@@ -16,7 +16,7 @@ WMSRNode::WMSRNode()
     nh_private_.param<int>("n", n, 15);
     nh_private_.param<int>("k", k, 7);
 
-    nh_private_.param<int>("idx", idx, 8);
+    nh_private_.param<int>("idx", idx, 9);
     nh_private_.param<int>("role", role, 2);
 
     nh_private_.param<int>("F", F, 0);
@@ -120,7 +120,7 @@ WMSRNode::WMSRNode()
 
     
     new_pub=nh.advertise<tiny_msgs>("barrier",10);
-    new_pub_timer = nh.createTimer(ros::Duration(0.5),
+    new_pub_timer = nh.createTimer(ros::Duration(0.01),
                &WMSRNode::new_pubCallback,this);
 
     while(ros::ok){
@@ -146,7 +146,9 @@ void WMSRNode::new_pubCallback(const ros::TimerEvent& event){
   //   ROS_INFO("Swarm y %lf",swarm_odom[i].y);
   // }
   filtered_barrier_collision(idx);
-  ROS_INFO("Barrier function [%lf, %lf]", barrier_out.x, barrier_out.y);
+  double angle=std::atan2(barrier_out.y, barrier_out.x);
+  ROS_INFO("Barrier function [%lf, %lf, %lf, %lf]", barrier_out.x, barrier_out.y, angle, state_lists[idx].orientation.z);
+  new_pub.publish(barrier_out);
 }
 // Switch signal Subscriber Callback Function
 void WMSRNode::switch_subCallback(const std_msgs::Bool::ConstPtr& msg){

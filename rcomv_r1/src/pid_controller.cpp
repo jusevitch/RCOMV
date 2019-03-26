@@ -27,7 +27,7 @@ PIDController::PIDController()
   nh_private_.param<double>("Kp1", Kp1, 0); nh_private_.param<double>("Kp2", Kp2, 0);
   nh_private_.param<double>("Kd1", Kd1, 0); nh_private_.param<double>("Kd2", Kd2, 0);
   nh_private_.param<double>("Ki1", Ki1, 0); nh_private_.param<double>("Ki2", Ki2, 0);
-  nh_private_.param<double>("Kpb1", Kpb1, 1); nh_private_.param<double>("Kpb2", Kpb2, 100);
+  nh_private_.param<double>("Kpb1", Kpb1, 1); nh_private_.param<double>("Kpb2", Kpb2, 1);
 
   Kp1=0;
   Kp2=0;
