@@ -146,7 +146,7 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   barErr.dis =  std::sqrt((barrier.x*barrier.x) + (barrier.y*barrier.y));
 
   //if difference > M_PI/4 assuming the domain of find difference is -Pi to Pi
-  if (barErr.yaw > fabs(M_PI/4)){
+  if (fabs(barErr.yaw) > M_PI/4){
     barCmd.dis = 0;
     barCmd.yaw = -Kpb2*barErr.yaw;
   }

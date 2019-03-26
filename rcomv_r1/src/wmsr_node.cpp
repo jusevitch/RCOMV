@@ -146,6 +146,7 @@ void WMSRNode::new_pubCallback(const ros::TimerEvent& event){
   //   ROS_INFO("Swarm y %lf",swarm_odom[i].y);
   // }
   filtered_barrier_collision(idx);
+  ROS_INFO("Barrier function [%lf, %lf]", barrier_out.x, barrier_out.y);
 }
 // Switch signal Subscriber Callback Function
 void WMSRNode::switch_subCallback(const std_msgs::Bool::ConstPtr& msg){
