@@ -250,24 +250,24 @@ function [x,y,z] = initPose(idx, n, center)
     %
     switch g
         case 0
-            x = cx + 5 + idx_g;
+            x = cx + 10 + idx_g;
             y = cy;
             z = cz + rand * sigma;
         case 1
-            x = cx + 5;
-            y = cy + 3 + idx_g;
+            x = cx + 10;
+            y = cy + 10 + idx_g;
             z = cz + rand * sigma;
         case 2
-            x = cx - 5;
-            y = cy + 3 + idx_g;
+            x = cx - 10;
+            y = cy + 10 + idx_g;
             z = cz + rand * sigma;
         case 3
-            x = cx - 5;
-            y = cy - 3 - idx_g;
+            x = cx - 10;
+            y = cy - 10 - idx_g;
             z = cz + rand * sigma;
         case 4
-            x = cx + 5;
-            y = cy - 3 - idx_g;
+            x = cx + 10;
+            y = cy - 10 - idx_g;
             z = cz + rand * sigma;
     end
             
