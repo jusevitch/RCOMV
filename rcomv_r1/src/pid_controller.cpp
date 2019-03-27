@@ -175,14 +175,14 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   cmd_vel.linear.x = std::max(-MAX_LIN_V, std::min(cmd_vel.linear.x, MAX_LIN_V));
   cmd_vel.angular.z = std::max(-MAX_ANG_V, std::min(cmd_vel.angular.z, MAX_ANG_V));
   // wait for turning
-  if (std::abs(error.yaw) > M_PI/3) {
-    cmd_vel.linear.x = 0;
-  }
-  // stop when the distance error is less than threshold
-  if (error.dis < threshold) {
-    cmd_vel.linear.x = 0;
-    cmd_vel.angular.z = 0;
-  }
+  // if (std::abs(error.yaw) > M_PI/3) {
+  //   cmd_vel.linear.x = 0;
+  // }
+  // // stop when the distance error is less than threshold
+  // if (error.dis < threshold) {
+  //   cmd_vel.linear.x = 0;
+  //   cmd_vel.angular.z = 0;
+  // }
 
   somevalue.x=barCmd.dis;
   somevalue.y=barCmd.yaw;

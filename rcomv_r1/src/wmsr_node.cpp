@@ -30,8 +30,8 @@ WMSRNode::WMSRNode()
     nh_private_.param<double>("cy", cy, 6);
 
     
-    nh_private_.param<float>("rc", rc, 30);
-    nh_private_.param<float>("rp", rp, 10);
+    nh_private_.param<float>("rc", rc, 1500);
+    nh_private_.param<float>("rp", rp, 1000);
 
     nh_private_.param<float>("ds", ds, 2);
     nh_private_.param<float>("dc", dc, 5);
