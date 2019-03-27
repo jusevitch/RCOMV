@@ -43,9 +43,11 @@ private:
   // msgs
   geometry_msgs::Twist cmd_vel;
   nav_msgs::Odometry state;
+  geometry_msgs::Point somevalue;
 
   // publisher
   ros::Publisher pub;
+  ros::Publisher pub2;
   ros::Timer pub_timer;
   ros::Timer dis_timer;
 

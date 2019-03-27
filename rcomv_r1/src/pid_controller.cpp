@@ -27,19 +27,19 @@ PIDController::PIDController()
   nh_private_.param<double>("Kp1", Kp1, 0); nh_private_.param<double>("Kp2", Kp2, 0);
   nh_private_.param<double>("Kd1", Kd1, 0); nh_private_.param<double>("Kd2", Kd2, 0);
   nh_private_.param<double>("Ki1", Ki1, 0); nh_private_.param<double>("Ki2", Ki2, 0);
-  nh_private_.param<double>("Kpb1", Kpb1, 1); nh_private_.param<double>("Kpb2", Kpb2, 0.6);
+  nh_private_.param<double>("Kpb1", Kpb1, 1); nh_private_.param<double>("Kpb2", Kpb2, 1);
 
-  // Kp1=0;
-  // Kp2=0;
-  // Kd1=0;
-  // Kd2=0;
-  // Ki1=0;
-  // Ki2=0;
+  Kp1=0;
+  Kp2=0;
+  Kd1=0;
+  Kd2=0;
+  Ki1=0;
+  Ki2=0;
 
 
   // Publisher := cmd_vel_mux/input/teleop
   pub = nh.advertise<geometry_msgs::Twist>("cmd_vel_mux/input/teleop", 10);
-  // frequency: 50 Hz
+  pub2=nh.advertise<geometry_msgs::Point>("somevalue",10);
   pub_timer = nh.createTimer(ros::Duration(0.02), &PIDController::pubCallback, this);
   // frequency: 1 Hz
   dis_timer = nh.createTimer(ros::Duration(1), &PIDController::disCallback, this);
@@ -94,8 +94,6 @@ void PIDController::disCallback(const ros::TimerEvent& event) {
   double vy = state.twist.twist.linear.y;
   double dot_yaw = state.twist.twist.angular.z;
 
-  
-  ROS_INFO("Barrier_msgs [%lf, %lf,%lf, %lf]", barrier.x, barrier.y, barErr.dis, int_error.yaw);
   // ROS_INFO("-----------------------------------------");
   // ROS_INFO("Odom Reading: ");
   // ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"Time: "
@@ -111,8 +109,10 @@ void PIDController::disCallback(const ros::TimerEvent& event) {
 void PIDController::pubCallback(const ros::TimerEvent& event)
 {
   // wait until the odometry topic is received
-  if(!odometry_connected)
-    return;
+  if(!odometry_connected){
+    somevalue.z=100;
+  pub2.publish(somevalue);
+  return;}
 
   // PID position control algorithm
   double x = state.pose.pose.position.x;
@@ -153,15 +153,16 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   barErr.yaw = findDifference(yaw,barErr.yaw);
   //compute 
   barErr.dis =  std::sqrt((barrier.x*barrier.x) + (barrier.y*barrier.y));
+  
 
   //if difference > M_PI/4 assuming the domain of find difference is -Pi to Pi
   if (fabs(barErr.yaw) > M_PI/4){
     barCmd.dis = 0;
-    barCmd.yaw = -Kpb2*barErr.yaw;
+    barCmd.yaw = Kpb2*barErr.yaw;
   }
   else{
     barCmd.dis = Kpb1*barErr.dis;
-    barCmd.yaw = -Kpb2*barErr.yaw;
+    barCmd.yaw = Kpb2*barErr.yaw;
   }
   
   
@@ -182,6 +183,10 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
     cmd_vel.linear.x = 0;
     cmd_vel.angular.z = 0;
   }
+
+  somevalue.x=barCmd.dis;
+  somevalue.y=barCmd.yaw;
+  pub2.publish(somevalue);
 
   
 
