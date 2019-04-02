@@ -27,7 +27,7 @@ PIDController::PIDController()
   nh_private_.param<double>("Kp1", Kp1, 0); nh_private_.param<double>("Kp2", Kp2, 0);
   nh_private_.param<double>("Kd1", Kd1, 0); nh_private_.param<double>("Kd2", Kd2, 0);
   nh_private_.param<double>("Ki1", Ki1, 0); nh_private_.param<double>("Ki2", Ki2, 0);
-  nh_private_.param<double>("Kpb1", Kpb1, 1); nh_private_.param<double>("Kpb2", Kpb2, 1);
+  nh_private_.param<double>("Kpb1", Kpb1, 100); nh_private_.param<double>("Kpb2", Kpb2, 1);
 
   Kp1=0;
   Kp2=0;
@@ -64,7 +64,7 @@ PIDController::~PIDController()
 // odometry subscriber callback function
 void PIDController::odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs)
 {
-  ROS_INFO("Received");
+  // ROS_INFO("Received");
   odometry_connected = true;
   state.header = msgs->header;
   state.child_frame_id = msgs->child_frame_id;
@@ -102,7 +102,7 @@ void PIDController::disCallback(const ros::TimerEvent& event) {
   // ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"goal position at ["<<goal.x<<", "<<goal.y<<"]");
   // ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"cmd lin vel: "<<cmd_vel.linear.x<<"|| cmd ang vel: "<<cmd_vel.angular.z);
   // ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"velocity is "<<vx<<"|| yaw rate is "<<dot_yaw);
-  
+
 }
 
 // publisher callback function
@@ -130,6 +130,9 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   error.dis = sqrt( pow(goal.x - x, 2) + pow(goal.y - y, 2) );
   error.yaw = findDifference(yaw, yaw_g);
 
+  // ROS_INFO("Goal parameters: [%lf, %lf, %lf]", goal.x, goal.y, goal.psi);
+  // ROS_INFO("Current yaw, Goal yaw: [%lf, %lf] ", yaw, yaw_g);
+
   // D term
   double current_pub_time = ros::Time::now().toSec();
   double dt = current_pub_time - last_pub_time;
@@ -151,9 +154,9 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   //compute direction of barrier vector
   barErr.yaw = fmod(atan2(barrier.y, barrier.x) + 2*M_PI, 2*M_PI);
   barErr.yaw = findDifference(yaw,barErr.yaw);
-  //compute 
+  //compute
   barErr.dis =  std::sqrt((barrier.x*barrier.x) + (barrier.y*barrier.y));
-  
+
 
   //if difference > M_PI/4 assuming the domain of find difference is -Pi to Pi
   if (fabs(barErr.yaw) > M_PI/4){
@@ -164,18 +167,23 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
     barCmd.dis = Kpb1*barErr.dis;
     barCmd.yaw = Kpb2*barErr.yaw;
   }
-  
-  
-  
+
+  // ROS_INFO("error.dis, error.yaw: [%lf, %lf]", error.dis, error.yaw)
+  ROS_INFO("barCmd.dis,barCmd.yaw: [%lf, %lf]", error.dis, error.yaw);
+
 
   // compute the output
-  cmd_vel.linear.x = Kp1*error.dis + Ki1*int_error.dis + Kd1*d_error.dis + barCmd.dis;
-  cmd_vel.angular.z = Kp2*error.yaw + Ki2*int_error.yaw + Kd2*d_error.yaw + barCmd.yaw;
+  // cmd_vel.linear.x = Kp1*error.dis + Ki1*int_error.dis + Kd1*d_error.dis + barCmd.dis;
+  // cmd_vel.angular.z = Kp2*error.yaw + Ki2*int_error.yaw + Kd2*d_error.yaw + barCmd.yaw;
+  cmd_vel.linear.x = barCmd.dis;
+  cmd_vel.angular.z = barCmd.yaw;
+
   // limit the output
   cmd_vel.linear.x = std::max(-MAX_LIN_V, std::min(cmd_vel.linear.x, MAX_LIN_V));
   cmd_vel.angular.z = std::max(-MAX_ANG_V, std::min(cmd_vel.angular.z, MAX_ANG_V));
   // wait for turning
-  if (std::abs(error.yaw) > M_PI/3) {
+  // if (std::abs(error.yaw) > M_PI/3) {
+  if (std::abs(barErr.yaw) > M_PI/3) {
     cmd_vel.linear.x = 0;
   }
   // stop when the distance error is less than threshold
@@ -188,7 +196,7 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   somevalue.y=barCmd.yaw;
   pub2.publish(somevalue);
 
-  
+
 
   //ROS_INFO_STREAM(dt);
   //ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<error.dis<<", "<<int_error.dis<<", "<<d_error.dis);

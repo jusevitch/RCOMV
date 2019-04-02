@@ -81,7 +81,7 @@
  		  <param name="Ki2" value="$(arg Ki2)"/>
 		  <param name="Kd2" value="$(arg Kd2)"/>
       	</node>
-        <node name="pid_controller_node" pkg="rcomv_r1" type="pid_controller" if="$(arg wmsr_node)">
+        <node name="pid_controller_node" pkg="rcomv_r1" type="pid_controller" output="screen" if="$(arg wmsr_node)">
 	          <param name="max_linear_velocity" value="2" />
 	          <param name="max_angular_velocity" value="2" />
 

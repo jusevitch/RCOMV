@@ -116,6 +116,13 @@ WMSRNode::WMSRNode()
                          boost::bind(&WMSRNode::ref_subCallback, this, _1, i-1)) );
 
       ROS_INFO("sub_idx at: [%d] with topic name: ", sub_idx);
+
+      // Make state feedback subscribers -- JU
+      std::string sub_state_topic = "/ugv" + std::to_string(sub_idx) + "/odom";
+
+
+
+      // end make state feedback subscribers -- JU
     }
 
 
@@ -147,8 +154,8 @@ void WMSRNode::new_pubCallback(const ros::TimerEvent& event){
   // }
   filtered_barrier_collision(idx);
   double angle=std::atan2(barrier_out.y, barrier_out.x);
-  ROS_INFO("Barrier function agent %i : [%lf, %lf, %lf, %lf]", idx, barrier_out.x, barrier_out.y, angle, state_lists[idx].orientation.z);
-  ROS_INFO("Orientation of agent %i : [%lf, %lf, %lf]", idx, state_lists[idx].orientation.x, state_lists[idx].orientation.y, state_lists[idx].orientation.z);
+  // ROS_INFO("Barrier function agent %i : [%lf, %lf, %lf, %lf]", idx, barrier_out.x, barrier_out.y, angle, state_lists[idx].orientation.z);
+  // ROS_INFO("Orientation of agent %i : [%lf, %lf, %lf]", idx, state_lists[idx].orientation.x, state_lists[idx].orientation.y, state_lists[idx].orientation.z);
   new_pub.publish(barrier_out);
 }
 // Switch signal Subscriber Callback Function
