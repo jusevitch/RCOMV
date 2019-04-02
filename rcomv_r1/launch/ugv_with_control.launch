@@ -99,7 +99,7 @@
 
 
 	<!-- WMSR node -->
-	<node name="wmsr_node" pkg="rcomv_r1" type="wmsr_node" if="$(arg wmsr_node)">
+	<node name="wmsr_node" pkg="rcomv_r1" type="wmsr_node" output="screen" if="$(arg wmsr_node)">
 		<param name="n" value="$(arg n)" />
 		<param name="k" value="$(arg k)" />
 		<param name="F" value="$(arg F)" />

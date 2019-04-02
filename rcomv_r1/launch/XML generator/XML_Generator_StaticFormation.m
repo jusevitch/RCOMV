@@ -10,7 +10,8 @@ rng('shuffle')
 % name of the saved launch filef
 file_list = {'test', 'test_world','test_ruin_world'};
 % -------------------------- modify here ----------------------------
-file_name = file_list{1};
+% file_name = file_list{1};
+file_name = '5_agent';
 
 % -------------------------------------------------------------------
 
@@ -27,8 +28,8 @@ paused = 'true';
 % size of the formation
 % k must be greater or equal to 5
 % -------------------------- modify here ----------------------------
-n = 30;    % number of agents
-k = 15;    % number of neighbours for each agent 
+n = 5;    % number of agents
+k = 4;    % number of neighbours for each agent 
 % -------------------------------------------------------------------
 
 % type of demo
@@ -250,24 +251,24 @@ function [x,y,z] = initPose(idx, n, center)
     %
     switch g
         case 0
-            x = cx + 10 + idx_g;
+            x = cx + 10 + 6*idx_g;
             y = cy;
             z = cz + rand * sigma;
         case 1
             x = cx + 10;
-            y = cy + 10 + idx_g;
+            y = cy + 10 + 6*idx_g;
             z = cz + rand * sigma;
         case 2
             x = cx - 10;
-            y = cy + 10 + idx_g;
+            y = cy + 10 + 6*idx_g;
             z = cz + rand * sigma;
         case 3
             x = cx - 10;
-            y = cy - 10 - idx_g;
+            y = cy - 10 - 6*idx_g;
             z = cz + rand * sigma;
         case 4
             x = cx + 10;
-            y = cy - 10 - idx_g;
+            y = cy - 10 - 6*idx_g;
             z = cz + rand * sigma;
     end
             

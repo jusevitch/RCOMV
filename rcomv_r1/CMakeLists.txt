@@ -4,6 +4,9 @@ project(rcomv_r1)
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
+# Debug with gdb
+set(CMAKE_BUILD_TYPE Debug)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -165,6 +168,7 @@ add_executable(InputOutputLin_Controller src/InputOutputLin_Controller.cpp
 src/InputOutputLin_Controller.h)
 add_dependencies(InputOutputLin_Controller ${catkin_EXPORTED_TARGETS})
 target_link_libraries(InputOutputLin_Controller ${catkin_LIBRARIES})
+add_dependencies(InputOutputLin_Controller rcomv_r1_generate_messages_cpp)
 
 add_executable(pid_controller src/pid_controller.cpp src/pid_controller.h)
 add_dependencies(pid_controller ${catkin_EXPORTED_TARGETS})
