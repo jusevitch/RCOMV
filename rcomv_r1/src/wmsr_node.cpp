@@ -100,8 +100,8 @@ WMSRNode::WMSRNode()
 
     states_sub = nh.subscribe<state_graph_builder::posegraph>("/graph",10,&WMSRNode::graph_subCallback, this);
 
-
     // Subscribers: (msgs list to hold the msgs from subscibed topics)
+    // Why does i start from 1? This is wrong.
     for (int i = 1; i <= k; i++) {
       // Initialize the msgs list that holds msgs from neighbor agents
       ref_msgs ref_point;
@@ -118,9 +118,11 @@ WMSRNode::WMSRNode()
       ROS_INFO("sub_idx at: [%d] with topic name: ", sub_idx);
 
       // Make state feedback subscribers -- JU
-      std::string sub_state_topic = "/ugv" + std::to_string(sub_idx) + "/odom";
-
-
+      // This ensures that each agent gets an updated state estimate of the
+      //    other agents in the network.
+      // std::string sub_state_topic = "/ugv" + std::to_string(sub_idx) + "/odom";
+      // neighbor_state_subs.push_back(nh.subscribe<state_msgs>(sub_state_topic,10,
+      //                               boost::bind(&WMSRNode::state_subCallback, this, _1, i-1)));
 
       // end make state feedback subscribers -- JU
     }
@@ -168,16 +170,18 @@ void WMSRNode::state_subCallback(const state_msgs::ConstPtr& msgs, const int lis
   state_lists[list_idx].position=msgs->pose.pose.position;
   state_lists[list_idx].orientation=msgs->pose.pose.orientation;
 
-    ROS_INFO("[%d, %lf]", list_idx,state_lists[list_idx].position.x);
+    // ROS_INFO("[%d, %lf]", list_idx,state_lists[list_idx].position.x);
 }
 
 void WMSRNode::graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs){
+  // The posegraph->poses attribute returns a vector of pose objects
+  // state_lists should be an array of pose objects
   state_lists = msgs->poses;
 
-  for (int i=0; i<n; i++){
-
-    //ROS_INFO("[%d, %lf]", i,state_lists[i].position.x);
-  }
+  // for (int i=0; i<n; i++){
+  //
+  //   //ROS_INFO("[%d, %lf]", i,state_lists[i].position.x);
+  // }
 }
 //  Subscriber Callback Function: subscribes reference paths of other WMSR nodes
 void WMSRNode::ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_idx)
@@ -478,6 +482,7 @@ void WMSRNode::make_tau_vector(){
     tau[i][0]=5*std::cos(ang);
     tau[i][1]=5*std::sin(ang);
     tau[i][2]=0;
+    ROS_INFO("tau for agent %i : [%lf, %lf, %lf]", i, tau[i][0], tau[i][1], tau[i][2]);
   }
 
   // for(int jj=0; jj < n; jj++){
@@ -745,8 +750,8 @@ void WMSRNode::filtered_barrier_collision(int i){
   }
   else{
     tiny_msgs psi_gradient_sum, psi_collision_sum;
-    psi_gradient_sum.x=0; psi_gradient_sum.y=0; psi_gradient_sum.z=0;
-    psi_collision_sum.x=0; psi_collision_sum.y=0; psi_collision_sum.z=0;
+    psi_gradient_sum.x=0.0; psi_gradient_sum.y=0.0; psi_gradient_sum.z=0.0;
+    psi_collision_sum.x=0.0; psi_collision_sum.y=0.0; psi_collision_sum.z=0.0;
 
     //-----------------------Collision sum-------------------------------//
 
@@ -754,6 +759,13 @@ void WMSRNode::filtered_barrier_collision(int i){
     neigh_list=get_in_neighbours(1, i);
     if (!neigh_list.empty()){
       for (int j=0; j<neigh_list.size(); j++){
+      //   // Testing
+      //   if(idx == 1){
+      //     ROS_INFO("Agent %i has collision neighbor %i", i, neigh_list[j]);
+      //     if(j == neigh_list.size() - 1){
+      //       ROS_INFO("END OF COLLISION LOOP");
+      //     }
+      //   }
         tiny_msgs grad_vector=psi_col_gradient(i,neigh_list[j]);
         psi_collision_sum=add_vectors(psi_collision_sum,grad_vector);
       }
@@ -766,6 +778,15 @@ void WMSRNode::filtered_barrier_collision(int i){
 
     NLists nlist;
     nlist=velocity_filter(i);
+    // // Testing
+    // if(idx == 1){
+    //   for (int j=0; j<nlist.u_neigh.size(); j++){
+    //     ROS_INFO("Agent %i has filter neighbor %i", i, nlist.u_neigh.at(j));
+    //     if(j == nlist.u_neigh.size() - 1){
+    //       ROS_INFO("END OF FILTER LOOP");
+    //     }
+    //   }
+    // }
     if (nlist.filtered_only==0){
       for (int j=0; j<nlist.u_neigh.size(); j++){
         tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
@@ -775,8 +796,11 @@ void WMSRNode::filtered_barrier_collision(int i){
     }
 
     float gain=-10.0;
+
+    ROS_INFO("Barrier functions for agent %i before gain (grad,coll): [%lf, %lf], [%lf, %lf]", idx, psi_gradient_sum.x, psi_gradient_sum.y, psi_collision_sum.x, psi_collision_sum.y);
     barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
     barrier_out = multiply_scalar_vec(gain,barrier_out);
+    ROS_INFO("Barrier function for agent %i after addition and gain of %lf: [%lf, %lf]",idx,gain,barrier_out.x,barrier_out.y);
 
     if (self_norm(barrier_out) >=umax){
       barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);

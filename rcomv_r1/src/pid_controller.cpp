@@ -152,7 +152,7 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   //------------------------------Barrier functions ----------------------------------//
 
   //compute direction of barrier vector
-  barErr.yaw = fmod(atan2(-barrier.y, -barrier.x) + 2*M_PI, 2*M_PI);
+  barErr.yaw = fmod(atan2(barrier.y, barrier.x) + 2*M_PI, 2*M_PI);
   barErr.yaw = findDifference(yaw,barErr.yaw);
   //compute
   barErr.dis =  std::sqrt((barrier.x*barrier.x) + (barrier.y*barrier.y));
@@ -187,7 +187,7 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
     cmd_vel.linear.x = 0;
   }
   // stop when the distance error is less than threshold
-  if (error.dis < threshold) {
+  if (barErr.dis < threshold) {
     cmd_vel.linear.x = 0;
     cmd_vel.angular.z = 0;
   }
@@ -196,7 +196,8 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   somevalue.y=barCmd.yaw;
   pub2.publish(somevalue);
 
-
+//Testing
+  cmd_vel.linear.x = 0;
 
   //ROS_INFO_STREAM(dt);
   //ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<error.dis<<", "<<int_error.dis<<", "<<d_error.dis);

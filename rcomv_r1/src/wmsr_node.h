@@ -75,6 +75,9 @@ private:
 
   // ROS  Subscribers
   std::vector<ros::Subscriber> ref_subs; // subscribe references from neighbor WMSR nodes
+  std::vector<ros::Subscriber> neighbor_state_subs; // subscribe to update neighbor states
+
+  std::vector<int> neighbors;
 
   //ROS Subscriber to build the adjacency matrix
   ros::Subscriber states_sub;
