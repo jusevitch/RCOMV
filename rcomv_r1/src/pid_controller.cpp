@@ -183,6 +183,7 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   cmd_vel.angular.z = std::max(-MAX_ANG_V, std::min(cmd_vel.angular.z, MAX_ANG_V));
   // wait for turning
   // if (std::abs(error.yaw) > M_PI/3) {
+
   if (std::abs(barErr.yaw) > M_PI/3) {
     cmd_vel.linear.x = 0;
   }
