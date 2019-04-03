@@ -27,7 +27,7 @@ PIDController::PIDController()
   nh_private_.param<double>("Kp1", Kp1, 0); nh_private_.param<double>("Kp2", Kp2, 0);
   nh_private_.param<double>("Kd1", Kd1, 0); nh_private_.param<double>("Kd2", Kd2, 0);
   nh_private_.param<double>("Ki1", Ki1, 0); nh_private_.param<double>("Ki2", Ki2, 0);
-  nh_private_.param<double>("Kpb1", Kpb1, 100); nh_private_.param<double>("Kpb2", Kpb2, 1);
+  nh_private_.param<double>("Kpb1", Kpb1, 10); nh_private_.param<double>("Kpb2", Kpb2, 1);
 
   Kp1=0;
   Kp2=0;
@@ -152,11 +152,20 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   //------------------------------Barrier functions ----------------------------------//
 
   //compute direction of barrier vector
-  barErr.yaw = fmod(atan2(-barrier.y, -barrier.x) + 2*M_PI, 2*M_PI);
+  barErr.yaw = fmod(atan2(barrier.y, barrier.x) + 2*M_PI, 2*M_PI);
   barErr.yaw = findDifference(yaw,barErr.yaw);
   //compute
   barErr.dis =  std::sqrt((barrier.x*barrier.x) + (barrier.y*barrier.y));
 
+  // stop when the distance error is less than threshold
+  if (barErr.dis < threshold) {
+    barErr.dis = 0.0;
+    // cmd_vel.angular.z = 0;
+  }
+
+  if (barErr.yaw < threshold) {
+    barErr.yaw = 0.0;
+  }
 
   //if difference > M_PI/4 assuming the domain of find difference is -Pi to Pi
   if (fabs(barErr.yaw) > M_PI/4){
@@ -187,17 +196,14 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   if (std::abs(barErr.yaw) > M_PI/3) {
     cmd_vel.linear.x = 0;
   }
-  // stop when the distance error is less than threshold
-  if (error.dis < threshold) {
-    cmd_vel.linear.x = 0;
-    cmd_vel.angular.z = 0;
-  }
+
 
   somevalue.x=barCmd.dis;
   somevalue.y=barCmd.yaw;
   pub2.publish(somevalue);
 
-
+//Testing
+  // cmd_vel.linear.x = 0;
 
   //ROS_INFO_STREAM(dt);
   //ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<error.dis<<", "<<int_error.dis<<", "<<d_error.dis);
