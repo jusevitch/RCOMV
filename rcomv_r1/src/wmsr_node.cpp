@@ -154,7 +154,7 @@ void WMSRNode::new_pubCallback(const ros::TimerEvent& event){
   //   ROS_INFO("Swarm x %lf", swarm_odom[i].x);
   //   ROS_INFO("Swarm y %lf",swarm_odom[i].y);
   // }
-  filtered_barrier_collision(idx);
+  filtered_barrier_collision(idx-1); // TESTING
   double angle=std::atan2(barrier_out.y, barrier_out.x);
   // ROS_INFO("Barrier function agent %i : [%lf, %lf, %lf, %lf]", idx, barrier_out.x, barrier_out.y, angle, state_lists[idx].orientation.z);
   // ROS_INFO("Orientation of agent %i : [%lf, %lf, %lf]", idx, state_lists[idx].orientation.x, state_lists[idx].orientation.y, state_lists[idx].orientation.z);
@@ -514,11 +514,11 @@ float WMSRNode::psi_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent, c
   // yij = y_i - y_j;
   // rshat = rs - norm(tauij,2);
   // outscalar = norm(yij,2)^2 / (rshat - norm(yij,2) + rshat^2/mu1);
-  float mu=1000;
+  float mu1=1000;
   float output;
   tiny_msgs tiny=WMSRNode::calc_vec(m_agent,n_agent);
   float rshat = rp - WMSRNode::self_norm(tau_ij);
-  output = WMSRNode::self_norm(tiny) / (rshat - WMSRNode::self_norm(tiny) + (rshat*rshat)/mu);
+  output = WMSRNode::self_norm(tiny) / (rshat - WMSRNode::self_norm(tiny) + (rshat*rshat)/mu1);
   return output;
 
 }
@@ -573,7 +573,7 @@ float WMSRNode::psi_col_helper(const tiny_msgs &m_agent, const  tiny_msgs &n_age
 tiny_msgs WMSRNode::psi_col_gradient(int m_agent, int n_agent){ //this is supposed to only take the state vector
   float h=0.001;
   std::vector<tiny_msgs> perturb(6);
-  for (int i; i<6; i++){
+  for (int i=0; i<6; i++){
     perturb.push_back(swarm_odom[m_agent]);
   }
   perturb[0].x+=h;
@@ -599,7 +599,14 @@ void WMSRNode::populate_velocity_vector(){
   yidot.resize(n);
   for (int i=0; i<n;i++){
 
+    // NEED TO DIVIDE BY TIME TO GET ACTUAL DERIVATIVE
     yidot[i]=calc_vec(swarm_tau[i],prev_tau[i]);
+    // The denominator should be the publish frequence from
+    // new_pub_timer in this file
+    yidot[i].x=yidot[i].x/0.01;
+    yidot[i].y=yidot[i].y/0.01;
+    yidot[i].z=yidot[i].z/0.01;
+
   }
 }
 
@@ -633,7 +640,7 @@ NLists WMSRNode::velocity_filter(int i){
         for (int j=0; j<neigh_list.size(); j++){
           tiny_msgs tau_ij = calc_fvec(i,neigh_list[j]); //calculating tauij
           grad_vector.push_back(psi_gradient(i,neigh_list[j],tau_ij));
-	  diff_vector.push_back(calc_vec(yidot[i],yidot[neigh_list[j]]));
+	        diff_vector.push_back(calc_vec(yidot[i],yidot[neigh_list[j]]));
 	  //ROS_INFO("At [%d], grad_vector %lf, diff_vector %lf", j, grad_vector[j].x, diff_vector[j].x);
          }
         vel_grad = WMSRNode::multiply_vectors(grad_vector,diff_vector,neigh_list);
@@ -669,8 +676,8 @@ NLists WMSRNode::velocity_filter(int i){
 
 void WMSRNode::filtered_barrier_function(int iteration, int i){
   if (iteration!=0){
-    save_state_vector();
-    populate_state_vector();
+    save_state_vector(); // Saves current state into the previous state for derivative calculation
+    populate_state_vector(); // Udpates the current state from subscriber
   }
   else {
     populate_state_vector();
@@ -720,9 +727,10 @@ void WMSRNode::filtered_barrier_function(int iteration, int i){
 }
 
 void WMSRNode::filtered_barrier_collision(int i){
+  // i -= 1;
   if (iteration!=0){
-    save_state_vector();
-    populate_state_vector();
+    save_state_vector(); // Saves current state into the previous state for derivative calculation
+    populate_state_vector(); // Udpates the current state from subscriber
   }
   else {
     populate_state_vector();
