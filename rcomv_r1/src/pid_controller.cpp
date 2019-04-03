@@ -157,6 +157,15 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   //compute
   barErr.dis =  std::sqrt((barrier.x*barrier.x) + (barrier.y*barrier.y));
 
+  // stop when the distance error is less than threshold
+  if (barErr.dis < threshold) {
+    barErr.dis = 0.0;
+    // cmd_vel.angular.z = 0;
+  }
+
+  if (barErr.yaw < threshold) {
+    barErr.yaw = 0.0;
+  }
 
   //if difference > M_PI/4 assuming the domain of find difference is -Pi to Pi
   if (fabs(barErr.yaw) > M_PI/4){
@@ -186,11 +195,7 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   if (std::abs(barErr.yaw) > M_PI/3) {
     cmd_vel.linear.x = 0;
   }
-  // stop when the distance error is less than threshold
-  if (barErr.dis < threshold) {
-    cmd_vel.linear.x = 0;
-    cmd_vel.angular.z = 0;
-  }
+
 
   somevalue.x=barCmd.dis;
   somevalue.y=barCmd.yaw;

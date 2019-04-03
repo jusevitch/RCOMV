@@ -807,12 +807,55 @@ void WMSRNode::filtered_barrier_collision(int i){
 
     // ROS_INFO("Barrier functions for agent %i before gain (grad,coll): [%lf, %lf], [%lf, %lf]", idx, psi_gradient_sum.x, psi_gradient_sum.y, psi_collision_sum.x, psi_collision_sum.y);
     barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
+    // Testing
+
+    ROS_INFO("\n Barrier function: [%lf, %lf] \n", barrier_out.x, barrier_out.y);
+    if(self_norm(barrier_out) < .002){
+      barrier_out.x = 0.0;
+      barrier_out.y = 0.0;
+      barrier_out.z = 0.0;
+    }
     barrier_out = multiply_scalar_vec(gain,barrier_out);
-    ROS_INFO("Barrier function for agent %i after addition and gain of %lf: [%lf, %lf]",idx,gain,barrier_out.x,barrier_out.y);
+    // ROS_INFO("Barrier function for agent %i after addition and gain of %lf: [%lf, %lf]",idx,gain,barrier_out.x,barrier_out.y);
 
     if (self_norm(barrier_out) >=umax){
       barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
     }
+
+    // Debug
+    for(int ii=0; ii<n; ii++){
+      for(int jj=0; jj<n; jj++){
+        if(ii != jj) {
+          tiny_msgs yij = calc_vec(swarm_tau[ii],swarm_tau[jj]);
+          tiny_msgs xij = calc_vec(swarm_odom[ii], swarm_odom[jj]);
+          tiny_msgs taui, tauj, tauij;
+          taui.x = tau[ii][0]; taui.y = tau[ii][1]; taui.z = tau[ii][2];
+          tauj.x = tau[jj][0]; tauj.y = tau[jj][1]; tauj.z = tau[jj][2];
+          tauij = calc_vec(taui,tauj);
+          // DO NOT USE THESE MESSAGES -- they do not stay together. Only kept
+          //    for historical reasons.
+          // ROS_INFO("\n i = %i and j = %i", ii, jj);
+          // ROS_INFO("\n x_i = [%lf, %lf, %lf], x_j = [%lf, %lf, %lf], x_ij = [%lf, %lf, %lf]", swarm_odom[ii].x, swarm_odom[ii].y, swarm_odom[ii].z,  swarm_odom[jj].x, swarm_odom[jj].y, swarm_odom[jj].z,xij.x,xij.y,xij.z);
+          // ROS_INFO("\n tau_i = [%lf, %lf, %lf], tau_j = [%lf, %lf, %lf], tau_ij = [%lf, %lf, %lf]", tau[ii][0], tau[ii][1], tau[ii][2], tau[jj][0], tau[jj][1], tau[jj][2], tauij.x, tauij.y,tauij.z);
+          // ROS_INFO("\n y_i = [%lf, %lf, %lf], y_j = [%lf, %lf, %lf], y_ij = [%lf, %lf, %lf]", swarm_tau[ii].x, swarm_tau[ii].y, swarm_tau[ii].z, swarm_tau[jj].x, swarm_tau[jj].y, swarm_tau[jj].z, yij.x, yij.y, yij.z);
+
+          // Super nasty, but the only way I can keep these messages together.
+          ROS_INFO("\n i = %i and j = %i\
+          \n x_i = [%lf, %lf, %lf], x_j = [%lf, %lf, %lf], x_ij = [%lf, %lf, %lf]\
+          \n tau_i = [%lf, %lf, %lf], tau_j = [%lf, %lf, %lf], tau_ij = [%lf, %lf, %lf]\
+          \n y_i = [%lf, %lf, %lf], y_j = [%lf, %lf, %lf], y_ij = [%lf, %lf, %lf] \n \n",\
+           ii, jj,\
+          swarm_odom[ii].x, swarm_odom[ii].y, swarm_odom[ii].z,  swarm_odom[jj].x, swarm_odom[jj].y, swarm_odom[jj].z,xij.x,xij.y,xij.z,\
+        tau[ii][0], tau[ii][1], tau[ii][2], tau[jj][0], tau[jj][1], tau[jj][2], tauij.x, tauij.y,tauij.z,\
+      swarm_tau[ii].x, swarm_tau[ii].y, swarm_tau[ii].z, swarm_tau[jj].x, swarm_tau[jj].y, swarm_tau[jj].z, yij.x, yij.y, yij.z);
+          if(ii == n-1 && jj == n-1){
+            ROS_INFO("\n");
+          }
+        }
+      // ROS_INFO("END \n")
+      }
+    }
+
   }
   iteration+=1;
 }
