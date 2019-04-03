@@ -152,7 +152,7 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   //------------------------------Barrier functions ----------------------------------//
 
   //compute direction of barrier vector
-  barErr.yaw = fmod(atan2(barrier.y, barrier.x) + 2*M_PI, 2*M_PI);
+  barErr.yaw = fmod(atan2(-barrier.y, -barrier.x) + 2*M_PI, 2*M_PI);
   barErr.yaw = findDifference(yaw,barErr.yaw);
   //compute
   barErr.dis =  std::sqrt((barrier.x*barrier.x) + (barrier.y*barrier.y));
@@ -169,7 +169,7 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   }
 
   // ROS_INFO("error.dis, error.yaw: [%lf, %lf]", error.dis, error.yaw)
-  ROS_INFO("barCmd.dis,barCmd.yaw: [%lf, %lf]", error.dis, error.yaw);
+  // ROS_INFO("barCmd.dis,barCmd.yaw: [%lf, %lf]", error.dis, error.yaw);
 
 
   // compute the output

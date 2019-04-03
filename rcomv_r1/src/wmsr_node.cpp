@@ -479,6 +479,10 @@ void WMSRNode::make_tau_vector(){
     tau[i][1]=5*std::sin(ang);
     tau[i][2]=0;
   }
+
+  // for(int jj=0; jj < n; jj++){
+  //   ROS_INFO("Agent %i tau vector: [%lf, %lf, %lf]", jj, tau[jj][0], tau[jj][1], tau[jj][2]);
+  // }
 }
 
 tiny_msgs WMSRNode::add_vectors(const tiny_msgs &a, const tiny_msgs &b){
