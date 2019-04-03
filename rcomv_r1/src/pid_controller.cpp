@@ -27,7 +27,7 @@ PIDController::PIDController()
   nh_private_.param<double>("Kp1", Kp1, 0); nh_private_.param<double>("Kp2", Kp2, 0);
   nh_private_.param<double>("Kd1", Kd1, 0); nh_private_.param<double>("Kd2", Kd2, 0);
   nh_private_.param<double>("Ki1", Ki1, 0); nh_private_.param<double>("Ki2", Ki2, 0);
-  nh_private_.param<double>("Kpb1", Kpb1, 100); nh_private_.param<double>("Kpb2", Kpb2, 1);
+  nh_private_.param<double>("Kpb1", Kpb1, 10); nh_private_.param<double>("Kpb2", Kpb2, 1);
 
   Kp1=0;
   Kp2=0;
@@ -197,7 +197,7 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   pub2.publish(somevalue);
 
 //Testing
-  cmd_vel.linear.x = 0;
+  // cmd_vel.linear.x = 0;
 
   //ROS_INFO_STREAM(dt);
   //ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<error.dis<<", "<<int_error.dis<<", "<<d_error.dis);

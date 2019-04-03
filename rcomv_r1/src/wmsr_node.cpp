@@ -795,12 +795,12 @@ void WMSRNode::filtered_barrier_collision(int i){
       }
     }
 
-    float gain=-10.0;
+    float gain= 10.0;
 
-    ROS_INFO("Barrier functions for agent %i before gain (grad,coll): [%lf, %lf], [%lf, %lf]", idx, psi_gradient_sum.x, psi_gradient_sum.y, psi_collision_sum.x, psi_collision_sum.y);
+    // ROS_INFO("Barrier functions for agent %i before gain (grad,coll): [%lf, %lf], [%lf, %lf]", idx, psi_gradient_sum.x, psi_gradient_sum.y, psi_collision_sum.x, psi_collision_sum.y);
     barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
     barrier_out = multiply_scalar_vec(gain,barrier_out);
-    ROS_INFO("Barrier function for agent %i after addition and gain of %lf: [%lf, %lf]",idx,gain,barrier_out.x,barrier_out.y);
+    // ROS_INFO("Barrier function for agent %i after addition and gain of %lf: [%lf, %lf]",idx,gain,barrier_out.x,barrier_out.y);
 
     if (self_norm(barrier_out) >=umax){
       barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
