@@ -479,8 +479,8 @@ void WMSRNode::make_tau_vector(){
   for(int i=0; i < n; i++){
     double ang=i*res;
     tau.at(i).resize(3);
-    tau[i][0]=5*std::cos(ang);
-    tau[i][1]=5*std::sin(ang);
+    tau[i][0]=10*std::cos(ang);
+    tau[i][1]=10*std::sin(ang);
     tau[i][2]=0;
     ROS_INFO("tau for agent %i : [%lf, %lf, %lf]", i, tau[i][0], tau[i][1], tau[i][2]);
   }
@@ -803,12 +803,12 @@ void WMSRNode::filtered_barrier_collision(int i){
       }
     }
 
-    float gain= 10.0;
+    float gain= -10.0;
 
     // ROS_INFO("Barrier functions for agent %i before gain (grad,coll): [%lf, %lf], [%lf, %lf]", idx, psi_gradient_sum.x, psi_gradient_sum.y, psi_collision_sum.x, psi_collision_sum.y);
     barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
     barrier_out = multiply_scalar_vec(gain,barrier_out);
-    // ROS_INFO("Barrier function for agent %i after addition and gain of %lf: [%lf, %lf]",idx,gain,barrier_out.x,barrier_out.y);
+    ROS_INFO("Barrier function for agent %i after addition and gain of %lf: [%lf, %lf]",idx,gain,barrier_out.x,barrier_out.y);
 
     if (self_norm(barrier_out) >=umax){
       barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
