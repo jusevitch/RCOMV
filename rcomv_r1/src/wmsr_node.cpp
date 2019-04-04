@@ -231,7 +231,7 @@ void WMSRNode::ref_pubCallback(const ros::TimerEvent& event)
 void WMSRNode::out_pubCallback(const ros::TimerEvent& event)
 {
   // calculate the node states in the formation
-  WMSRNode::Formation();
+  // WMSRNode::Formation();
 
   // output msg
   ref_msgs trajectory_msg;
@@ -478,9 +478,9 @@ void WMSRNode::make_tau_vector(){
   for(int i=0; i < n; i++){
     double ang=i*res;
     tau.at(i).resize(3);
-    tau[i][0]=10*std::cos(ang);
-    tau[i][1]=10*std::sin(ang);
-    tau[i][2]=0;
+    tau[i][0]=10.0*std::cos(ang);
+    tau[i][1]=10.0*std::sin(ang);
+    tau[i][2]=0.0;
     ROS_INFO("tau for agent %i : [%lf, %lf, %lf]", i, tau[i][0], tau[i][1], tau[i][2]);
   }
 
@@ -513,22 +513,48 @@ float WMSRNode::psi_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent, c
   // yij = y_i - y_j;
   // rshat = rs - norm(tauij,2);
   // outscalar = norm(yij,2)^2 / (rshat - norm(yij,2) + rshat^2/mu1);
-  float mu1=1000;
-  float output;
+
+  // ROS_INFO("m_agent")
+
+  double mu1=1000.0;
+  double output;
   tiny_msgs tiny=WMSRNode::calc_vec(m_agent,n_agent);
-  float rshat = rp - WMSRNode::self_norm(tau_ij);
-  output = WMSRNode::self_norm(tiny) / (rshat - WMSRNode::self_norm(tiny) + (rshat*rshat)/mu1);
+  double rshat = rp - WMSRNode::self_norm(tau_ij);
+  output = WMSRNode::self_norm(tiny)*WMSRNode::self_norm(tiny) / (rshat - WMSRNode::self_norm(tiny) + (rshat*rshat)/mu1);
+
+  ROS_INFO("\n m_agent vector: [%lf, %lf, %lf] \n n_agent vector: [%lf, %lf, %lf] \n output: %lf \n",\
+  m_agent.x, m_agent.y, m_agent.z, n_agent.x, n_agent.y, n_agent.z, output);
+
   return output;
 
 }
 tiny_msgs WMSRNode::psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_ij){
   //use rp
+
   float h=0.001;
-  std::vector<tiny_msgs> perturb(6);
-  for (int i; i<6; i++){
+  std::vector<tiny_msgs> perturb;
+  for (int i=0; i<6; i++){
     perturb.push_back(swarm_tau[m_agent]);
   }
-  perturb[0].x+=h;
+  // Testing
+  // if(m_agent == 0){
+  //   ROS_INFO("swarm_odom -- agent %i : [%lf, %lf, %lf], agent %i : [%lf, %lf, %lf] \n \
+  //    swarm_tau -- agent %i : [%lf, %lf, %lf], agent %i : [%lf, %lf, %lf]",\
+  //    m_agent, swarm_odom[m_agent].x,swarm_odom[m_agent].y,swarm_odom[m_agent].z, n_agent, swarm_odom[n_agent].x,swarm_odom[n_agent].y,swarm_odom[n_agent].z,\
+  //   m_agent, swarm_tau[m_agent].x,swarm_tau[m_agent].y,swarm_tau[m_agent].z, n_agent, swarm_tau[n_agent].x,swarm_tau[n_agent].y,swarm_tau[n_agent].z);
+  // }
+//   if(m_agent == 1){
+//     ROS_INFO("perturb[0] for m_agent = %i before adding h: [%lf, %lf, %lf] \n \
+//     perturb[1]: [%lf, %lf, %lf] \n \
+//     perturb[3]: [%lf, %lf, %lf] \n \
+//     perturb[5]: [%lf, %lf, %lf]",\
+//      m_agent, perturb[0].x, perturb[0].y,perturb[0].z,\
+//    perturb[1].x, perturb[1].y,perturb[1].z,\
+//   perturb[3].x, perturb[3].y,perturb[3].z,\
+// perturb[5].x, perturb[5].y,perturb[5].z);
+//   }
+
+  perturb[0].x+=h; //ROS_INFO("perturb[0] for m_agent = %i: [%lf, %lf, %lf]", m_agent, perturb[0].x, perturb[0].y,perturb[0].z);
   perturb[1].x-=h;
   perturb[2].y+=h;
   perturb[3].y-=h;
@@ -539,6 +565,9 @@ tiny_msgs WMSRNode::psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_
   output.x = (psi_helper(perturb[0],swarm_tau[n_agent],tau_ij) - psi_helper(perturb[1],swarm_tau[n_agent],tau_ij))/(2*h);
   output.y = (psi_helper(perturb[2],swarm_tau[n_agent],tau_ij) - psi_helper(perturb[3],swarm_tau[n_agent],tau_ij))/(2*h);
   output.z = (psi_helper(perturb[4],swarm_tau[n_agent],tau_ij) - psi_helper(perturb[5],swarm_tau[n_agent],tau_ij))/(2*h);
+
+  // ROS_INFO("\n Output vector for m_agent %i : [%lf, %lf, %lf] \n", m_agent, output.x, output.y, output.z);
+
   return output;
 
 }
@@ -547,7 +576,7 @@ float WMSRNode::psi_col_helper(const tiny_msgs &m_agent, const  tiny_msgs &n_age
   tiny_msgs vecij = calc_vec(m_agent,n_agent);
   double val=self_norm(vecij);
   double mu2=10000;
-  float output;
+  double output;
 
   // //Reference MATLAB code
   // if norm(xij,2) <= norm(dc,2)
@@ -559,9 +588,10 @@ float WMSRNode::psi_col_helper(const tiny_msgs &m_agent, const  tiny_msgs &n_age
   // else
   //    outscalar = 0;
   // end
-  if (val <= dc){
+  double dc2 = 2*dc; // Line 123 of MATLAB code -- 2*dc is used.
+  if (val <= dc2){
     if (val >=ds)
-      output =  ((val - dc)*(val-dc)) / (val - ds + ((ds-dc)*(ds-dc))/mu2);
+      output =  ((val - dc2)*(val-dc2)) / (val - ds + ((ds-dc2)*(ds-dc2))/mu2);
     else
       output = mu2;
   }
@@ -571,7 +601,7 @@ float WMSRNode::psi_col_helper(const tiny_msgs &m_agent, const  tiny_msgs &n_age
 
 tiny_msgs WMSRNode::psi_col_gradient(int m_agent, int n_agent){ //this is supposed to only take the state vector
   float h=0.001;
-  std::vector<tiny_msgs> perturb(6);
+  std::vector<tiny_msgs> perturb;
   for (int i=0; i<6; i++){
     perturb.push_back(swarm_odom[m_agent]);
   }
@@ -767,12 +797,12 @@ void WMSRNode::filtered_barrier_collision(int i){
     if (!neigh_list.empty()){
       for (int j=0; j<neigh_list.size(); j++){
       //   // Testing
-      //   if(idx == 1){
-      //     ROS_INFO("Agent %i has collision neighbor %i", i, neigh_list[j]);
-      //     if(j == neigh_list.size() - 1){
-      //       ROS_INFO("END OF COLLISION LOOP");
-      //     }
-      //   }
+        // if(idx == 1){
+        //   ROS_INFO("Agent %i has collision neighbor %i", i, neigh_list[j]);
+        //   if(j == neigh_list.size() - 1){
+        //     ROS_INFO("END OF COLLISION LOOP");
+        //   }
+        // }
         tiny_msgs grad_vector=psi_col_gradient(i,neigh_list[j]);
         psi_collision_sum=add_vectors(psi_collision_sum,grad_vector);
       }
@@ -799,6 +829,14 @@ void WMSRNode::filtered_barrier_collision(int i){
         tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
         tiny_msgs grad_vector=psi_gradient(i,nlist.u_neigh[j],tau_ij);
         psi_gradient_sum = add_vectors(psi_gradient_sum, grad_vector);
+
+        // // TESTING
+        // if(idx == 1){
+        //   ROS_INFO("Current psi_gradient_sum for agent %i: [%lf, %lf, %lf]", idx, psi_gradient_sum.x, psi_gradient_sum.y, psi_gradient_sum.z);
+        //   if(j == nlist.u_neigh.size()-1){
+        //     ROS_INFO("END OF LOOP \n");
+        //   }
+        // }
       }
     }
 
@@ -808,12 +846,12 @@ void WMSRNode::filtered_barrier_collision(int i){
     barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
     // Testing
 
-    ROS_INFO("\n Barrier function: [%lf, %lf] \n", barrier_out.x, barrier_out.y);
-    if(self_norm(barrier_out) < .002){
-      barrier_out.x = 0.0;
-      barrier_out.y = 0.0;
-      barrier_out.z = 0.0;
-    }
+    // ROS_INFO("\n Barrier function for agent %i: [%lf, %lf] \n", idx, barrier_out.x, barrier_out.y);
+    // if(self_norm(barrier_out) < .0002){
+    //   barrier_out.x = 0.0;
+    //   barrier_out.y = 0.0;
+    //   barrier_out.z = 0.0;
+    // }
     barrier_out = multiply_scalar_vec(gain,barrier_out);
     // ROS_INFO("Barrier function for agent %i after addition and gain of %lf: [%lf, %lf]",idx,gain,barrier_out.x,barrier_out.y);
 
@@ -839,17 +877,17 @@ void WMSRNode::filtered_barrier_collision(int i){
           // ROS_INFO("\n y_i = [%lf, %lf, %lf], y_j = [%lf, %lf, %lf], y_ij = [%lf, %lf, %lf]", swarm_tau[ii].x, swarm_tau[ii].y, swarm_tau[ii].z, swarm_tau[jj].x, swarm_tau[jj].y, swarm_tau[jj].z, yij.x, yij.y, yij.z);
 
           // Super nasty, but the only way I can keep these messages together.
-          ROS_INFO("\n i = %i and j = %i\
-          \n x_i = [%lf, %lf, %lf], x_j = [%lf, %lf, %lf], x_ij = [%lf, %lf, %lf]\
-          \n tau_i = [%lf, %lf, %lf], tau_j = [%lf, %lf, %lf], tau_ij = [%lf, %lf, %lf]\
-          \n y_i = [%lf, %lf, %lf], y_j = [%lf, %lf, %lf], y_ij = [%lf, %lf, %lf] \n \n",\
-           ii, jj,\
-          swarm_odom[ii].x, swarm_odom[ii].y, swarm_odom[ii].z,  swarm_odom[jj].x, swarm_odom[jj].y, swarm_odom[jj].z,xij.x,xij.y,xij.z,\
-        tau[ii][0], tau[ii][1], tau[ii][2], tau[jj][0], tau[jj][1], tau[jj][2], tauij.x, tauij.y,tauij.z,\
-      swarm_tau[ii].x, swarm_tau[ii].y, swarm_tau[ii].z, swarm_tau[jj].x, swarm_tau[jj].y, swarm_tau[jj].z, yij.x, yij.y, yij.z);
-          if(ii == n-1 && jj == n-1){
-            ROS_INFO("\n");
-          }
+      //     ROS_INFO("\n i = %i and j = %i\
+      //     \n x_i = [%lf, %lf, %lf], x_j = [%lf, %lf, %lf], x_ij = [%lf, %lf, %lf]\
+      //     \n tau_i = [%lf, %lf, %lf], tau_j = [%lf, %lf, %lf], tau_ij = [%lf, %lf, %lf]\
+      //     \n y_i = [%lf, %lf, %lf], y_j = [%lf, %lf, %lf], y_ij = [%lf, %lf, %lf] \n \n",\
+      //      ii, jj,\
+      //     swarm_odom[ii].x, swarm_odom[ii].y, swarm_odom[ii].z,  swarm_odom[jj].x, swarm_odom[jj].y, swarm_odom[jj].z,xij.x,xij.y,xij.z,\
+      //   tau[ii][0], tau[ii][1], tau[ii][2], tau[jj][0], tau[jj][1], tau[jj][2], tauij.x, tauij.y,tauij.z,\
+      // swarm_tau[ii].x, swarm_tau[ii].y, swarm_tau[ii].z, swarm_tau[jj].x, swarm_tau[jj].y, swarm_tau[jj].z, yij.x, yij.y, yij.z);
+      //     if(ii == n-1 && jj == n-1){
+      //       ROS_INFO("\n");
+      //     }
         }
       // ROS_INFO("END \n")
       }

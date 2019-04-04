@@ -15,7 +15,7 @@
    </include>
    <arg default="true" name="wmsr_node"/>
    <arg default="5" name="n"/>
-   <arg default="4" name="k"/>
+   <arg default="1" name="k"/>
    <arg default="0" name="F"/>
    <arg default="3" name="demo"/>
    <arg default="15" name="lead_x"/>

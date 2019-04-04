@@ -99,7 +99,9 @@
 
 
 	<!-- WMSR node -->
-	<node name="wmsr_node" pkg="rcomv_r1" type="wmsr_node" output="screen" if="$(arg wmsr_node)">
+  <!-- launch-prefix="xterm -e gdb - -args"  -->
+  <!-- launch-prefix="gdb -ex run - -args" -->
+	<node name="wmsr_node" pkg="rcomv_r1" type="wmsr_node" launch-prefix="gdb -ex run --args" output="screen" if="$(arg wmsr_node)">
 		<param name="n" value="$(arg n)" />
 		<param name="k" value="$(arg k)" />
 		<param name="F" value="$(arg F)" />
