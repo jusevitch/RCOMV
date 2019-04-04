@@ -831,10 +831,10 @@ void WMSRNode::filtered_barrier_collision(int i){
         tiny_msgs grad_vector=psi_gradient(i,nlist.u_neigh[j],tau_ij);
 	if (idx==1)
 	ROS_INFO("grad_vector for %d, %d: [%lf, %lf]", i, nlist.u_neigh[j], grad_vector.x, grad_vector.y);
-	if (grad_vector.x < 0.001)
-	  grad_vector.x=0;
-	if (grad_vector.y < 0.001)
-	  grad_vector.y=0;
+	// if (grad_vector.x < 0.001)
+	//   grad_vector.x=0;
+	// if (grad_vector.y < 0.001)
+	//   grad_vector.y=0;
         psi_gradient_sum = add_vectors(psi_gradient_sum, grad_vector);
 
         // // TESTING
@@ -870,7 +870,7 @@ void WMSRNode::filtered_barrier_collision(int i){
     if (self_norm(barrier_out) >=umax){
       barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
     }
-     if(idx == 1)
+     if(idx == 4)
         ROS_INFO("Current psi_gradient_sum for agent %i: [%lf, %lf, %lf]", idx, barrier_out.x, barrier_out.y, barrier_out.z);
         
     
