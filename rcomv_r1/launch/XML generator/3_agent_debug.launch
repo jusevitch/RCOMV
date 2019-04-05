@@ -14,7 +14,7 @@
       <arg name="paused" value="true"/>
    </include>
    <arg default="true" name="wmsr_node"/>
-   <arg default="5" name="n"/>
+   <arg default="3" name="n"/>
    <arg default="1" name="k"/>
    <arg default="0" name="F"/>
    <arg default="3" name="demo"/>
@@ -97,3 +97,4 @@
       <arg name="Kd2" value="$(arg Kd2)"/>
    </include>
    <!--end of ugv3-->
+ </launch>

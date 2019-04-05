@@ -154,6 +154,9 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
   //compute direction of barrier vector
   barErr.yaw = fmod(atan2(barrier.y, barrier.x) + 2*M_PI, 2*M_PI);
   barErr.yaw = findDifference(yaw,barErr.yaw);
+  // ROS_INFO("fmod(atan2(barrier.y,barrier.x)...): %lf \n \
+  // yaw: %lf \n \
+  // barErr.yaw: %lf", fmod(atan2(barrier.y, barrier.x) + 2*M_PI, 2*M_PI), yaw, barErr.yaw);
   //compute
   barErr.dis =  std::sqrt((barrier.x*barrier.x) + (barrier.y*barrier.y));
 
@@ -163,7 +166,7 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
     // cmd_vel.angular.z = 0;
   }
 
-  if (barErr.yaw < threshold) {
+  if (fabs(barErr.yaw) < threshold) {
     barErr.yaw = 0.0;
   }
 

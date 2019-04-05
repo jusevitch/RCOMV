@@ -522,7 +522,7 @@ float WMSRNode::psi_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent, c
   double rshat = rp - WMSRNode::self_norm(tau_ij);
   output = WMSRNode::self_norm(tiny)*WMSRNode::self_norm(tiny) / (rshat - WMSRNode::self_norm(tiny) + (rshat*rshat)/mu1);
 
-  ROS_INFO("\n m_agent vector: [%lf, %lf, %lf] \n n_agent vector: [%lf, %lf, %lf] \n output: %lf \n",\
+  // ROS_INFO("\n m_agent vector: [%lf, %lf, %lf] \n n_agent vector: [%lf, %lf, %lf] \n output: %lf \n",\
   m_agent.x, m_agent.y, m_agent.z, n_agent.x, n_agent.y, n_agent.z, output);
 
   return output;
@@ -816,14 +816,14 @@ void WMSRNode::filtered_barrier_collision(int i){
     NLists nlist;
     nlist=velocity_filter(i);
     // // Testing
-    // if(idx == 1){
-    //   for (int j=0; j<nlist.u_neigh.size(); j++){
-    //     ROS_INFO("Agent %i has filter neighbor %i", i, nlist.u_neigh.at(j));
-    //     if(j == nlist.u_neigh.size() - 1){
-    //       ROS_INFO("END OF FILTER LOOP");
-    //     }
-    //   }
-    // }
+    if(idx == 1){
+      for (int j=0; j<nlist.u_neigh.size(); j++){
+        ROS_INFO("Agent %i has filter neighbor %i", i, nlist.u_neigh.at(j));
+        if(j == nlist.u_neigh.size() - 1){
+          ROS_INFO("END OF FILTER LOOP");
+        }
+      }
+    }
     if (nlist.filtered_only==0){
       for (int j=0; j<nlist.u_neigh.size(); j++){
         tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
