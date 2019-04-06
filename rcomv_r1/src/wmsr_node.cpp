@@ -690,13 +690,14 @@ NLists WMSRNode::velocity_filter(int i){
     return nlist;
 }
 
-NLists WMSRNode::norm_filtering(int i){
+NLists WMSRNode::norm_filter(int i){
 
   // use swarm_tau
-    std::vector<int> neigh_list;
-    std::vector<Neigh> norm_vector;
+    std::vector<int> neigh_list;    
     std::vector<tiny_msgs> vector_list;
+    std::vector<Neigh> norm_vector;
     NLists nlist;
+    
     neigh_list=get_in_neighbours(1, i);
     if (!neigh_list.empty()){
       for(int j=0; j<neigh_list.size(); j++){
@@ -708,10 +709,13 @@ NLists WMSRNode::norm_filtering(int i){
        std::sort(norm_vector.begin(), norm_vector.end(),
                   [](const Neigh &i, const Neigh &j) { return i.val > j.val; } );
 
+
        if (F<norm_vector.size()){
 	 for(int k=0; k<norm_vector.size();k++){
               if (k<F) // take into account the Fth value as value
               nlist.f_neigh.push_back(norm_vector[k].id);
+	      else if (k>norm_vector.size()-F-1)
+	       nlist.f_neigh.push_back(norm_vector[k].id);
               else
               nlist.u_neigh.push_back(norm_vector[k].id);
             }
@@ -726,6 +730,7 @@ NLists WMSRNode::norm_filtering(int i){
        }
 
     }
+    return nlist;
 }
 
 void WMSRNode::filtered_barrier_function(int iteration, int i){
@@ -758,11 +763,7 @@ void WMSRNode::filtered_barrier_function(int iteration, int i){
         psi_gradient_sum=add_vectors(psi_gradient_sum,grad_ij);
       }
     }
-    std::vector<int> Glist;
-    Glist=G[1][i];
-    for (int j=0; j<nlist.f_neigh.size(); j++){
-      Glist[nlist.f_neigh[j]]=0;
-    }
+
 
     //Get the sum of Glist
 
@@ -832,7 +833,7 @@ void WMSRNode::filtered_barrier_collision(int i){
 
 
     NLists nlist;
-    nlist=velocity_filter(i);
+    nlist=norm_filter(i);
 
     // Testing
     // if(idx == 1){
@@ -852,6 +853,19 @@ void WMSRNode::filtered_barrier_collision(int i){
         psi_gradient_sum = add_vectors(psi_gradient_sum, grad_vector);
       }
     }
+
+    std::vector<int> Glist, Gf;
+    int sum_of_G=0;
+    Glist=G[1][i];
+    for (int j=0; j<nlist.f_neigh.size(); j++){
+      Glist[nlist.f_neigh[j]]=0;
+    }
+    for (int j=0; j<Glist.size(); j++){
+      Gf.push_back(-Glist[j]);
+      sum_of_G+=-Glist[j];
+    }
+
+    Gf[i]=sum_of_G;
 
     float gain= -10.0;
 
