@@ -16,7 +16,7 @@
    <arg default="true" name="wmsr_node"/>
    <arg default="5" name="n"/>
    <arg default="1" name="k"/>
-   <arg default="0" name="F"/>
+   <arg default="1" name="F"/>
    <arg default="3" name="demo"/>
    <arg default="15" name="lead_x"/>
    <arg default="-15" name="lead_y"/>
@@ -62,7 +62,7 @@
       <arg name="enable_logging" value="$(arg enable_logging)"/>
       <arg name="name_space" value="ugv2"/>
       <arg name="idx" value="2"/>
-      <arg name="role" value="2"/>
+      <arg name="role" value="1"/>
       <arg name="x" value="3.0902"/>
       <arg name="y" value="9.5106"/>
       <arg name="lead_x" value="$(arg lead_x)"/>

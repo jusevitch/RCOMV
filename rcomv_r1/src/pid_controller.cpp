@@ -163,7 +163,7 @@ void PIDController::pubCallback(const ros::TimerEvent& event)
     // cmd_vel.angular.z = 0;
   }
 
-  if (barErr.yaw < threshold) {
+  if (fabs(barErr.yaw) < threshold) {
     barErr.yaw = 0.0;
   }
 
