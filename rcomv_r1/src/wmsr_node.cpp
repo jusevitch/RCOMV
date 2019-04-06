@@ -733,52 +733,15 @@ NLists WMSRNode::norm_filter(int i){
     return nlist;
 }
 
-void WMSRNode::filtered_barrier_function(int iteration, int i){
-  if (iteration!=0){
-    save_state_vector(); // Saves current state into the previous state for derivative calculation
-    populate_state_vector(); // Udpates the current state from subscriber
+tiny_msgs WMSRNode::weighted_sum(const std::vector<int> &weights){
+  tiny_msgs gradient;
+  gradient.x=0;gradient.y=0; gradient.z=0;
+  for (int j=0; j < swarm_tau.size(); j++){
+    gradient.x -= weights[j]*swarm_tau[j].x;
+    gradient.y -= weights[j]*swarm_tau[j].y;
+    gradient.z -= weights[j]*swarm_tau[j].z;
   }
-  else {
-    populate_state_vector();
-    save_state_vector();
-  }
-  if (role==1){
-    tiny_msgs malic;
-    malic.x=0;
-    malic.y=80*std::cos(iteration/20 + 2);
-    malic.z=0;
-    barrier_out=malic;
-  }
-  else{
-    populate_velocity_vector();
-
-    NLists nlist;
-    nlist=velocity_filter(i);
-    tiny_msgs psi_gradient_sum;
-    psi_gradient_sum.x=0; psi_gradient_sum.y=0; psi_gradient_sum.z=0;
-    if (!nlist.u_neigh.empty()){
-      for (int j=0; j<nlist.u_neigh.size(); j++){
-        tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
-        tiny_msgs grad_ij = psi_gradient(i,nlist.u_neigh[j],tau_ij);
-        psi_gradient_sum=add_vectors(psi_gradient_sum,grad_ij);
-      }
-    }
-
-
-    //Get the sum of Glist
-
-    float gain = -100.0; //% Makes barrier function converge faster.
-    barrier_out = multiply_scalar_vec(gain,psi_gradient_sum);
-
-    if (self_norm(barrier_out) >=50){
-      barrier_out = multiply_scalar_vec(20.00f / self_norm(barrier_out), barrier_out);
-    }
-
-      //Just check if i's role is 1 in the role_list and change the barrier_out vector accordingly.
-      //for ii=misbehaving_agents
-      //    outvector(ii*2-1:ii*2,1) = [0,80*cos(args.tt/20 + 2)];
-  }
-
+  return gradient;
 }
 
 void WMSRNode::filtered_barrier_collision(int i){
@@ -866,6 +829,7 @@ void WMSRNode::filtered_barrier_collision(int i){
     }
 
     Gf[i]=sum_of_G;
+    tiny_msgs extra_gradient = weighted_sum(Gf);
 
     float gain= -10.0;
 
@@ -876,6 +840,11 @@ void WMSRNode::filtered_barrier_collision(int i){
         ROS_INFO("Before gain addition %i: [%lf, %lf, %lf]", idx, barrier_out.x, barrier_out.y, barrier_out.z);
 
      barrier_out = multiply_scalar_vec(gain,barrier_out);
+
+     barrier_out = add_vectors(barrier_out, extra_gradient);
+
+     if(idx == 1)
+        ROS_INFO("After adding extra gradient %i: [%lf, %lf, %lf]", idx, barrier_out.x, barrier_out.y, barrier_out.z);
      if (self_norm(barrier_out) >=umax){
        barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
      }

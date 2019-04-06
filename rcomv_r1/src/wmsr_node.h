@@ -155,6 +155,7 @@ private:
   tiny_msgs subtract_vectors(const tiny_msgs &a, const tiny_msgs &b);
   tiny_msgs multiply_scalar_vec(const float gain, const tiny_msgs &vec);
   tiny_msgs calc_fvec(int i, int j);
+  tiny_msgs weighted_sum(const std::vector<int> &weights);
 
 }; // end of class
 
