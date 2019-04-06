@@ -149,6 +149,7 @@ private:
   void populate_velocity_vector();
   std::vector<Neigh> multiply_vectors(const std::vector<tiny_msgs> &vec1,const std::vector<tiny_msgs> &vec2, const std::vector<int> neigh);
   NLists velocity_filter(int i);
+  NLists norm_filtering(int i);
   void make_tau_vector();
   tiny_msgs add_vectors(const tiny_msgs &a, const tiny_msgs &b);
   tiny_msgs subtract_vectors(const tiny_msgs &a, const tiny_msgs &b);

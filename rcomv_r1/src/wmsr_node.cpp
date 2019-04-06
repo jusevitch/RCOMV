@@ -537,23 +537,6 @@ tiny_msgs WMSRNode::psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_
   for (int i=0; i<6; i++){
     perturb.push_back(swarm_tau[m_agent]);
   }
-  // Testing
-  // if(m_agent == 0){
-  //   ROS_INFO("swarm_odom -- agent %i : [%lf, %lf, %lf], agent %i : [%lf, %lf, %lf] \n \
-  //    swarm_tau -- agent %i : [%lf, %lf, %lf], agent %i : [%lf, %lf, %lf]",\
-  //    m_agent, swarm_odom[m_agent].x,swarm_odom[m_agent].y,swarm_odom[m_agent].z, n_agent, swarm_odom[n_agent].x,swarm_odom[n_agent].y,swarm_odom[n_agent].z,\
-  //   m_agent, swarm_tau[m_agent].x,swarm_tau[m_agent].y,swarm_tau[m_agent].z, n_agent, swarm_tau[n_agent].x,swarm_tau[n_agent].y,swarm_tau[n_agent].z);
-  // }
-//   if(m_agent == 1){
-//     ROS_INFO("perturb[0] for m_agent = %i before adding h: [%lf, %lf, %lf] \n \
-//     perturb[1]: [%lf, %lf, %lf] \n \
-//     perturb[3]: [%lf, %lf, %lf] \n \
-//     perturb[5]: [%lf, %lf, %lf]",\
-//      m_agent, perturb[0].x, perturb[0].y,perturb[0].z,\
-//    perturb[1].x, perturb[1].y,perturb[1].z,\
-//   perturb[3].x, perturb[3].y,perturb[3].z,\
-// perturb[5].x, perturb[5].y,perturb[5].z);
-//   }
 
   perturb[0].x+=h; //ROS_INFO("perturb[0] for m_agent = %i: [%lf, %lf, %lf]", m_agent, perturb[0].x, perturb[0].y,perturb[0].z);
   perturb[1].x-=h;
@@ -680,17 +663,18 @@ NLists WMSRNode::velocity_filter(int i){
 
         //sort in_neighbours with the vel_grad vector
         std::sort(vel_grad.begin(), vel_grad.end(),
-                  [](const Neigh &i, const Neigh &j) { return i.val < j.val; } );
+                  [](const Neigh &i, const Neigh &j) { return i.val > j.val; } );
 
 	// for (int k=0; k<vel_grad.size(); k++){
+	//   if (i==0)
     	//   ROS_INFO("vel_grad: %d, %lf %d", k, vel_grad[k].val,F); // just want to check my sorting OK IT WORKS
     	// }
         if (F<vel_grad.size()){//filter out the highest multiples of the velocities and gradient of the velocities
             for(int k=0; k<vel_grad.size();k++){
               if (k<F) // take into account the Fth value as value
               nlist.f_neigh.push_back(vel_grad[k].id);
-	      else if (k>vel_grad.size()-F-1)
-	      nlist.f_neigh.push_back(vel_grad[k].id);
+	      // else if (k>vel_grad.size()-F-1)
+	      // nlist.f_neigh.push_back(vel_grad[k].id);
               else
               nlist.u_neigh.push_back(vel_grad[k].id);
             }
@@ -706,9 +690,43 @@ NLists WMSRNode::velocity_filter(int i){
     return nlist;
 }
 
-// NLists WMSRNode::norm_filtering(int i){
-  
-// }
+NLists WMSRNode::norm_filtering(int i){
+
+  // use swarm_tau
+    std::vector<int> neigh_list;
+    std::vector<Neigh> norm_vector;
+    std::vector<tiny_msgs> vector_list;
+    NLists nlist;
+    neigh_list=get_in_neighbours(1, i);
+    if (!neigh_list.empty()){
+      for(int j=0; j<neigh_list.size(); j++){
+	vector_list.push_back(calc_vec(swarm_tau[i],swarm_tau[neigh_list[j]]));		
+      }
+
+      norm_vector = multiply_vectors(vector_list, vector_list, neigh_list);
+
+       std::sort(norm_vector.begin(), norm_vector.end(),
+                  [](const Neigh &i, const Neigh &j) { return i.val > j.val; } );
+
+       if (F<norm_vector.size()){
+	 for(int k=0; k<norm_vector.size();k++){
+              if (k<F) // take into account the Fth value as value
+              nlist.f_neigh.push_back(norm_vector[k].id);
+              else
+              nlist.u_neigh.push_back(norm_vector[k].id);
+            }
+	    nlist.filtered_only=0;
+	 
+       }
+       else{
+	 for (int k=0; k<norm_vector.size();k++){//the in-neighbours are even less than F, return a filtered list
+              nlist.f_neigh.push_back(norm_vector[k].id);
+            }
+	    nlist.filtered_only=1;	 
+       }
+
+    }
+}
 
 void WMSRNode::filtered_barrier_function(int iteration, int i){
   if (iteration!=0){
@@ -815,7 +833,8 @@ void WMSRNode::filtered_barrier_collision(int i){
 
     NLists nlist;
     nlist=velocity_filter(i);
-    // // Testing
+
+    // Testing
     // if(idx == 1){
     //   for (int j=0; j<nlist.u_neigh.size(); j++){
     //     ROS_INFO("Agent %i has filter neighbor %i", i, nlist.u_neigh.at(j));
@@ -823,24 +842,14 @@ void WMSRNode::filtered_barrier_collision(int i){
     //       ROS_INFO("END OF FILTER LOOP");
     //     }
     //   }
-    // }
+    //}
     if (nlist.filtered_only==0){
       for (int j=0; j<nlist.u_neigh.size(); j++){
         tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
         tiny_msgs grad_vector=psi_gradient(i,nlist.u_neigh[j],tau_ij);
-	if (i==0){
-	  ROS_INFO("unfiltered list for %d, %d", i, nlist.u_neigh[j]);}
-	// if (grad_vector.x < 0.001)
-	//   grad_vector.x=0;
-	// if (grad_vector.y < 0.001)
-	//   grad_vector.y=0;
+    	if (i==0){
+    	  ROS_INFO("unfiltered list for %d, %d", i, nlist.u_neigh[j]);}
         psi_gradient_sum = add_vectors(psi_gradient_sum, grad_vector);
-
-        // // TESTING
-       //   if(j == nlist.u_neigh.size()-1){
-        //     ROS_INFO("END OF LOOP \n");
-        //   }
-        // }
       }
     }
 
