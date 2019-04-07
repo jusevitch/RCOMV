@@ -829,7 +829,7 @@ void WMSRNode::filtered_barrier_collision(int i){
     }
 
     Gf[i]=sum_of_G;
-    tiny_msgs extra_gradient = weighted_sum(Gf);
+    //tiny_msgs extra_gradient = weighted_sum(Gf);
 
     float gain= -10.0;
 
@@ -841,7 +841,7 @@ void WMSRNode::filtered_barrier_collision(int i){
 
      barrier_out = multiply_scalar_vec(gain,barrier_out);
 
-     barrier_out = add_vectors(barrier_out, extra_gradient);
+     //barrier_out = add_vectors(barrier_out, extra_gradient);
 
      if(idx == 1)
         ROS_INFO("After adding extra gradient %i: [%lf, %lf, %lf]", idx, barrier_out.x, barrier_out.y, barrier_out.z);
