@@ -48,14 +48,14 @@
       <arg name="Ri" value="0.0"/>
       <arg name="alphai" value="0.0"/>
       <arg name="path_type" value="$(arg path_type)"/>
-      <arg name="qi_x" value="9.9662"/><!--reference cubic polynomial path-->
+      <arg name="qi_x" value="1.9662"/><!--reference cubic polynomial path-->
       <arg name="qi_y" value="-0.053919"/>
       <arg name="qi_theta" value="1.5498"/>
-      <arg name="qf_x" value="-9.9225"/>
+      <arg name="qf_x" value="-1.9225"/>
       <arg name="qf_y" value="-0.0078972"/>
       <arg name="qf_theta" value="1.5918"/>
-      <arg name="poly_k" value="60"/>
-      <arg name="T" value="30"/>
+      <arg name="poly_k" value="10"/>
+      <arg name="T" value="20"/>
       <arg name="endless" value="$(arg endless)"/>
       <arg name="b" value="$(arg b)"/><!--controller paramters-->
       <arg name="k1" value="$(arg k1)"/>

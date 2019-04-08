@@ -524,11 +524,8 @@ float WMSRNode::psi_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent, c
   output = (tiny_norm*tiny_norm) / (rshat - tiny_norm + (rshat*rshat)/mu1);
 
   // ROS_INFO("\n m_agent vector: [%lf, %lf, %lf] \n n_agent vector: [%lf, %lf, %lf] \n output: %lf \n",\
-<<<<<<< HEAD
-  m_agent.x, m_agent.y, m_agent.z, n_agent.x, n_agent.y, n_agent.z, output);
-=======
   // m_agent.x, m_agent.y, m_agent.z, n_agent.x, n_agent.y, n_agent.z, output);
->>>>>>> origin/master
+
 
   return output;
 
@@ -697,15 +694,15 @@ NLists WMSRNode::velocity_filter(int i){
 NLists WMSRNode::norm_filter(int i){
 
   // use swarm_tau
-    std::vector<int> neigh_list;    
+    std::vector<int> neigh_list;
     std::vector<tiny_msgs> vector_list;
     std::vector<Neigh> norm_vector;
     NLists nlist;
-    
+
     neigh_list=get_in_neighbours(1, i);
     if (!neigh_list.empty()){
       for(int j=0; j<neigh_list.size(); j++){
-	vector_list.push_back(calc_vec(swarm_tau[i],swarm_tau[neigh_list[j]]));		
+	vector_list.push_back(calc_vec(swarm_tau[i],swarm_tau[neigh_list[j]]));
       }
 
       norm_vector = multiply_vectors(vector_list, vector_list, neigh_list);
@@ -724,13 +721,13 @@ NLists WMSRNode::norm_filter(int i){
               nlist.u_neigh.push_back(norm_vector[k].id);
             }
 	    nlist.filtered_only=0;
-	 
+
        }
        else{
 	 for (int k=0; k<norm_vector.size();k++){//the in-neighbours are even less than F, return a filtered list
               nlist.f_neigh.push_back(norm_vector[k].id);
             }
-	    nlist.filtered_only=1;	 
+	    nlist.filtered_only=1;
        }
 
     }
@@ -800,18 +797,6 @@ void WMSRNode::filtered_barrier_collision(int i){
 
 
     NLists nlist;
-<<<<<<< HEAD
-    nlist=velocity_filter(i);
-    // // Testing
-    if(idx == 1){
-      for (int j=0; j<nlist.u_neigh.size(); j++){
-        ROS_INFO("Agent %i has filter neighbor %i", i, nlist.u_neigh.at(j));
-        if(j == nlist.u_neigh.size() - 1){
-          ROS_INFO("END OF FILTER LOOP");
-        }
-      }
-    }
-=======
     nlist=norm_filter(i);
 
     // Testing
@@ -823,7 +808,6 @@ void WMSRNode::filtered_barrier_collision(int i){
     //     }
     //   }
     //}
->>>>>>> origin/master
     if (nlist.filtered_only==0){
       for (int j=0; j<nlist.u_neigh.size(); j++){
         tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
@@ -851,8 +835,8 @@ void WMSRNode::filtered_barrier_collision(int i){
     float gain= -10.0;
 
     barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
-    
-    
+
+
      if(idx == 1)
         ROS_INFO("Before gain addition %i: [%lf, %lf, %lf]", idx, barrier_out.x, barrier_out.y, barrier_out.z);
 
@@ -865,7 +849,7 @@ void WMSRNode::filtered_barrier_collision(int i){
      if (self_norm(barrier_out) >=umax){
        barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
      }
-        
+
 
   }
   iteration+=1;
