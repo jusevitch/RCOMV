@@ -62,7 +62,7 @@
       <arg name="enable_logging" value="$(arg enable_logging)"/>
       <arg name="name_space" value="ugv2"/>
       <arg name="idx" value="2"/>
-      <arg name="role" value="2"/>
+      <arg name="role" value="1"/>
       <arg name="x" value="3.0902"/>
       <arg name="y" value="9.5106"/>
       <arg name="lead_x" value="$(arg lead_x)"/>

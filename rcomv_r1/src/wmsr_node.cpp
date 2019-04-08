@@ -518,12 +518,17 @@ float WMSRNode::psi_helper(const tiny_msgs &m_agent, const tiny_msgs &n_agent, c
 
   double mu1=1000.0;
   double output;
-  tiny_msgs tiny=WMSRNode::calc_vec(m_agent,n_agent);
-  double rshat = rp - WMSRNode::self_norm(tau_ij);
-  output = WMSRNode::self_norm(tiny)*WMSRNode::self_norm(tiny) / (rshat - WMSRNode::self_norm(tiny) + (rshat*rshat)/mu1);
+  tiny_msgs tiny=calc_vec(m_agent,n_agent);
+  double tiny_norm = self_norm(tiny);
+  double rshat = rp - self_norm(tau_ij);
+  output = (tiny_norm*tiny_norm) / (rshat - tiny_norm + (rshat*rshat)/mu1);
 
   // ROS_INFO("\n m_agent vector: [%lf, %lf, %lf] \n n_agent vector: [%lf, %lf, %lf] \n output: %lf \n",\
+<<<<<<< HEAD
   m_agent.x, m_agent.y, m_agent.z, n_agent.x, n_agent.y, n_agent.z, output);
+=======
+  // m_agent.x, m_agent.y, m_agent.z, n_agent.x, n_agent.y, n_agent.z, output);
+>>>>>>> origin/master
 
   return output;
 
@@ -536,23 +541,6 @@ tiny_msgs WMSRNode::psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_
   for (int i=0; i<6; i++){
     perturb.push_back(swarm_tau[m_agent]);
   }
-  // Testing
-  // if(m_agent == 0){
-  //   ROS_INFO("swarm_odom -- agent %i : [%lf, %lf, %lf], agent %i : [%lf, %lf, %lf] \n \
-  //    swarm_tau -- agent %i : [%lf, %lf, %lf], agent %i : [%lf, %lf, %lf]",\
-  //    m_agent, swarm_odom[m_agent].x,swarm_odom[m_agent].y,swarm_odom[m_agent].z, n_agent, swarm_odom[n_agent].x,swarm_odom[n_agent].y,swarm_odom[n_agent].z,\
-  //   m_agent, swarm_tau[m_agent].x,swarm_tau[m_agent].y,swarm_tau[m_agent].z, n_agent, swarm_tau[n_agent].x,swarm_tau[n_agent].y,swarm_tau[n_agent].z);
-  // }
-//   if(m_agent == 1){
-//     ROS_INFO("perturb[0] for m_agent = %i before adding h: [%lf, %lf, %lf] \n \
-//     perturb[1]: [%lf, %lf, %lf] \n \
-//     perturb[3]: [%lf, %lf, %lf] \n \
-//     perturb[5]: [%lf, %lf, %lf]",\
-//      m_agent, perturb[0].x, perturb[0].y,perturb[0].z,\
-//    perturb[1].x, perturb[1].y,perturb[1].z,\
-//   perturb[3].x, perturb[3].y,perturb[3].z,\
-// perturb[5].x, perturb[5].y,perturb[5].z);
-//   }
 
   perturb[0].x+=h; //ROS_INFO("perturb[0] for m_agent = %i: [%lf, %lf, %lf]", m_agent, perturb[0].x, perturb[0].y,perturb[0].z);
   perturb[1].x-=h;
@@ -566,7 +554,7 @@ tiny_msgs WMSRNode::psi_gradient(int m_agent, int n_agent, const tiny_msgs &tau_
   output.y = (psi_helper(perturb[2],swarm_tau[n_agent],tau_ij) - psi_helper(perturb[3],swarm_tau[n_agent],tau_ij))/(2*h);
   output.z = (psi_helper(perturb[4],swarm_tau[n_agent],tau_ij) - psi_helper(perturb[5],swarm_tau[n_agent],tau_ij))/(2*h);
 
-  // ROS_INFO("\n Output vector for m_agent %i : [%lf, %lf, %lf] \n", m_agent, output.x, output.y, output.z);
+  //ROS_INFO("\n Output vector for m_agent %i : [%lf, %lf, %lf] \n", m_agent, output.x, output.y, output.z);
 
   return output;
 
@@ -679,15 +667,18 @@ NLists WMSRNode::velocity_filter(int i){
 
         //sort in_neighbours with the vel_grad vector
         std::sort(vel_grad.begin(), vel_grad.end(),
-                  [](const Neigh &i, const Neigh &j) { return i.val < j.val; } );
+                  [](const Neigh &i, const Neigh &j) { return i.val > j.val; } );
 
 	// for (int k=0; k<vel_grad.size(); k++){
+	//   if (i==0)
     	//   ROS_INFO("vel_grad: %d, %lf %d", k, vel_grad[k].val,F); // just want to check my sorting OK IT WORKS
     	// }
         if (F<vel_grad.size()){//filter out the highest multiples of the velocities and gradient of the velocities
             for(int k=0; k<vel_grad.size();k++){
               if (k<F) // take into account the Fth value as value
               nlist.f_neigh.push_back(vel_grad[k].id);
+	      // else if (k>vel_grad.size()-F-1)
+	      // nlist.f_neigh.push_back(vel_grad[k].id);
               else
               nlist.u_neigh.push_back(vel_grad[k].id);
             }
@@ -703,56 +694,58 @@ NLists WMSRNode::velocity_filter(int i){
     return nlist;
 }
 
-void WMSRNode::filtered_barrier_function(int iteration, int i){
-  if (iteration!=0){
-    save_state_vector(); // Saves current state into the previous state for derivative calculation
-    populate_state_vector(); // Udpates the current state from subscriber
-  }
-  else {
-    populate_state_vector();
-    save_state_vector();
-  }
-  if (role==1){
-    tiny_msgs malic;
-    malic.x=0;
-    malic.y=80*std::cos(iteration/20 + 2);
-    malic.z=0;
-    barrier_out=malic;
-  }
-  else{
-    populate_velocity_vector();
+NLists WMSRNode::norm_filter(int i){
 
+  // use swarm_tau
+    std::vector<int> neigh_list;    
+    std::vector<tiny_msgs> vector_list;
+    std::vector<Neigh> norm_vector;
     NLists nlist;
-    nlist=velocity_filter(i);
-    tiny_msgs psi_gradient_sum;
-    psi_gradient_sum.x=0; psi_gradient_sum.y=0; psi_gradient_sum.z=0;
-    if (!nlist.u_neigh.empty()){
-      for (int j=0; j<nlist.u_neigh.size(); j++){
-        tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
-        tiny_msgs grad_ij = psi_gradient(i,nlist.u_neigh[j],tau_ij);
-        psi_gradient_sum=add_vectors(psi_gradient_sum,grad_ij);
+    
+    neigh_list=get_in_neighbours(1, i);
+    if (!neigh_list.empty()){
+      for(int j=0; j<neigh_list.size(); j++){
+	vector_list.push_back(calc_vec(swarm_tau[i],swarm_tau[neigh_list[j]]));		
       }
+
+      norm_vector = multiply_vectors(vector_list, vector_list, neigh_list);
+
+       std::sort(norm_vector.begin(), norm_vector.end(),
+                  [](const Neigh &i, const Neigh &j) { return i.val > j.val; } );
+
+
+       if (F<norm_vector.size()){
+	 for(int k=0; k<norm_vector.size();k++){
+              if (k<F) // take into account the Fth value as value
+              nlist.f_neigh.push_back(norm_vector[k].id);
+	      else if (k>norm_vector.size()-F-1)
+	       nlist.f_neigh.push_back(norm_vector[k].id);
+              else
+              nlist.u_neigh.push_back(norm_vector[k].id);
+            }
+	    nlist.filtered_only=0;
+	 
+       }
+       else{
+	 for (int k=0; k<norm_vector.size();k++){//the in-neighbours are even less than F, return a filtered list
+              nlist.f_neigh.push_back(norm_vector[k].id);
+            }
+	    nlist.filtered_only=1;	 
+       }
+
     }
-    std::vector<int> Glist;
-    Glist=G[1][i];
-    for (int j=0; j<nlist.f_neigh.size(); j++){
-      Glist[nlist.f_neigh[j]]=0;
-    }
+    return nlist;
+}
 
-    //Get the sum of Glist
-
-    float gain = -100.0; //% Makes barrier function converge faster.
-    barrier_out = multiply_scalar_vec(gain,psi_gradient_sum);
-
-    if (self_norm(barrier_out) >=50){
-      barrier_out = multiply_scalar_vec(20.00f / self_norm(barrier_out), barrier_out);
-    }
-
-      //Just check if i's role is 1 in the role_list and change the barrier_out vector accordingly.
-      //for ii=misbehaving_agents
-      //    outvector(ii*2-1:ii*2,1) = [0,80*cos(args.tt/20 + 2)];
+tiny_msgs WMSRNode::weighted_sum(const std::vector<int> &weights){
+  tiny_msgs gradient;
+  gradient.x=0;gradient.y=0; gradient.z=0;
+  for (int j=0; j < swarm_tau.size(); j++){
+    gradient.x -= weights[j]*swarm_tau[j].x;
+    gradient.y -= weights[j]*swarm_tau[j].y;
+    gradient.z -= weights[j]*swarm_tau[j].z;
   }
-
+  return gradient;
 }
 
 void WMSRNode::filtered_barrier_collision(int i){
@@ -796,13 +789,6 @@ void WMSRNode::filtered_barrier_collision(int i){
     neigh_list=get_in_neighbours(1, i);
     if (!neigh_list.empty()){
       for (int j=0; j<neigh_list.size(); j++){
-      //   // Testing
-        // if(idx == 1){
-        //   ROS_INFO("Agent %i has collision neighbor %i", i, neigh_list[j]);
-        //   if(j == neigh_list.size() - 1){
-        //     ROS_INFO("END OF COLLISION LOOP");
-        //   }
-        // }
         tiny_msgs grad_vector=psi_col_gradient(i,neigh_list[j]);
         psi_collision_sum=add_vectors(psi_collision_sum,grad_vector);
       }
@@ -814,6 +800,7 @@ void WMSRNode::filtered_barrier_collision(int i){
 
 
     NLists nlist;
+<<<<<<< HEAD
     nlist=velocity_filter(i);
     // // Testing
     if(idx == 1){
@@ -824,74 +811,61 @@ void WMSRNode::filtered_barrier_collision(int i){
         }
       }
     }
+=======
+    nlist=norm_filter(i);
+
+    // Testing
+    // if(idx == 1){
+    //   for (int j=0; j<nlist.u_neigh.size(); j++){
+    //     ROS_INFO("Agent %i has filter neighbor %i", i, nlist.u_neigh.at(j));
+    //     if(j == nlist.u_neigh.size() - 1){
+    //       ROS_INFO("END OF FILTER LOOP");
+    //     }
+    //   }
+    //}
+>>>>>>> origin/master
     if (nlist.filtered_only==0){
       for (int j=0; j<nlist.u_neigh.size(); j++){
         tiny_msgs tau_ij = calc_fvec(i,nlist.u_neigh[j]);
         tiny_msgs grad_vector=psi_gradient(i,nlist.u_neigh[j],tau_ij);
+    	if (i==0){
+    	  ROS_INFO("unfiltered list for %d, %d", i, nlist.u_neigh[j]);}
         psi_gradient_sum = add_vectors(psi_gradient_sum, grad_vector);
-
-        // // TESTING
-        // if(idx == 1){
-        //   ROS_INFO("Current psi_gradient_sum for agent %i: [%lf, %lf, %lf]", idx, psi_gradient_sum.x, psi_gradient_sum.y, psi_gradient_sum.z);
-        //   if(j == nlist.u_neigh.size()-1){
-        //     ROS_INFO("END OF LOOP \n");
-        //   }
-        // }
       }
     }
+
+    std::vector<int> Glist, Gf;
+    int sum_of_G=0;
+    Glist=G[1][i];
+    for (int j=0; j<nlist.f_neigh.size(); j++){
+      Glist[nlist.f_neigh[j]]=0;
+    }
+    for (int j=0; j<Glist.size(); j++){
+      Gf.push_back(-Glist[j]);
+      sum_of_G+=-Glist[j];
+    }
+
+    Gf[i]=sum_of_G;
+    //tiny_msgs extra_gradient = weighted_sum(Gf);
 
     float gain= -10.0;
 
-    // ROS_INFO("Barrier functions for agent %i before gain (grad,coll): [%lf, %lf], [%lf, %lf]", idx, psi_gradient_sum.x, psi_gradient_sum.y, psi_collision_sum.x, psi_collision_sum.y);
     barrier_out = add_vectors(psi_gradient_sum, psi_collision_sum);
-    // Testing
+    
+    
+     if(idx == 1)
+        ROS_INFO("Before gain addition %i: [%lf, %lf, %lf]", idx, barrier_out.x, barrier_out.y, barrier_out.z);
 
-    // ROS_INFO("\n Barrier function for agent %i: [%lf, %lf] \n", idx, barrier_out.x, barrier_out.y);
-    // if(self_norm(barrier_out) < .0002){
-    //   barrier_out.x = 0.0;
-    //   barrier_out.y = 0.0;
-    //   barrier_out.z = 0.0;
-    // }
-    barrier_out = multiply_scalar_vec(gain,barrier_out);
-    // ROS_INFO("Barrier function for agent %i after addition and gain of %lf: [%lf, %lf]",idx,gain,barrier_out.x,barrier_out.y);
+     barrier_out = multiply_scalar_vec(gain,barrier_out);
 
-    if (self_norm(barrier_out) >=umax){
-      barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
-    }
+     //barrier_out = add_vectors(barrier_out, extra_gradient);
 
-    // Debug
-    for(int ii=0; ii<n; ii++){
-      for(int jj=0; jj<n; jj++){
-        if(ii != jj) {
-          tiny_msgs yij = calc_vec(swarm_tau[ii],swarm_tau[jj]);
-          tiny_msgs xij = calc_vec(swarm_odom[ii], swarm_odom[jj]);
-          tiny_msgs taui, tauj, tauij;
-          taui.x = tau[ii][0]; taui.y = tau[ii][1]; taui.z = tau[ii][2];
-          tauj.x = tau[jj][0]; tauj.y = tau[jj][1]; tauj.z = tau[jj][2];
-          tauij = calc_vec(taui,tauj);
-          // DO NOT USE THESE MESSAGES -- they do not stay together. Only kept
-          //    for historical reasons.
-          // ROS_INFO("\n i = %i and j = %i", ii, jj);
-          // ROS_INFO("\n x_i = [%lf, %lf, %lf], x_j = [%lf, %lf, %lf], x_ij = [%lf, %lf, %lf]", swarm_odom[ii].x, swarm_odom[ii].y, swarm_odom[ii].z,  swarm_odom[jj].x, swarm_odom[jj].y, swarm_odom[jj].z,xij.x,xij.y,xij.z);
-          // ROS_INFO("\n tau_i = [%lf, %lf, %lf], tau_j = [%lf, %lf, %lf], tau_ij = [%lf, %lf, %lf]", tau[ii][0], tau[ii][1], tau[ii][2], tau[jj][0], tau[jj][1], tau[jj][2], tauij.x, tauij.y,tauij.z);
-          // ROS_INFO("\n y_i = [%lf, %lf, %lf], y_j = [%lf, %lf, %lf], y_ij = [%lf, %lf, %lf]", swarm_tau[ii].x, swarm_tau[ii].y, swarm_tau[ii].z, swarm_tau[jj].x, swarm_tau[jj].y, swarm_tau[jj].z, yij.x, yij.y, yij.z);
-
-          // Super nasty, but the only way I can keep these messages together.
-      //     ROS_INFO("\n i = %i and j = %i\
-      //     \n x_i = [%lf, %lf, %lf], x_j = [%lf, %lf, %lf], x_ij = [%lf, %lf, %lf]\
-      //     \n tau_i = [%lf, %lf, %lf], tau_j = [%lf, %lf, %lf], tau_ij = [%lf, %lf, %lf]\
-      //     \n y_i = [%lf, %lf, %lf], y_j = [%lf, %lf, %lf], y_ij = [%lf, %lf, %lf] \n \n",\
-      //      ii, jj,\
-      //     swarm_odom[ii].x, swarm_odom[ii].y, swarm_odom[ii].z,  swarm_odom[jj].x, swarm_odom[jj].y, swarm_odom[jj].z,xij.x,xij.y,xij.z,\
-      //   tau[ii][0], tau[ii][1], tau[ii][2], tau[jj][0], tau[jj][1], tau[jj][2], tauij.x, tauij.y,tauij.z,\
-      // swarm_tau[ii].x, swarm_tau[ii].y, swarm_tau[ii].z, swarm_tau[jj].x, swarm_tau[jj].y, swarm_tau[jj].z, yij.x, yij.y, yij.z);
-      //     if(ii == n-1 && jj == n-1){
-      //       ROS_INFO("\n");
-      //     }
-        }
-      // ROS_INFO("END \n")
-      }
-    }
+     if(idx == 1)
+        ROS_INFO("After adding extra gradient %i: [%lf, %lf, %lf]", idx, barrier_out.x, barrier_out.y, barrier_out.z);
+     if (self_norm(barrier_out) >=umax){
+       barrier_out = multiply_scalar_vec(umax / self_norm(barrier_out), barrier_out);
+     }
+        
 
   }
   iteration+=1;
