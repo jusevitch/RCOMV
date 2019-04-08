@@ -34,6 +34,11 @@ InOutLinController::InOutLinController()
   nh_private_.param<double>("poly_k", poly_k, 20);
   nh_private_.param<double>("T", T, 15);
   nh_private_.param<bool>("endless", endless_flag, false);
+
+  // For indoor use
+  nh_private_.param<bool>("indoors_rover_bool", indoors_rover_bool, false); // Tests whether we're running it indoors or not
+  nh_private_.param<int>("rover_number", rover_number, 0); // gives Rover number; 0 throws an error.
+
   even_cycle = false;
   //
   odometry_connected = false;
@@ -42,14 +47,24 @@ InOutLinController::InOutLinController()
 
   // ------------------------------ Set Pubs/Subs -----------------------------
   // Publisher := cmd_vel_mux/input/teleop
-  pub = nh.advertise<geometry_msgs::Twist>("cmd_vel_mux/input/teleop", 10);
+  if(indoors_bool){
+    indoor_pub_topic = "/R" + std::to_string(rover_number);
+    pub = nh.advertise<geometry_msgs::Twist>(indoor_pub_topic, 10);
+  } else {
+    pub = nh.advertise<geometry_msgs::Twist>("cmd_vel_mux/input/teleop", 10);
+  }
   // frequency: 50 Hz
   pub_timer = nh.createTimer(ros::Duration(0.02), &InOutLinController::pubCallback, this);
   // frequency: 1 Hz
   dis_timer = nh.createTimer(ros::Duration(1), &InOutLinController::disCallback, this);
 
   //Subscriber := current states
-  odom_sub = nh.subscribe("odom", 10, &InOutLinController::odom_subCallback, this);
+  if(indoors_bool){
+    indoor_sub_topic = "vicon/R" + std::to_string(rover_number) + "/R" + std::to_string(rover_number);
+    indoors_sub = nh.subscribe(indoor_sub_topic, 10, &InOutLinController::indoor_subCallback, this);
+  } else{
+    odom_sub = nh.subscribe("odom", 10, &InOutLinController::odom_subCallback, this);
+  }
 
   //Subscriber := reference trajectory parameters
   trajectory_sub = nh.subscribe("ref", 10, &InOutLinController::trajectory_subCallback, this);
@@ -78,6 +93,21 @@ void InOutLinController::odom_subCallback(const nav_msgs::Odometry::ConstPtr& ms
   state.child_frame_id = msgs->child_frame_id;
   state.pose = msgs->pose;
   state.twist = msgs->twist;
+}
+
+void indoor_subCallback(const geometry_msgs::TransformStamped::ConstPtr& msgs)
+{
+  if (odometry_connected == false)
+  {
+      odometry_connected = true;
+      t0 = ros::Time::now().toSec(); // intial time
+  }
+  state.header = msgs->header;
+  state.child_frame_id = msgs->child_frame_id;
+  state.pose.position.x = msgs->transform.translation.x;
+  state.pose.position.y = msgs->transform.translation.y;
+  state.pose.position.z = msgs->transform.translation.z;
+  // TODO: Calculate linear velocity and angular velocity from vicon messages
 }
 
 void InOutLinController::trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs)
@@ -225,7 +255,7 @@ double QuaternionToYaw(const nav_msgs::Odometry &msgs)
 }
 
 // helper function
-// return the reference trajectory and velocities for any arbitrary cubic polynomial trajectory 
+// return the reference trajectory and velocities for any arbitrary cubic polynomial trajectory
 void InOutLinController::CubePolyPath(pose qi, pose qf, double k, double T, double t,
                   double &xd, double &yd, double &vd, double &wd) {
   // uniform time law

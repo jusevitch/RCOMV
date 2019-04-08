@@ -6,6 +6,7 @@
 
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <nav_msgs/Odometry.h>
 
 #include <rcomv_r1/CubicPath.h>
@@ -37,6 +38,7 @@ private:
   // msgs
   geometry_msgs::Twist cmd_vel;
   nav_msgs::Odometry state;
+  geometry_msgs::TransformStamped indoor_state;
 
   // publisher
   ros::Publisher pub;
@@ -51,6 +53,7 @@ private:
   void pubCallback(const ros::TimerEvent& event);
   void disCallback(const ros::TimerEvent& event);  // display callback function
   void odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs);
+  void indoor_subCallback(const geometry_msgs::TransformStamped::ConstPtr& msgs);
   void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs);
 
   // private variables
@@ -80,7 +83,10 @@ private:
   bool odometry_connected; // flag of odometry
   double initial_time;
 
-
+  bool indoors_rover_bool; // Must be put as true if you're running an AION rover indoors
+  int rover_number; // The number of the rover. This should correspond with the VICON topic the state is published to.
+  string indoor_sub_topic; // Indoors subscriber topic
+  string indoor_pub_topic; // Indoors publisher topic 
 
 
   // helper functions
