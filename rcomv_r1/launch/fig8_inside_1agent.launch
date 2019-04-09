@@ -1,5 +1,25 @@
 <?xml version="1.0"?>
 <launch>
+  <arg name="Ri" default="0" />
+  <arg name="alphai" default="0"/>
+  <arg name="b" default="0.05" />
+  <arg name="k1" default="4" />
+  <arg name="k2" default="4"/>
+  <arg name="vmax" default="6" />
+  <arg name="wmax" default="4"/>
+  <arg name="path_type" default="circular" />
+  <arg name="xc" default="0" />
+  <arg name="yc" default="-1" />
+  <arg name="R" default="4" />
+  <arg name="R1" default="5" />
+  <arg name="R2" default="10" />
+  <arg name="wd" default="0.5" />
+  <arg name="qi_x" default="10" /> <arg name="qi_y" default="0" /> <arg name="qi_theta" default="1.57" />
+  <arg name="qf_x" default="-10" /> <arg name="qf_y" default="0" /> <arg name="qf_theta" default="4.71" />
+  <arg name="poly_k" default="20" />
+  <arg name="T" default="15" />
+  <arg name="endless" default="false" />
+
 <node name="InOutLin_controller_node" pkg="rcomv_r1" type="InputOutputLin_Controller" launch-prefix="xterm -e"    output="screen" unless="$(arg wmsr_node)">
 <param name="Ri" value="$(arg Ri)" />
     <param name="alphai" value="$(arg alphai)"/>
@@ -10,21 +30,23 @@
     <param name="vmax" value="$(arg vmax)" />
     <param name="wmax" value="$(arg wmax)"/>
 
-<param name="path_type" value="$(arg path_type)" />
-<param name="xc" value="$(arg xc)" />
-<param name="yc" value="$(arg yc)" />
-<param name="R" value="$(arg R)" />
+    <param name="path_type" value="$(arg path_type)" />
+    <param name="xc" value="$(arg xc)" />
+    <param name="yc" value="$(arg yc)" />
+    <param name="R" value="$(arg R)" />
     <param name="R1" value="$(arg R1)" />
     <param name="R2" value="$(arg R2)" />
-<param name="wd" value="$(arg wd)" />
+    <param name="wd" value="$(arg wd)" />
 
-        <param name="qi_x" value="$(arg qi_x)" /> <param name="qi_y" value="$(arg qi_y)" />
-<param name="qi_theta" value="$(arg qi_theta)" />
-    <param name="qf_x" value="$(arg qf_x)" /> <param name="qf_y" value="$(arg qf_y)" />
-<param name="qf_theta" value="$(arg qf_theta)" />
+    <param name="qi_x" value="$(arg qi_x)" />
+    <param name="qi_y" value="$(arg qi_y)" />
+    <param name="qi_theta" value="$(arg qi_theta)" />
+    <param name="qf_x" value="$(arg qf_x)" />
+    <param name="qf_y" value="$(arg qf_y)" />
+    <param name="qf_theta" value="$(arg qf_theta)" />
     <param name="poly_k" value="$(arg poly_k)" />
     <param name="T" value="$(arg T)" />
-        <param name="endless" value="$(arg endless)" />
+    <param name="endless" value="$(arg endless)" />
 
 </node>
 </launch>
