@@ -14,11 +14,11 @@
   <arg name="R1" default="5" />
   <arg name="R2" default="10" />
   <arg name="wd" default="0.5" />
-  <arg name="qi_x" default="10" /> <arg name="qi_y" default="0" /> <arg name="qi_theta" default="1.57" />
-  <arg name="qf_x" default="-10" /> <arg name="qf_y" default="0" /> <arg name="qf_theta" default="4.71" />
-  <arg name="poly_k" default="20" />
-  <arg name="T" default="15" />
-  <arg name="endless" default="false" />
+  <arg name="qi_x" default="1.9662" /> <arg name="qi_y" default="-0.053919" /> <arg name="qi_theta" default="1.5498" />
+  <arg name="qf_x" default="-1.9225" /> <arg name="qf_y" default="-0.0078972" /> <arg name="qf_theta" default="1.5918" />
+  <arg name="poly_k" default="10" />
+  <arg name="T" default="20" />
+  <arg name="endless" default="true" />
 
 <node name="InOutLin_controller_node" pkg="rcomv_r1" type="InputOutputLin_Controller" launch-prefix="xterm -e"    output="screen" unless="$(arg wmsr_node)">
 <param name="Ri" value="$(arg Ri)" />
@@ -47,6 +47,8 @@
     <param name="poly_k" value="$(arg poly_k)" />
     <param name="T" value="$(arg T)" />
     <param name="endless" value="$(arg endless)" />
+    <param name="indoors_rover_bool" value="true"/>
+    <param name="rover_number" value="2"/>
 
 </node>
 </launch>
