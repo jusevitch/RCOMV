@@ -51,7 +51,7 @@ InOutLinController::InOutLinController()
     indoor_pub_topic = "/R" + std::to_string(rover_number);
     pub = nh.advertise<geometry_msgs::Twist>(indoor_pub_topic, 10);
   } else {
-    pub = nh.advertise<geometry_msgs::Twist>("cmd_vel_mux/input/teleop", 10);
+    pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel/", 10); //  cmd_vel_mux/input/teleop
   }
   // frequency: 50 Hz
   pub_timer = nh.createTimer(ros::Duration(0.02), &InOutLinController::pubCallback, this);
