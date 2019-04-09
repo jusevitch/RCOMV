@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<launch>
+<node name="InOutLin_controller_node" pkg="rcomv_r1" type="InputOutputLin_Controller" launch-prefix="xterm -e"    output="screen" unless="$(arg wmsr_node)">
+<param name="Ri" value="$(arg Ri)" />
+    <param name="alphai" value="$(arg alphai)"/>
+
+    <param name="b" value="$(arg b)" />
+    <param name="k1" value="$(arg k1)" />
+    <param name="k2" value="$(arg k2)"/>
+    <param name="vmax" value="$(arg vmax)" />
+    <param name="wmax" value="$(arg wmax)"/>
+
+<param name="path_type" value="$(arg path_type)" />
+<param name="xc" value="$(arg xc)" />
+<param name="yc" value="$(arg yc)" />
+<param name="R" value="$(arg R)" />
+    <param name="R1" value="$(arg R1)" />
+    <param name="R2" value="$(arg R2)" />
+<param name="wd" value="$(arg wd)" />
+
+        <param name="qi_x" value="$(arg qi_x)" /> <param name="qi_y" value="$(arg qi_y)" />
+<param name="qi_theta" value="$(arg qi_theta)" />
+    <param name="qf_x" value="$(arg qf_x)" /> <param name="qf_y" value="$(arg qf_y)" />
+<param name="qf_theta" value="$(arg qf_theta)" />
+    <param name="poly_k" value="$(arg poly_k)" />
+    <param name="T" value="$(arg T)" />
+        <param name="endless" value="$(arg endless)" />
+
+</node>
+</launch>
