@@ -1,11 +1,13 @@
 
-#ifndef INPUTOUTPUT_CONTROLLER_H
-#define INPUTOUTPUT_CONTROLLER_H
+#ifndef IO_COLLISION
+#define IO_COLLISION
 
 #include <ros/ros.h>
 
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Vector3.h>
 #include <nav_msgs/Odometry.h>
 
 #include <rcomv_r1/CubicPath.h>
@@ -15,6 +17,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string>
+#include <vector>
+
+#include <state_graph_builder/graph.h>
+#include <state_graph_builder/posegraph.h>
 
 
 // pose structure
@@ -24,11 +30,11 @@ struct pose {
   double theta;
 };
 
-class InOutLinController
+class IO_control_collision
 {
 public:
-  InOutLinController();
-  ~InOutLinController();
+  IO_control_collision();
+  ~IO_control_collision();
 private:
   // ROS node handle
   ros::NodeHandle nh;
@@ -46,15 +52,21 @@ private:
   // subscriber
   ros::Subscriber odom_sub;
   ros::Subscriber trajectory_sub;
-  ros::Subscriber all_states_sub;
+  ros::Subscriber states_sub;
 
   // callback funcrions
   void pubCallback(const ros::TimerEvent& event);
   void disCallback(const ros::TimerEvent& event);  // display callback function
   void odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs);
   void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs);
-  void all_states_Callback(const state_graph_builder::posegraph::ConstPtr& msgs);
+  void graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs);
 
+  geometry_msgs::Vector3 collision_neighbors(const state_graph_builder::posegraph::ConstPtr& graph);
+  double psi_col_helper(const geometry_msgs::Vector3 &m_agent, const  geometry_msgs::Vector3 &n_agent);
+  geometry_msgs::Vector3 psi_col_gradient(int m_agent, int n_agent);
+  geometry_msgs::Vector3 calc_vec(const geometry_msgs::Point& state1, const geometry_msgs::Point& state2);
+  double IO_control_collision::self_norm(const geometry_msgs::Vector3 &tiny);
+  
   // private variables
   // controller paramters
   double b; // a longitudinal distance ahead of the unicycle model
@@ -83,6 +95,8 @@ private:
   double initial_time;
   state_graph_builder::posegraph all_states;
   int n;
+  std::vector<pose_msgs> state_lists;
+  int agent_index;
 
 
 
@@ -90,6 +104,7 @@ private:
   // helper functions
   void CubePolyPath(pose qi, pose qf, double k, double T, double t,
                     double &xd, double &yd, double &vd, double &wd);
+
 
 }; // end of class
 

@@ -1,8 +1,8 @@
 
-#include "InputOutputLin_Controller.h"
+#include "IO_control_collision.h"
 
 // constructor
-InOutLinController::InOutLinController()
+IO_control_collision::IO_control_collision()
 :nh_private_("~")
 {
   // ------------------------------ Set Parameters -----------------------------
@@ -34,6 +34,12 @@ InOutLinController::InOutLinController()
   nh_private_.param<double>("poly_k", poly_k, 20);
   nh_private_.param<double>("T", T, 15);
   nh_private_.param<bool>("endless", endless_flag, false);
+
+  // Parameters for collision avoidance
+  nh_private_.param<double>("ds", ds, 1); // Safety radius; agents must be twice this far away to not crash.
+  nh_private_.param<double>("dc", dc, 2); // Radius where collision avoidance function becomes active. Must be strictly greater than ds.
+  nh_private_.param<int>("agent_index", agent_index, 0);
+
   even_cycle = false;
   //
   odometry_connected = false;
@@ -44,20 +50,20 @@ InOutLinController::InOutLinController()
   // Publisher := cmd_vel_mux/input/teleop
   pub = nh.advertise<geometry_msgs::Twist>("cmd_vel_mux/input/teleop", 10);
   // frequency: 50 Hz
-  pub_timer = nh.createTimer(ros::Duration(0.02), &InOutLinController::pubCallback, this);
+  pub_timer = nh.createTimer(ros::Duration(0.02), &IO_control_collision::pubCallback, this);
   // frequency: 1 Hz
-  dis_timer = nh.createTimer(ros::Duration(1), &InOutLinController::disCallback, this);
+  dis_timer = nh.createTimer(ros::Duration(1), &IO_control_collision::disCallback, this);
 
   //Subscriber := current states
-  odom_sub = nh.subscribe("odom", 10, &InOutLinController::odom_subCallback, this);
+  odom_sub = nh.subscribe("odom", 10, &IO_control_collision::odom_subCallback, this);
 
   //Subscriber := reference trajectory parameters
-  trajectory_sub = nh.subscribe("ref", 10, &InOutLinController::trajectory_subCallback, this);
+  trajectory_sub = nh.subscribe("ref", 10, &IO_control_collision::trajectory_subCallback, this);
 
 }
 
 // destructor
-InOutLinController::~InOutLinController()
+IO_control_collision::~IO_control_collision()
 {
   cmd_vel.linear.x = 0;
   cmd_vel.angular.z = 0;
@@ -66,7 +72,7 @@ InOutLinController::~InOutLinController()
 }
 
 // odometry subscriber callback function
-void InOutLinController::odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs)
+void IO_control_collision::odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs)
 {
   // set the intial time when odometry is connected
   if (odometry_connected == false)
@@ -80,7 +86,7 @@ void InOutLinController::odom_subCallback(const nav_msgs::Odometry::ConstPtr& ms
   state.twist = msgs->twist;
 }
 
-void InOutLinController::trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs)
+void IO_control_collision::trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs)
 {
 
   path_type = msgs->path_type;
@@ -103,7 +109,7 @@ void InOutLinController::trajectory_subCallback(const rcomv_r1::CubicPath::Const
 }
 
 // callback function to display the odometry reading
-void InOutLinController::disCallback(const ros::TimerEvent& event) {
+void IO_control_collision::disCallback(const ros::TimerEvent& event) {
   // displays the current pose and velocity
   double x = state.pose.pose.position.x;
   double y = state.pose.pose.position.y;
@@ -124,7 +130,7 @@ void InOutLinController::disCallback(const ros::TimerEvent& event) {
 }
 
 // publisher callback function
-void InOutLinController::pubCallback(const ros::TimerEvent& event)
+void IO_control_collision::pubCallback(const ros::TimerEvent& event)
 {
 
   // Input/Output Linearization Algorithm
@@ -213,13 +219,6 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
   pub.publish(cmd_vel);
 }
 
-void all_states_Callback(const state_graph_builder::posegraph::ConstPtr& msgs); {
-  if(n == 0){
-    n = msgs->size();
-  }
-  all_states = *msgs;
-}
-
 // helper function
 // giving quaternion readings from Odometry, convert them to euler angles
 // return range: [0, 2*pi]
@@ -237,7 +236,7 @@ double QuaternionToYaw(const nav_msgs::Odometry &msgs)
 
 // helper function
 // return the reference trajectory and velocities for any arbitrary cubic polynomial trajectory
-void InOutLinController::CubePolyPath(pose qi, pose qf, double k, double T, double t,
+void IO_control_collision::CubePolyPath(pose qi, pose qf, double k, double T, double t,
                   double &xd, double &yd, double &vd, double &wd) {
   // uniform time law
   double s = t/T;
@@ -301,17 +300,109 @@ double findDifference(double init_psi, double goal_psi)
   neigh_list=get_in_neighbours(1, i);
   if (!neigh_list.empty()){
     for (int j=0; j<neigh_list.size(); j++){
-      tiny_msgs grad_vector=psi_col_gradient(i,neigh_list[j]);
+      geometry_msgs::Vector3 grad_vector=psi_col_gradient(i,neigh_list[j]);
       psi_collision_sum=add_vectors(psi_collision_sum,grad_vector);
     }
   }
 }
 
-// main function: create a InOutLinController class type that handles everything
-int main(int argc, char** argv) {
-  ros::init(argc, argv, "InOutLinController_node");
+// Helper function: update states of other agents
+void IO_control_collision::graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs){
+  // The posegraph->poses attribute returns a vector of pose objects
+  // state_lists should be an array of pose objects
+  state_lists = msgs->poses;
+}
 
-  InOutLinController InOutLinController_node;
+// Helper function: calculate neighbors within dc of the agent
+geometry_msgs::Vector3 IO_control_collision::collision_neighbors(const state_graph_builder::posegraph::ConstPtr& graph, int agent_idx){
+  std::vector<geometry_msgs::Pose> close_poses;
+  int n = graph->poses.size();
+  for(int ii=0; ii < n; ii++){
+    double distance = std::sqrt(std::pow(state.pose.position.x - graph[ii].poses.position.x,2) +\
+      std::pow(state.pose.position.y - graph[ii].poses.position.y,2) + std::pow(state.pose.position.z - graph[ii].poses.position.z,2));
+    if(distance < dc && ii ~= agent_index){
+      // Save the
+      close_poses.push_back(graph[ii].poses);
+    }
+  }
+
+  if(close_poses.size() > 0){
+    // Calculate barrier gradient for each of the neighbors within dc of the original agent
+
+  }
+}
+
+double IO_control_collision::psi_col_helper(const geometry_msgs::Point &m_agent, const  geometry_msgs::Point &n_agent){
+  geometry_msgs::Vector3 vecij = calc_vec(m_agent,n_agent);
+  double val=self_norm(vecij);
+  double mu2=10000;
+  double output;
+
+  // //Reference MATLAB code
+  // if norm(xij,2) <= norm(dc,2)
+  //   mu2 = 10000; % What should this be? Not sure.
+
+  //   outscalar = (norm(xij,2) - dc)^2 / (norm(xij,2) - ds + (ds - dc)^2/mu2);
+  // elseif norm(xij,2) < ds
+  //    outscalar = mu2;
+  // else
+  //    outscalar = 0;
+  // end
+  double dc2 = 2*dc; // Line 123 of MATLAB code -- 2*dc is used.
+  if (val <= dc2){
+    if (val >=ds)
+      output =  ((val - dc2)*(val-dc2)) / (val - ds + ((ds-dc2)*(ds-dc2))/mu2);
+    else
+      output = mu2;
+  }
+  else
+    output = 0.0;
+}
+
+geometry_msgs::Vector3 IO_control_collision::psi_col_gradient(const geometry_msgs::Pose &m_agent, const geometry_msgs::Pose &n_agent){ //this is supposed to only take the state vector
+  double h=0.001;
+  std::vector<geometry_msgs::Point> perturb;
+  for (int i=0; i<6; i++){
+    perturb.push_back(m_agent->position);
+  }
+  perturb[0].x+=h;
+  perturb[1].x-=h;
+  perturb[2].y+=h;
+  perturb[3].y-=h;
+  perturb[4].z+=h;
+  perturb[5].z-=h;
+
+
+  geometry_msgs::Vector3 output;
+  output.x = (psi_col_helper(perturb[0],n_agent->position) - psi_col_helper(perturb[1],n_agent->position))/(2*h);
+
+  output.y = (psi_col_helper(perturb[2],n_agent->position) - psi_col_helper(perturb[3],n_agent->position))/(2*h);
+
+  output.z = (psi_col_helper(perturb[4],n_agent->position) - psi_col_helper(perturb[5],n_agent->position))/(2*h);
+  //std::cout << "Output" << output << std::endl;
+  return output;
+
+}
+
+geometry_msgs::Vector3 IO_control_collision::calc_vec(const geometry_msgs::Point& state1, const geometry_msgs::Point& state2){
+  geometry_msgs::Vector3 outVector3;
+  outVector3.x = state1.x - state2.x;
+  outVector3.y = state1.y - state2.y;
+  outVector3.z = state1.z - state2.z;
+  return outVector3;
+}
+
+double IO_control_collision::self_norm(const geometry_msgs::Vector3 &tiny){
+  double val;
+  val = sqrt((tiny.x*tiny.x) + (tiny.y*tiny.y) + (tiny.z*tiny.z));
+  return val;
+}
+
+// main function: create a IO_control_collision class type that handles everything
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "IO_control_collision_node");
+
+  IO_control_collision IO_control_collision_node;
 
   ros::spin();
 

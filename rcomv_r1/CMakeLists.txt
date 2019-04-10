@@ -170,6 +170,12 @@ add_dependencies(InputOutputLin_Controller ${catkin_EXPORTED_TARGETS})
 target_link_libraries(InputOutputLin_Controller ${catkin_LIBRARIES})
 add_dependencies(InputOutputLin_Controller rcomv_r1_generate_messages_cpp)
 
+add_executable(IO_control_collision src/IO_control_collision.cpp
+src/IO_control_collision.h)
+add_dependencies(IO_control_collision ${catkin_EXPORTED_TARGETS})
+target_link_libraries(IO_control_collision ${catkin_LIBRARIES})
+add_dependencies(IO_control_collision rcomv_r1_generate_messages_cpp)
+
 add_executable(pid_controller src/pid_controller.cpp src/pid_controller.h)
 add_dependencies(pid_controller ${catkin_EXPORTED_TARGETS})
 target_link_libraries(pid_controller ${catkin_LIBRARIES})
