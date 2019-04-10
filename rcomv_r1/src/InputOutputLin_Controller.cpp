@@ -47,7 +47,7 @@ InOutLinController::InOutLinController()
 
   // ------------------------------ Set Pubs/Subs -----------------------------
   // Publisher := cmd_vel_mux/input/teleop
-  if(indoors_bool){
+  if(indoors_rover_bool){
     indoor_pub_topic = "/R" + std::to_string(rover_number);
     pub = nh.advertise<geometry_msgs::Twist>(indoor_pub_topic, 10);
   } else {
@@ -59,7 +59,7 @@ InOutLinController::InOutLinController()
   dis_timer = nh.createTimer(ros::Duration(1), &InOutLinController::disCallback, this);
 
   //Subscriber := current states
-  if(indoors_bool){
+  if(indoors_rover_bool){
     indoor_sub_topic = "vicon/R" + std::to_string(rover_number) + "/R" + std::to_string(rover_number);
     indoors_sub = nh.subscribe(indoor_sub_topic, 10, &InOutLinController::indoor_subCallback, this);
   } else{

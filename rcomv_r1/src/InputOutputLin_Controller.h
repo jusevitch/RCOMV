@@ -85,8 +85,8 @@ private:
 
   bool indoors_rover_bool; // Must be put as true if you're running an AION rover indoors
   int rover_number; // The number of the rover. This should correspond with the VICON topic the state is published to.
-  string indoor_sub_topic; // Indoors subscriber topic
-  string indoor_pub_topic; // Indoors publisher topic 
+  std::string indoor_sub_topic; // Indoors subscriber topic
+  std::string indoor_pub_topic; // Indoors publisher topic
 
 
   // helper functions
