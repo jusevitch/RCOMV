@@ -35,6 +35,8 @@ WMSRNode::WMSRNode()
     nh_private_.param<float>("ds", ds, 2);
     nh_private_.param<float>("dc", dc, 5);
 
+    nh_private_.param<bool>("env", env,0);
+
     // Initialize msgs
     inform_states.header.stamp = ros::Time::now();
     if (demo == 3 && role == 3) {
@@ -97,7 +99,12 @@ WMSRNode::WMSRNode()
     ref_pub_timer = nh.createTimer(ros::Duration(0.1),
                 &WMSRNode::ref_pubCallback, this);
 
-    states_sub = nh.subscribe<state_graph_builder::posegraph>("/graph",10,&WMSRNode::graph_subCallback, this);
+    if (env==0){
+      states_sub = nh.subscribe<state_graph_builder::posegraph>("/graph",10,&WMSRNode::graph_subCallback, this);
+    }
+    else{
+       state_out_sub = nh.subscribe<state_graph_builder::posestampedgraph>("/graph",10,&WMSRNode::graphstamped_subCallback, this);
+    }
 
     // Subscribers: (msgs list to hold the msgs from subscibed topics)
     // Why does i start from 1? This is wrong.
@@ -116,14 +123,6 @@ WMSRNode::WMSRNode()
 
       ROS_INFO("sub_idx at: [%d] with topic name: ", sub_idx);
 
-      // Make state feedback subscribers -- JU
-      // This ensures that each agent gets an updated state estimate of the
-      //    other agents in the network.
-      // std::string sub_state_topic = "/ugv" + std::to_string(sub_idx) + "/odom";
-      // neighbor_state_subs.push_back(nh.subscribe<state_msgs>(sub_state_topic,10,
-      //                               boost::bind(&WMSRNode::state_subCallback, this, _1, i-1)));
-
-      // end make state feedback subscribers -- JU
     }
 
 
@@ -172,9 +171,13 @@ void WMSRNode::state_subCallback(const state_msgs::ConstPtr& msgs, const int lis
     // ROS_INFO("[%d, %lf]", list_idx,state_lists[list_idx].position.x);
 }
 
+void WMSRNode::graphstamped_subCallback(const state_graph_builder::posestampedgraph::ConstPtr& msgs){
+  
+  for (int i=0; i<n; i++){
+    state_lists[i]=msgs->poses[i].pose;
+  }
+}
 void WMSRNode::graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs){
-  // The posegraph->poses attribute returns a vector of pose objects
-  // state_lists should be an array of pose objects
   state_lists = msgs->poses;
 
   // for (int i=0; i<n; i++){
