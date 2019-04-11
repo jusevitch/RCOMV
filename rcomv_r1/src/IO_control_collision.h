@@ -13,6 +13,7 @@
 #include <rcomv_r1/CubicPath.h>
 
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_datatypes.h>
 
 #include <stdlib.h>
 #include <math.h>
@@ -29,6 +30,11 @@ struct pose {
   double y;
   double theta;
 };
+
+struct control_cmd{
+  double v;
+  double w;
+}
 
 class IO_control_collision
 {
@@ -65,8 +71,8 @@ private:
   double psi_col_helper(const geometry_msgs::Vector3 &m_agent, const  geometry_msgs::Vector3 &n_agent);
   geometry_msgs::Vector3 psi_col_gradient(int m_agent, int n_agent);
   geometry_msgs::Vector3 calc_vec(const geometry_msgs::Point& state1, const geometry_msgs::Point& state2);
-  double IO_control_collision::self_norm(const geometry_msgs::Vector3 &tiny);
-  
+  double self_norm(const geometry_msgs::Vector3 &tiny);
+
   // private variables
   // controller paramters
   double b; // a longitudinal distance ahead of the unicycle model
