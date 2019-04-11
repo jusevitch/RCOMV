@@ -67,7 +67,7 @@ private:
   void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs);
   void graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs);
 
-  geometry_msgs::Vector3 collision_neighbors(const state_graph_builder::posegraph::ConstPtr& graph);
+  std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose current_state);
   double psi_col_helper(const geometry_msgs::Vector3 &m_agent, const  geometry_msgs::Vector3 &n_agent);
   geometry_msgs::Vector3 psi_col_gradient(int m_agent, int n_agent);
   geometry_msgs::Vector3 calc_vec(const geometry_msgs::Point& state1, const geometry_msgs::Point& state2);
@@ -76,7 +76,7 @@ private:
   // private variables
   // controller paramters
   double b; // a longitudinal distance ahead of the unicycle model
-  double k1, k2; // control gains
+  double k1, k2, k3; // control gains
   double vmax, wmax; // maximum velocity, and angular velocity
 
   double Ri, alphai; // offset from the center (in the body fixed frame)
@@ -111,6 +111,7 @@ private:
   void CubePolyPath(pose qi, pose qf, double k, double T, double t,
                     double &xd, double &yd, double &vd, double &wd);
 
+geometry_msgs::Pose add_vectors(const geometry_msgs::Pose &a, const geometry_msgs::Pose &b)
 
 }; // end of class
 
@@ -118,6 +119,9 @@ private:
 double QuaternionToYaw(const nav_msgs::Odometry &msgs);
 // helper function
 double findDifference(double init_psi, double goal_psi);
+// helper function
+
+
 
 
 #endif

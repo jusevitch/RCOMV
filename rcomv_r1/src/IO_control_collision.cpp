@@ -10,8 +10,9 @@ IO_control_collision::IO_control_collision()
   // syntax: nh_private_.param<type>
   // ("parameter name in launch file", variable to be assigned, default value);
   nh_private_.param<double>("b", b, 0.05);
-  nh_private_.param<double>("k1", k1, 4);
-  nh_private_.param<double>("k2", k2, 4);
+  nh_private_.param<double>("k1", k1, 4.0);
+  nh_private_.param<double>("k2", k2, 4.0);
+  nh_private_.param<double>("k3", k3, 10.0); // Proportional gain for collision avoidance direction tracking
   nh_private_.param<double>("vmax", vmax, 6);
   nh_private_.param<double>("wmax", wmax, 4);
   nh_private_.param<double>("Ri", Ri, 0);
@@ -296,14 +297,21 @@ double findDifference(double init_psi, double goal_psi)
 
 // helper function: determine collision avoidance term
 IO_control_collision::control_cmd IO_control_collision::collision_avoid(){
-  std::vector<int> neigh_list;
-  neigh_list=get_in_neighbors(1, i);
+  // Initialize the output
   IO_control_collision::control_cmd out_cmd; out_cmd.v = 0.0; out_cmd.w = 0.0;
-  if (!neigh_list.empty()){
+
+  // Collect list of in-neighbors
+  std::vector<geometry_msgs::Pose> all_states = state_lists; // Freezes the state list at a certain time
+  geometry_msgs::Pose current_state = all_states[agent_index - 1]; // This agent's current state (pose)
+  all_states.erase(agent_index-1); // Remove the agent's state from the list
+  std::vector<geometry_msgs::Pose> collision_states = collision_neighbors(all_states, current_state); // Need to define this
+
+  if (!collision_states.empty()){
     // Get the collision avoidance gradient term
-    for (int j=0; j<neigh_list.size(); j++){
-      geometry_msgs::Vector3 grad_vector=psi_col_gradient(i,neigh_list[j]);
-      psi_collision_sum=add_vectors(psi_collision_sum,grad_vector);
+    geometry_msgs::Vector3 psi_collision_sum; psi_collision_sum.x = 0.0; psi_collision_sum.y = 0.0; psi_collision_sum.z = 0.0;
+    for (int j=0; j<collision_states.size(); j++){
+      geometry_msgs::Vector3 grad_vector = psi_col_gradient(current_state,collision_states[j]);
+      psi_collision_sum = add_vectors(psi_collision_sum,grad_vector);
     }
 
     // Convert the collision avoidance gradient term into linear and angular velocity commands
@@ -312,7 +320,7 @@ IO_control_collision::control_cmd IO_control_collision::collision_avoid(){
     double theta = tf::getYaw(state.pose.pose.orientation);
     angle_error = findDifference(theta_d - theta); // Change angle error to be in [-PI,PI]
 
-    out_cmd.w = 10.0*angle_error; // Proportional gain must be tuned
+    out_cmd.w = k3*angle_error; // Proportional gain must be tuned
 
     // Only set a linear velocity if angular error is less than PI/4
     if(abs(angle_error) < PI/4.0){
@@ -331,22 +339,17 @@ void IO_control_collision::graph_subCallback(const state_graph_builder::posegrap
 }
 
 // Helper function: calculate neighbors within dc of the agent
-geometry_msgs::Vector3 IO_control_collision::collision_neighbors(const state_graph_builder::posegraph::ConstPtr& graph, int agent_idx){
+std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose current_state){
   std::vector<geometry_msgs::Pose> close_poses;
-  int n = graph->poses.size();
-  for(int ii=0; ii < n; ii++){
-    double distance = std::sqrt(std::pow(state.pose.position.x - graph[ii].poses.position.x,2) +\
-      std::pow(state.pose.position.y - graph[ii].poses.position.y,2) + std::pow(state.pose.position.z - graph[ii].poses.position.z,2));
-    if(distance < dc && ii ~= agent_index){
-      // Save the
-      close_poses.push_back(graph[ii].poses);
+  for(int ii=0; ii < other_agents->size(); ii++){
+    double distance = std::sqrt(std::pow(current_state.pose.position.x - (*other_agents)[ii].poses.position.x,2) +\
+      std::pow(current_state.pose.position.y - (*other_agents)[ii].poses.position.y,2) + std::pow(current_state.pose.position.z - (*other_agents)[ii].poses.position.z,2));
+    if(distance < dc){
+      // Save the close poses
+      close_poses.push_back((*other_agents)[ii].poses);
     }
   }
-
-  if(close_poses.size() > 0){
-    // Calculate barrier gradient for each of the neighbors within dc of the original agent
-
-  }
+  return close_poses;
 }
 
 double IO_control_collision::psi_col_helper(const geometry_msgs::Point &m_agent, const  geometry_msgs::Point &n_agent){
@@ -413,6 +416,14 @@ double IO_control_collision::self_norm(const geometry_msgs::Vector3 &tiny){
   double val;
   val = sqrt((tiny.x*tiny.x) + (tiny.y*tiny.y) + (tiny.z*tiny.z));
   return val;
+}
+
+geometry_msgs::Pose IO_control_collision::add_vectors(const geometry_msgs::Pose &a, const geometry_msgs::Pose &b){
+  geometry_msgs::Pose result;
+  result.x = a->x + b->x;
+  result.y = a->y + b->y;
+  result.z = a->z + b->z;
+  return result;
 }
 
 // main function: create a IO_control_collision class type that handles everything
