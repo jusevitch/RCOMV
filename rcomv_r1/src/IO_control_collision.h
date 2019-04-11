@@ -101,7 +101,7 @@ private:
   double initial_time;
   state_graph_builder::posegraph all_states;
   int n;
-  std::vector<pose_msgs> state_lists;
+  std::vector<geometry_msgs::Pose> state_lists;
   int agent_index;
 
 

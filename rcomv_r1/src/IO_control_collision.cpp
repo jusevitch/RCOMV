@@ -295,9 +295,9 @@ double findDifference(double init_psi, double goal_psi)
 }
 
 // helper function: determine collision avoidance term
-IO_control_collision::control_cmd IO_control_collision::collision_avoid(???){
+IO_control_collision::control_cmd IO_control_collision::collision_avoid(){
   std::vector<int> neigh_list;
-  neigh_list=get_in_neighbours(1, i);
+  neigh_list=get_in_neighbors(1, i);
   IO_control_collision::control_cmd out_cmd; out_cmd.v = 0.0; out_cmd.w = 0.0;
   if (!neigh_list.empty()){
     // Get the collision avoidance gradient term
@@ -310,16 +310,7 @@ IO_control_collision::control_cmd IO_control_collision::collision_avoid(???){
     double PI = 3.141592653589793;
     double theta_d = fmod(atan2(psi_collision_sum.y,psi_collision_sum.x) + 2*PI, 2*PI);
     double theta = tf::getYaw(state.pose.pose.orientation);
-    angle_error = (theta_d - theta);
-    // Change angle error to be in [-PI,PI]
-    if(abs(angle_error) > PI){
-      if(angle_error > 0){
-        angle_error -= 2*PI;
-      }
-      if(angle_error < 0){
-        angle_error += 2*PI;
-      }
-    }
+    angle_error = findDifference(theta_d - theta); // Change angle error to be in [-PI,PI]
 
     out_cmd.w = 10.0*angle_error; // Proportional gain must be tuned
 
