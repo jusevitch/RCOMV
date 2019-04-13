@@ -54,7 +54,7 @@
     <param name="alphai" value="$(arg alphai)"/>
 
     <!-- !!! Don't forget to change to the agent's number! -->
-    <param name="rover_number" value="1"/>
+    <param name="rover_number" value="3"/>
 </node>
 
 <!-- Agent 2 -->
@@ -88,11 +88,11 @@
     <param name="indoors_rover_bool" value="true"/>
 
     <!-- Local Parameters -->
-    <param name="Ri" value=".5" />
+    <param name="Ri" value=".75" />
     <param name="alphai" value="-0.78539"/>
 
     <!-- !!! Don't forget to change to the agent's number! -->
-    <param name="rover_number" value="2"/>
+    <param name="rover_number" value="4"/>
 </node>
 
 <!-- Agent 3 -->
@@ -126,11 +126,11 @@
     <param name="indoors_rover_bool" value="true"/>
 
     <!-- Local Parameters -->
-    <param name="Ri" value=".5" />
-    <param name="alphai" value="3.92699"/>
+    <param name="Ri" value=".75" />
+    <param name="alphai" value="0.78539"/>
 
     <!-- !!! Don't forget to change to the agent's number! -->
-    <param name="rover_number" value="3"/>
+    <param name="rover_number" value="5"/>
 </node>
 
 </launch>
