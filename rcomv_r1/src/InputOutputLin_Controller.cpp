@@ -48,11 +48,7 @@ InOutLinController::InOutLinController()
   // ------------------------------ Set Pubs/Subs -----------------------------
   // Publisher := cmd_vel_mux/input/teleop
   if(indoors_rover_bool){
-<<<<<<< HEAD
     indoor_pub_topic = "/R" + std::to_string(rover_number) + "/cmd_vel";
-=======
-    indoor_pub_topic = "/R" + std::to_string(rover_number);
->>>>>>> origin/indoors
     pub = nh.advertise<geometry_msgs::Twist>(indoor_pub_topic, 10);
   } else {
     pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel/", 10); //  cmd_vel_mux/input/teleop
@@ -64,11 +60,7 @@ InOutLinController::InOutLinController()
 
   //Subscriber := current states
   if(indoors_rover_bool){
-<<<<<<< HEAD
     indoor_sub_topic = "/R" + std::to_string(rover_number);
-=======
-    indoor_sub_topic = "vicon/R" + std::to_string(rover_number) + "/R" + std::to_string(rover_number);
->>>>>>> origin/indoors
     indoors_sub = nh.subscribe(indoor_sub_topic, 10, &InOutLinController::indoor_subCallback, this);
   } else{
     odom_sub = nh.subscribe("odom", 10, &InOutLinController::odom_subCallback, this);
