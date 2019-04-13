@@ -203,8 +203,8 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
   y1d = xd + b*c_thd;
   y2d = yd + b*s_thd;
   // the time derivative of the reference output
-  vy1d = -wd*(R*sin(wd*t) + b*sin(theta_d)); // c_thd * vd - b * s_thd * wd;
-  vy2d = wd*(R*cos(wd*t) + b*cos(theta_d)); // s_thd * vd + b * c_thd * wd;
+  vy1d = -wd*(R*sin(wd*t) + Ri*sin(wd*t + alphai) + b*sin(theta_d)); // c_thd * vd - b * s_thd * wd;
+  vy2d = wd*(R*cos(wd*t) + Ri*cos(wd*t + alphai) + b*cos(theta_d)); // s_thd * vd + b * c_thd * wd;
 
   // the output error
   c_th = cos(theta);

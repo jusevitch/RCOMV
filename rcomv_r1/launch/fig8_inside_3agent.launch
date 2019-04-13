@@ -88,8 +88,8 @@
     <param name="indoors_rover_bool" value="true"/>
 
     <!-- Local Parameters -->
-    <param name="Ri" value="$(arg Ri)" />
-    <param name="alphai" value="$(arg alphai)"/>
+    <param name="Ri" value=".5" />
+    <param name="alphai" value="-0.78539"/>
 
     <!-- !!! Don't forget to change to the agent's number! -->
     <param name="rover_number" value="2"/>
@@ -126,8 +126,8 @@
     <param name="indoors_rover_bool" value="true"/>
 
     <!-- Local Parameters -->
-    <param name="Ri" value="$(arg Ri)" />
-    <param name="alphai" value="$(arg alphai)"/>
+    <param name="Ri" value=".5" />
+    <param name="alphai" value="3.92699"/>
 
     <!-- !!! Don't forget to change to the agent's number! -->
     <param name="rover_number" value="3"/>
