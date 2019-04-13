@@ -36,7 +36,7 @@ InOutLinController::InOutLinController()
   nh_private_.param<bool>("endless", endless_flag, false);
 
   // For indoor use
-  nh_private_.param<bool>("indoors_rover_bool", indoors_rover_bool, false); // Tests whether we're running it indoors or not
+  nh_private_.param<bool>("indoors_rover_bool", indoors_rover_bool, true); // Tests whether we're running it indoors or not
   nh_private_.param<int>("rover_number", rover_number, 0); // gives Rover number; 0 throws an error.
 
   even_cycle = false;
@@ -47,8 +47,8 @@ InOutLinController::InOutLinController()
 
   // ------------------------------ Set Pubs/Subs -----------------------------
   // Publisher := cmd_vel_mux/input/teleop
-  if(indoors_bool){
-    indoor_pub_topic = "/R" + std::to_string(rover_number);
+  if(indoors_rover_bool){
+    indoor_pub_topic = "/R" + std::to_string(rover_number) + "/cmd_vel";
     pub = nh.advertise<geometry_msgs::Twist>(indoor_pub_topic, 10);
   } else {
     pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel/", 10); //  cmd_vel_mux/input/teleop
@@ -59,8 +59,8 @@ InOutLinController::InOutLinController()
   dis_timer = nh.createTimer(ros::Duration(1), &InOutLinController::disCallback, this);
 
   //Subscriber := current states
-  if(indoors_bool){
-    indoor_sub_topic = "vicon/R" + std::to_string(rover_number) + "/R" + std::to_string(rover_number);
+  if(indoors_rover_bool){
+    indoor_sub_topic = "/R" + std::to_string(rover_number);
     indoors_sub = nh.subscribe(indoor_sub_topic, 10, &InOutLinController::indoor_subCallback, this);
   } else{
     odom_sub = nh.subscribe("odom", 10, &InOutLinController::odom_subCallback, this);
@@ -69,13 +69,14 @@ InOutLinController::InOutLinController()
   //Subscriber := reference trajectory parameters
   trajectory_sub = nh.subscribe("ref", 10, &InOutLinController::trajectory_subCallback, this);
 
+  // ROS_INFO("this worked in constructor \n");
 }
 
 // destructor
 InOutLinController::~InOutLinController()
 {
-  cmd_vel.linear.x = 0;
-  cmd_vel.angular.z = 0;
+  cmd_vel.linear.x = 0.0;
+  cmd_vel.angular.z = 0.0;
   pub.publish(cmd_vel);
   ros::shutdown();
 }
@@ -95,7 +96,7 @@ void InOutLinController::odom_subCallback(const nav_msgs::Odometry::ConstPtr& ms
   state.twist = msgs->twist;
 }
 
-void indoor_subCallback(const geometry_msgs::TransformStamped::ConstPtr& msgs)
+void InOutLinController::indoor_subCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs)
 {
   if (odometry_connected == false)
   {
@@ -103,11 +104,13 @@ void indoor_subCallback(const geometry_msgs::TransformStamped::ConstPtr& msgs)
       t0 = ros::Time::now().toSec(); // intial time
   }
   state.header = msgs->header;
-  state.child_frame_id = msgs->child_frame_id;
-  state.pose.position.x = msgs->transform.translation.x;
-  state.pose.position.y = msgs->transform.translation.y;
-  state.pose.position.z = msgs->transform.translation.z;
-  // TODO: Calculate linear velocity and angular velocity from vicon messages
+  // state.child_frame_id = msgs->child_frame_id;
+  state.pose.pose.position.x = msgs->pose.position.x;
+  state.pose.pose.position.y = msgs->pose.position.y;
+  state.pose.pose.position.z = msgs->pose.position.z;
+
+  state.pose.pose.orientation = msgs->pose.orientation;
+
 }
 
 void InOutLinController::trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs)
@@ -170,12 +173,15 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
 
   double t = ros::Time::now().toSec() - t0;
 
+  ROS_INFO("Theta: %lf \n", theta);
+
   // the reference states and velocity: circular path
   if (path_type.compare(std::string("circular")) == 0) {
      xd = xc + R*cos(wd*t) + Ri*cos(theta+alphai);
      yd = yc + R*sin(wd*t) + Ri*sin(theta+alphai);
      vd = hypot(wd*(-R*sin(wd*t) - Ri*sin(theta+alphai)),
                 wd*(R*cos(wd*t) + Ri*cos(theta+alphai)));
+     ROS_INFO("(xd, yd) : (%lf, %lf)", xd, yd);
   }
   // the reference states and velocity: eight-shaped path
   if (path_type.compare(std::string("eight_shaped")) == 0) {
@@ -207,7 +213,7 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
 
   // compute the control inputs for the linearized output model
   u1 = vy1d + k1 * e_y1;
-  u2 = vy2d + k2 * e_y2;
+  u2 =  vy2d + k2 * e_y2;
   // transform to the actual control inputs for the unicycle model
   cmd_vel.linear.x = c_th * u1 + s_th * u2;
   cmd_vel.angular.z = -s_th/b * u1 + c_th/b * u2;

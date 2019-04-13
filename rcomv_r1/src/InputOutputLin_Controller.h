@@ -38,7 +38,6 @@ private:
   // msgs
   geometry_msgs::Twist cmd_vel;
   nav_msgs::Odometry state;
-  geometry_msgs::TransformStamped indoor_state;
 
   // publisher
   ros::Publisher pub;
@@ -48,12 +47,13 @@ private:
   // subscriber
   ros::Subscriber odom_sub;
   ros::Subscriber trajectory_sub;
+  ros::Subscriber indoors_sub;
 
   // callback funcrions
   void pubCallback(const ros::TimerEvent& event);
   void disCallback(const ros::TimerEvent& event);  // display callback function
   void odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs);
-  void indoor_subCallback(const geometry_msgs::TransformStamped::ConstPtr& msgs);
+  void indoor_subCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs);
   void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs);
 
   // private variables
@@ -85,8 +85,8 @@ private:
 
   bool indoors_rover_bool; // Must be put as true if you're running an AION rover indoors
   int rover_number; // The number of the rover. This should correspond with the VICON topic the state is published to.
-  string indoor_sub_topic; // Indoors subscriber topic
-  string indoor_pub_topic; // Indoors publisher topic 
+  std::string indoor_sub_topic; // Indoors subscriber topic
+  std::string indoor_pub_topic; // Indoors publisher topic
 
 
   // helper functions
