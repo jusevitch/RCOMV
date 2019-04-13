@@ -48,7 +48,7 @@
     <param name="T" value="$(arg T)" />
     <param name="endless" value="$(arg endless)" />
     <param name="indoors_rover_bool" value="true"/>
-    <param name="rover_number" value="1"/>
+    <param name="rover_number" value="5"/>
 
 </node>
 </launch>
