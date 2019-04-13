@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="Ri" default="0" />
-  <arg name="alphai" default="0">
+  <arg name="alphai" default="0" />
   <arg name="b" default="0.05" />
   <arg name="k1" default="0.1" />
   <arg name="k2" default="0.2"/>
@@ -13,7 +13,7 @@
   <arg name="R" default="1.0" />
   <arg name="R1" default="5" />
   <arg name="R2" default="10" />
-  <arg name="wd" default="0.2" />
+  <arg name="wd" default="0.4" />
   <arg name="qi_x" default="0.9662" /> <arg name="qi_y" default="-0.053919" /> <arg name="qi_theta" default="1.5498" />
   <arg name="qf_x" default="-0.9225" /> <arg name="qf_y" default="-0.0078972" /> <arg name="qf_theta" default="1.5918" />
   <arg name="poly_k" default="5" />
@@ -21,7 +21,7 @@
   <arg name="endless" default="true" />
 
 <!-- Agent 1 -->
-<node name="InOutLin_controller_node" pkg="rcomv_r1" type="InputOutputLin_Controller" launch-prefix="xterm -e" output="screen">
+<node name="R3_inout" pkg="rcomv_r1" type="InputOutputLin_Controller" launch-prefix="xterm -e" output="screen">
     
     <!-- Generally Global Parameters -->
     <param name="b" value="$(arg b)" />
@@ -58,7 +58,7 @@
 </node>
 
 <!-- Agent 2 -->
-<node name="InOutLin_controller_node" pkg="rcomv_r1" type="InputOutputLin_Controller" launch-prefix="xterm -e" output="screen">
+<node name="R4_inout" pkg="rcomv_r1" type="InputOutputLin_Controller" launch-prefix="xterm -e" output="screen">
 
     <!-- Generally Global Parameters -->
     <param name="b" value="$(arg b)" />
@@ -88,15 +88,15 @@
     <param name="indoors_rover_bool" value="true"/>
 
     <!-- Local Parameters -->
-    <param name="Ri" value=".75" />
-    <param name="alphai" value="-0.78539"/>
+    <param name="Ri" value=".45" />
+    <param name="alphai" value="3.14"/>
 
     <!-- !!! Don't forget to change to the agent's number! -->
     <param name="rover_number" value="4"/>
 </node>
 
 <!-- Agent 3 -->
-<node name="InOutLin_controller_node" pkg="rcomv_r1" type="InputOutputLin_Controller" launch-prefix="xterm -e" output="screen">
+ <node name="R5_inout" pkg="rcomv_r1" type="InputOutputLin_Controller" launch-prefix="xterm -e" output="screen">
 
     <!-- Generally Global Parameters -->
     <param name="b" value="$(arg b)" />
@@ -125,12 +125,13 @@
     <param name="endless" value="$(arg endless)" />
     <param name="indoors_rover_bool" value="true"/>
 
-    <!-- Local Parameters -->
-    <param name="Ri" value=".75" />
-    <param name="alphai" value="0.78539"/>
+    
+    <param name="Ri" value=".45" />
+    <param name="alphai" value="0.0"/>
 
     <!-- !!! Don't forget to change to the agent's number! -->
     <param name="rover_number" value="5"/>
-</node>
+</node> 
+
 
 </launch>

@@ -177,8 +177,8 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
 
   // the reference states and velocity: circular path
   if (path_type.compare(std::string("circular")) == 0) {
-     xd = xc + R*cos(wd*t) + Ri*cos(theta+alphai);
-     yd = yc + R*sin(wd*t) + Ri*sin(theta+alphai);
+     xd = xc + R*cos(wd*t) + Ri*cos(wd*t+alphai);
+     yd = yc + R*sin(wd*t) + Ri*sin(wd*t+alphai);
      vd = hypot(wd*(-R*sin(wd*t) - Ri*sin(theta+alphai)),
                 wd*(R*cos(wd*t) + Ri*cos(theta+alphai)));
      ROS_INFO("(xd, yd) : (%lf, %lf)", xd, yd);
