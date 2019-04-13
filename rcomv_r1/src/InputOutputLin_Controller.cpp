@@ -161,13 +161,14 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
   }
 
   // the reference output
-  c_th = cos(theta);
-  s_th = sin(theta);
-  y1d = xd + b*c_th;
-  y2d = yd + b*s_th;
+  theta_d = fmod(wd*t + (M_PI /2) + 2*M_PI, 2*M_PI); // Current desired angle
+  c_thd = cos(thd);
+  s_thd = sin(thd);
+  y1d = xd + b*c_thd;
+  y2d = yd + b*s_thd;
   // the time derivative of the reference output
-  vy1d = c_th * vd - b * s_th * wd;
-  vy2d = s_th * vd + b * c_th * wd;
+  vy1d = c_thd * vd - b * s_thd * wd;
+  vy2d = s_thd * vd + b * c_thd * wd;
 
   // the output error
   y1 = x + b*c_th;

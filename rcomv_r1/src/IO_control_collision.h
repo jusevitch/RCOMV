@@ -34,7 +34,7 @@ struct pose {
 struct control_cmd{
   double v;
   double w;
-}
+};
 
 class IO_control_collision
 {
@@ -60,18 +60,19 @@ private:
   ros::Subscriber trajectory_sub;
   ros::Subscriber states_sub;
 
-  // callback funcrions
+  // callback functions
   void pubCallback(const ros::TimerEvent& event);
   void disCallback(const ros::TimerEvent& event);  // display callback function
   void odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs);
   void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs);
   void graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs);
 
-  std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose current_state);
+  std::vector<geometry_msgs::Pose> collision_neighbors(std::vector<geometry_msgs::Pose> const  &other_agents, geometry_msgs::Pose  const current_state);
   double psi_col_helper(const geometry_msgs::Vector3 &m_agent, const  geometry_msgs::Vector3 &n_agent);
   geometry_msgs::Vector3 psi_col_gradient(int m_agent, int n_agent);
   geometry_msgs::Vector3 calc_vec(const geometry_msgs::Point& state1, const geometry_msgs::Point& state2);
   double self_norm(const geometry_msgs::Vector3 &tiny);
+  control_cmd collision_avoid();
 
   // private variables
   // controller paramters
@@ -89,6 +90,9 @@ private:
   double R; // radius for cirular path
   double R1, R2; // radius for eight_shaped path
   double wd; // reference turning rate
+  double ds; // Safety radius; must not be crossed
+  double dc; // Radius where collision avoidance function is activated
+
 
   // cubic ploynomials path paramters
   pose qi, qf; // initial, final pose
@@ -106,12 +110,11 @@ private:
 
 
 
-
   // helper functions
   void CubePolyPath(pose qi, pose qf, double k, double T, double t,
                     double &xd, double &yd, double &vd, double &wd);
 
-geometry_msgs::Pose add_vectors(const geometry_msgs::Pose &a, const geometry_msgs::Pose &b)
+geometry_msgs::Pose add_vectors(const geometry_msgs::Pose &a, const geometry_msgs::Pose &b);
 
 }; // end of class
 

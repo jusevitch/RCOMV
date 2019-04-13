@@ -296,9 +296,9 @@ double findDifference(double init_psi, double goal_psi)
 }
 
 // helper function: determine collision avoidance term
-IO_control_collision::control_cmd IO_control_collision::collision_avoid(){
+control_cmd IO_control_collision::collision_avoid(){
   // Initialize the output
-  IO_control_collision::control_cmd out_cmd; out_cmd.v = 0.0; out_cmd.w = 0.0;
+  control_cmd out_cmd; out_cmd.v = 0.0; out_cmd.w = 0.0;
 
   // Collect list of in-neighbors
   std::vector<geometry_msgs::Pose> all_states = state_lists; // Freezes the state list at a certain time
