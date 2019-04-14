@@ -185,8 +185,8 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
   }
   // the reference states and velocity: eight-shaped path
   if (path_type.compare(std::string("eight_shaped")) == 0) {
-     xd = xc + R1*sin(2*wd*t) + Ri*cos(theta+alphai);
-     yd = yc + R2*sin(wd*t) + Ri*sin(theta+alphai);
+     xd = xc + R1*sin(2*wd*t) + Ri*cos(wd*t+alphai);
+     yd = yc + R2*sin(wd*t) + Ri*sin(wd*t+alphai);
      //vd = hypot((2*R1*wd*cos(2*wd*t)), (R2*wd*cos(wd*t)));
      vd = hypot((2*wd*R1*cos(2*wd*t) - wd*Ri*sin(theta+alphai)),
                 wd*(R2*cos(wd*t) + Ri*cos(theta+alphai)));
@@ -197,14 +197,28 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
   }
 
   // the reference output
-  double theta_d = fmod(wd*t + (M_PI / 2.0) + 2*M_PI, 2*M_PI);
+  if(path_type.compare(std::string("circular")) == 0) {
+    double theta_d = fmod(wd*t + (M_PI / 2.0) + 2*M_PI, 2*M_PI);
+  } else if(path_type.compare(std::string("eight_shaped")) == 0) {
+    double xddot = wd*(2*R1*cos(2*wd*t) - Ri*sin(wd*t + alphai)); // First derivative of xd
+    double yddot = wd*(R2*cos(wd*t) + Ri*cos(wd*t + alphai)); // First derivative of yd
+    double theta_d = atan2(yddot,xddot);
+  }
   double c_thd = cos(theta_d);
   double s_thd = sin(theta_d);
   y1d = xd + b*c_thd;
   y2d = yd + b*s_thd;
   // the time derivative of the reference output
-  vy1d = -wd*(R*sin(wd*t) + Ri*sin(wd*t + alphai) + b*sin(theta_d)); // c_thd * vd - b * s_thd * wd;
-  vy2d = wd*(R*cos(wd*t) + Ri*cos(wd*t + alphai) + b*cos(theta_d)); // s_thd * vd + b * c_thd * wd;
+  if(path_type.compare(std::string("circular")) == 0) {
+    vy1d = -wd*(R*sin(wd*t) + Ri*sin(wd*t + alphai) + b*sin(theta_d)); // c_thd * vd - b * s_thd * wd;
+    vy2d = wd*(R*cos(wd*t) + Ri*cos(wd*t + alphai) + b*cos(theta_d)); // s_thd * vd + b * c_thd * wd;
+  } else if(path_type.compare(std::string("eight_shaped")) == 0) {
+    double xdoubledot = -pow(wd,2)*(4*R1*sin(2*wd*t) + Ri*cos(wd*t + alphai)); // Second derivative of xd
+    double ydoubledot = -pow(wd,2)*(R2*sin(wd*t) + Ri*sin(wd*t+alphai)); // Second derivative of yd
+    double thetaddot = (xddot / (pow(xddot,2) + pow(yddot,2)))*ydoubledot - (yddot / (pow(xddot,2) + pow(yddot,2)))*xdoubledot;
+    vy1d = xddot - b*sin(theta_d)*thetaddot;
+    vy2d = yddot + b*cos(theta_d)*thetaddot;
+  }
 
   // the output error
   c_th = cos(theta);
