@@ -196,13 +196,15 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
       CubePolyPath(qi, qf, poly_k, T, t, xd, yd, vd, wd);
   }
 
+  double xddot, yddot, theta_d, xdoubledot, ydoubledot, thetaddot;
+
   // the reference output
   if(path_type.compare(std::string("circular")) == 0) {
-    double theta_d = fmod(wd*t + (M_PI / 2.0) + 2*M_PI, 2*M_PI);
+    theta_d = fmod(wd*t + (M_PI / 2.0) + 2*M_PI, 2*M_PI);
   } else if(path_type.compare(std::string("eight_shaped")) == 0) {
-    double xddot = wd*(2*R1*cos(2*wd*t) - Ri*sin(wd*t + alphai)); // First derivative of xd
-    double yddot = wd*(R2*cos(wd*t) + Ri*cos(wd*t + alphai)); // First derivative of yd
-    double theta_d = atan2(yddot,xddot);
+    xddot = wd*(2*R1*cos(2*wd*t) - Ri*sin(wd*t + alphai)); // First derivative of xd
+    yddot = wd*(R2*cos(wd*t) + Ri*cos(wd*t + alphai)); // First derivative of yd
+    theta_d = atan2(yddot,xddot);
   }
   double c_thd = cos(theta_d);
   double s_thd = sin(theta_d);
