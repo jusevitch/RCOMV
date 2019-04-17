@@ -167,14 +167,32 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
       CubePolyPath(qi, qf, poly_k, T, t, xd, yd, vd, wd);
   }
 
+  double xddot, yddot, theta_d, xdoubledot, ydoubledot, thetaddot;
+  ROS_INFO("wd : %lf", wd);
+
   // the reference output
-  c_th = cos(theta);
-  s_th = sin(theta);
-  y1d = xd + b*c_th;
-  y2d = yd + b*s_th;
+  if(path_type.compare(std::string("circular")) == 0) {
+    theta_d = fmod(wd*t + (M_PI / 2.0) + 2*M_PI, 2*M_PI);
+  } else if(path_type.compare(std::string("eight_shaped")) == 0) {
+    xddot = wd*(2*R1*cos(2*wd*t) - Ri*sin(wd*t + alphai)); // First derivative of xd
+    yddot = wd*(R2*cos(wd*t) + Ri*cos(wd*t + alphai)); // First derivative of yd
+    theta_d = atan2(yddot,xddot);
+  }
+  double c_thd = cos(theta_d);
+  double s_thd = sin(theta_d);
+  y1d = xd + b*c_thd;
+  y2d = yd + b*s_thd;
   // the time derivative of the reference output
-  vy1d = c_th * vd - b * s_th * wd;
-  vy2d = s_th * vd + b * c_th * wd;
+  if(path_type.compare(std::string("circular")) == 0) {
+    vy1d = -wd*(R*sin(wd*t) + Ri*sin(wd*t + alphai) + b*sin(theta_d)); // c_thd * vd - b * s_thd * wd;
+    vy2d = wd*(R*cos(wd*t) + Ri*cos(wd*t + alphai) + b*cos(theta_d)); // s_thd * vd + b * c_thd * wd;
+  } else if(path_type.compare(std::string("eight_shaped")) == 0) {
+    double xdoubledot = -pow(wd,2)*(4*R1*sin(2*wd*t) + Ri*cos(wd*t + alphai)); // Second derivative of xd
+    double ydoubledot = -pow(wd,2)*(R2*sin(wd*t) + Ri*sin(wd*t+alphai)); // Second derivative of yd
+    double thetaddot = (xddot / (pow(xddot,2) + pow(yddot,2)))*ydoubledot - (yddot / (pow(xddot,2) + pow(yddot,2)))*xdoubledot;
+    vy1d = xddot - b*sin(theta_d)*thetaddot;
+    vy2d = yddot + b*cos(theta_d)*thetaddot;
+  }
 
   // the output error
   y1 = x + b*c_th;

@@ -172,7 +172,6 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
   double u1, u2;
 
   double t = ros::Time::now().toSec() - t0;
-
   ROS_INFO("Theta: %lf \n", theta);
 
   // the reference states and velocity: circular path
