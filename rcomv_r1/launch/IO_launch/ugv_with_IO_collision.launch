@@ -12,13 +12,16 @@
     <arg name="lead_y" default="6" />
     <arg name="lead_z" default="10" />
 
+    <!-- Args specifying whether this is a Gazebo simulation or real implementation -->
+    <arg name="gazebo" default="1"/>
+
     <!-- Default parameters for agent initialization -->
     <arg name="x" default="0"/>
     <arg name="y" default="0"/>
     <arg name="z" default="0"/>
     <arg name="yaw" default="0"/>
 
-    <!-- Parameters for the trajectory tracking conteoller -->
+    <!-- Parameters for the trajectory tracking controller -->
     <arg name="Ri" default="0" />
     <arg name="alphai" default="0"/>
     <arg name="b" default="0.05" />
@@ -71,6 +74,8 @@
         <!-- In/Output Linearization controller node -->
         <!-- No wmsr node involved -->
         <node name="IO_control_collision_node" pkg="rcomv_r1" type="IO_control_collision" launch-prefix="xterm -e" output="screen">
+            
+            <param name="gazebo" value="$(arg gazebo)"/>
             <param name="Ri" value="$(arg Ri)" />
             <param name="alphai" value="$(arg alphai)"/>
 
