@@ -303,14 +303,14 @@ control_cmd IO_control_collision::collision_avoid(){
   // Collect list of in-neighbors
   std::vector<geometry_msgs::Pose> all_states = state_lists; // Freezes the state list at a certain time
   geometry_msgs::Pose current_state = all_states[agent_index - 1]; // This agent's current state (pose)
-  all_states.erase(agent_index-1); // Remove the agent's state from the list
+  all_states.erase(all_states.begin() + agent_index - 1); // Remove the agent's state from the list
   std::vector<geometry_msgs::Pose> collision_states = collision_neighbors(all_states, current_state); // Need to define this
 
   if (!collision_states.empty()){
     // Get the collision avoidance gradient term
     geometry_msgs::Vector3 psi_collision_sum; psi_collision_sum.x = 0.0; psi_collision_sum.y = 0.0; psi_collision_sum.z = 0.0;
     for (int j=0; j<collision_states.size(); j++){
-      geometry_msgs::Vector3 grad_vector = psi_col_gradient(current_state,collision_states[j]);
+      geometry_msgs::Vector3 grad_vector = psi_col_gradient(current_state, collision_states[j]);
       psi_collision_sum = add_vectors(psi_collision_sum,grad_vector);
     }
 
@@ -318,7 +318,7 @@ control_cmd IO_control_collision::collision_avoid(){
     double PI = 3.141592653589793;
     double theta_d = fmod(atan2(psi_collision_sum.y,psi_collision_sum.x) + 2*PI, 2*PI);
     double theta = tf::getYaw(state.pose.pose.orientation);
-    angle_error = findDifference(theta_d - theta); // Change angle error to be in [-PI,PI]
+    double angle_error = findDifference(theta,theta_d); // Change angle error to be in [-PI,PI]
 
     out_cmd.w = k3*angle_error; // Proportional gain must be tuned
 
@@ -339,14 +339,14 @@ void IO_control_collision::graph_subCallback(const state_graph_builder::posegrap
 }
 
 // Helper function: calculate neighbors within dc of the agent
-std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose current_state){
+std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose &current_state){
   std::vector<geometry_msgs::Pose> close_poses;
-  for(int ii=0; ii < other_agents->size(); ii++){
-    double distance = std::sqrt(std::pow(current_state.pose.position.x - (*other_agents)[ii].poses.position.x,2) +\
-      std::pow(current_state.pose.position.y - (*other_agents)[ii].poses.position.y,2) + std::pow(current_state.pose.position.z - (*other_agents)[ii].poses.position.z,2));
+  for(int ii=0; ii < other_agents.size(); ii++){
+    double distance = std::sqrt(std::pow(current_state.position.x - other_agents[ii].position.x,2) +\
+      std::pow(current_state.position.y - other_agents[ii].position.y,2) + std::pow(current_state.position.z - other_agents[ii].position.z,2));
     if(distance < dc){
       // Save the close poses
-      close_poses.push_back((*other_agents)[ii].poses);
+      close_poses.push_back(other_agents[ii]);
     }
   }
   return close_poses;
@@ -383,7 +383,7 @@ geometry_msgs::Vector3 IO_control_collision::psi_col_gradient(const geometry_msg
   double h=0.001;
   std::vector<geometry_msgs::Point> perturb;
   for (int i=0; i<6; i++){
-    perturb.push_back(m_agent->position);
+    perturb.push_back(m_agent.position);
   }
   perturb[0].x+=h;
   perturb[1].x-=h;
@@ -394,11 +394,11 @@ geometry_msgs::Vector3 IO_control_collision::psi_col_gradient(const geometry_msg
 
 
   geometry_msgs::Vector3 output;
-  output.x = (psi_col_helper(perturb[0],n_agent->position) - psi_col_helper(perturb[1],n_agent->position))/(2*h);
+  output.x = (psi_col_helper(perturb[0],n_agent.position) - psi_col_helper(perturb[1],n_agent.position))/(2*h);
 
-  output.y = (psi_col_helper(perturb[2],n_agent->position) - psi_col_helper(perturb[3],n_agent->position))/(2*h);
+  output.y = (psi_col_helper(perturb[2],n_agent.position) - psi_col_helper(perturb[3],n_agent.position))/(2*h);
 
-  output.z = (psi_col_helper(perturb[4],n_agent->position) - psi_col_helper(perturb[5],n_agent->position))/(2*h);
+  output.z = (psi_col_helper(perturb[4],n_agent.position) - psi_col_helper(perturb[5],n_agent.position))/(2*h);
   //std::cout << "Output" << output << std::endl;
   return output;
 
@@ -418,11 +418,11 @@ double IO_control_collision::self_norm(const geometry_msgs::Vector3 &tiny){
   return val;
 }
 
-geometry_msgs::Pose IO_control_collision::add_vectors(const geometry_msgs::Pose &a, const geometry_msgs::Pose &b){
-  geometry_msgs::Pose result;
-  result.x = a->x + b->x;
-  result.y = a->y + b->y;
-  result.z = a->z + b->z;
+geometry_msgs::Vector3 IO_control_collision::add_vectors(const geometry_msgs::Vector3 &a, const geometry_msgs::Vector3 &b){
+  geometry_msgs::Vector3 result;
+  result.x = a.x + b.x;
+  result.y = a.y + b.y;
+  result.z = a.z + b.z;
   return result;
 }
 
