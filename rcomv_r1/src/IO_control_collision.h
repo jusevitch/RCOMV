@@ -42,7 +42,7 @@ public:
   IO_control_collision();
   ~IO_control_collision();
 private:
-  // ROS node handle
+  // ROS node handle  
   ros::NodeHandle nh;
   ros::NodeHandle nh_private_;
 
@@ -64,6 +64,7 @@ private:
   void pubCallback(const ros::TimerEvent& event);
   void disCallback(const ros::TimerEvent& event);  // display callback function
   void odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs);
+  void posestamped_subCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs);
   void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs);
   void graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs);
 
@@ -107,6 +108,11 @@ private:
   int n;
   std::vector<geometry_msgs::Pose> state_lists;
   int agent_index;
+
+  bool gazebo_bool; // Must be put as true if you're running Gazebo simulations
+  int rover_number; // The number of the rover. This should correspond with the VICON topic the state is published to.
+  std::string sub_topic;
+  std::string pub_topic;
 
 
 

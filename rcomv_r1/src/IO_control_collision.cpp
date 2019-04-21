@@ -41,6 +41,11 @@ IO_control_collision::IO_control_collision()
   nh_private_.param<double>("dc", dc, 2); // Radius where collision avoidance function becomes active. Must be strictly greater than ds.
   nh_private_.param<int>("agent_index", agent_index, 0);
 
+  // Distinguishes between running in simulation and running in hardware
+  nh_private_.param<bool>("gazebo_bool", gazebo_bool, "true"); // Tests whether we're running it indoors or not
+  nh_private_.param<int>("rover_number", rover_number, 0); // gives Rover number; 0 throws an error.
+
+
   even_cycle = false;
   //
   odometry_connected = false;
@@ -49,14 +54,21 @@ IO_control_collision::IO_control_collision()
 
   // ------------------------------ Set Pubs/Subs -----------------------------
   // Publisher := cmd_vel_mux/input/teleop
-  pub = nh.advertise<geometry_msgs::Twist>("cmd_vel_mux/input/teleop", 10);
+  pub_topic = "cmd_vel_mux/input/teleop";
+  pub = nh.advertise<geometry_msgs::Twist>(pub_topic, 10);
   // frequency: 50 Hz
   pub_timer = nh.createTimer(ros::Duration(0.02), &IO_control_collision::pubCallback, this);
   // frequency: 1 Hz
   dis_timer = nh.createTimer(ros::Duration(1), &IO_control_collision::disCallback, this);
 
   //Subscriber := current states
-  odom_sub = nh.subscribe("odom", 10, &IO_control_collision::odom_subCallback, this);
+  if(gazebo_bool){
+    sub_topic = "/R" + std::to_string(rover_number) + "/odom";
+    odom_sub = nh.subscribe(sub_topic, 10, &IO_control_collision::odom_subCallback, this);
+  } else {
+    sub_topic = "/R" + std::to_string(rover_number); // Need to remap the topic name in the launch files
+    odom_sub = nh.subscribe(sub_topic,10, &IO_control_collision::posestamped_subCallback, this);
+  }
 
   //Subscriber := reference trajectory parameters
   trajectory_sub = nh.subscribe("ref", 10, &IO_control_collision::trajectory_subCallback, this);
@@ -70,6 +82,26 @@ IO_control_collision::~IO_control_collision()
   cmd_vel.angular.z = 0;
   pub.publish(cmd_vel);
   ros::shutdown();
+}
+
+
+// Pose Stamped Callback
+void IO_control_collision::posestamped_subCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs){
+  if (odometry_connected == false)
+  {
+      odometry_connected = true;
+      t0 = ros::Time::now().toSec(); // intial time
+  }
+
+  state.header = msgs->header;
+  state.pose.pose.position.x = msgs->pose.position.x;
+  state.pose.pose.position.y = msgs->pose.position.y;
+  state.pose.pose.position.z = msgs->pose.position.z;
+
+  state.pose.pose.orientation.x = msgs->pose.orientation.x;
+  state.pose.pose.orientation.y = msgs->pose.orientation.y;
+  state.pose.pose.orientation.z = msgs->pose.orientation.z;
+  state.pose.pose.orientation.w = msgs->pose.orientation.w;
 }
 
 // odometry subscriber callback function
@@ -110,6 +142,8 @@ void IO_control_collision::trajectory_subCallback(const rcomv_r1::CubicPath::Con
 }
 
 // callback function to display the odometry reading
+// !!! WARNING: THIS WILL NOT WORK PROPERLY FOR NON-GAZEBO TESTS. Real-world data comes as PoseStamped messages instead of Odom, which
+//  does not come with a Twist element.
 void IO_control_collision::disCallback(const ros::TimerEvent& event) {
   // displays the current pose and velocity
   double x = state.pose.pose.position.x;
@@ -149,15 +183,15 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
 
   // the reference states and velocity: circular path
   if (path_type.compare(std::string("circular")) == 0) {
-     xd = xc + R*cos(wd*t) + Ri*cos(theta+alphai);
-     yd = yc + R*sin(wd*t) + Ri*sin(theta+alphai);
+     xd = xc + R*cos(wd*t) + Ri*cos(wd*t+alphai);
+     yd = yc + R*sin(wd*t) + Ri*sin(wd*t+alphai);
      vd = hypot(wd*(-R*sin(wd*t) - Ri*sin(theta+alphai)),
                 wd*(R*cos(wd*t) + Ri*cos(theta+alphai)));
   }
   // the reference states and velocity: eight-shaped path
   if (path_type.compare(std::string("eight_shaped")) == 0) {
-     xd = xc + R1*sin(2*wd*t) + Ri*cos(theta+alphai);
-     yd = yc + R2*sin(wd*t) + Ri*sin(theta+alphai);
+     xd = xc + R1*sin(2*wd*t) + Ri*cos(wd*t+alphai);
+     yd = yc + R2*sin(wd*t) + Ri*sin(wd*t+alphai);
      //vd = hypot((2*R1*wd*cos(2*wd*t)), (R2*wd*cos(wd*t)));
      vd = hypot((2*wd*R1*cos(2*wd*t) - wd*Ri*sin(theta+alphai)),
                 wd*(R2*cos(wd*t) + Ri*cos(theta+alphai)));
@@ -169,6 +203,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
 
   double xddot, yddot, theta_d, xdoubledot, ydoubledot, thetaddot;
   ROS_INFO("wd : %lf", wd);
+  // ROS_INFO("agent_index, rover_number: %d, %d", agent_index, rover_number);
 
   // the reference output
   if(path_type.compare(std::string("circular")) == 0) {
@@ -178,6 +213,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
     yddot = wd*(R2*cos(wd*t) + Ri*cos(wd*t + alphai)); // First derivative of yd
     theta_d = atan2(yddot,xddot);
   }
+  ROS_INFO("xd, yd : [%lf, %lf]", xd, yd);
   double c_thd = cos(theta_d);
   double s_thd = sin(theta_d);
   y1d = xd + b*c_thd;
@@ -194,6 +230,11 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
     vy2d = yddot + b*cos(theta_d)*thetaddot;
   }
 
+  // ROS_INFO("xd, yd, thetad: [%lf, %lf, %lf]", xd, yd, theta_d);
+
+  c_th = cos(theta);
+  s_th = sin(theta);
+
   // the output error
   y1 = x + b*c_th;
   y2 = y + b*s_th;
@@ -205,11 +246,12 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   u2 = vy2d + k2 * e_y2;
 
   // compute collision avoidance term
-
+  
 
   // transform to the actual control inputs for the unicycle model
   cmd_vel.linear.x = c_th * u1 + s_th * u2;
   cmd_vel.angular.z = -s_th/b * u1 + c_th/b * u2;
+
   // saturation
   cmd_vel.linear.x = std::max(-vmax, std::min(cmd_vel.linear.x, vmax));
   cmd_vel.angular.z = std::max(-wmax, std::min(cmd_vel.angular.z, wmax));
