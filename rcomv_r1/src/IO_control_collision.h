@@ -75,7 +75,7 @@ private:
   geometry_msgs::Vector3 calc_vec(const geometry_msgs::Point& state1, const geometry_msgs::Point& state2);
   double self_norm(const geometry_msgs::Vector3 &tiny);
   control_cmd collision_avoid();
-  double difference_norm(const geometry_msgs::Vector3 &v1, const geometry_msgs::Vector3 &v2);
+  double difference_norm(const geometry_msgs::Pose &v1, const geometry_msgs::Pose &v2);
 
   // private variables
   // controller paramters

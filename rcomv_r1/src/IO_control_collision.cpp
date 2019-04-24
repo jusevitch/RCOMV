@@ -425,15 +425,16 @@ control_cmd IO_control_collision::collision_avoid(){
         if(difference_norm(current_state,collision_states[j]) < ds){
           // Return maximum norm gradient in direction opposite of other agent.
           // This is necessary because value is capped at mu2. If agents are less than ds apart, the gradient will be zero.
-          
-          grad_norm = std::abs(2*mu2/(ds - dc) - pow(mu2,2)/pow(ds - dc,2));
-          grad_angle = std::atan2(current_state.position.y - collision_states[j].position.y,current_state.position.x - collision_states[j].position.x);
+          // !!! THE FOLLOWING CODE ONLY WORKS FOR 2D GROUND ROVERS
+          double grad_norm = std::abs(2*mu2/(ds - dc) - pow(mu2,2)/pow(ds - dc,2));
+          double grad_angle = std::atan2(current_state.position.y - collision_states[j].position.y,current_state.position.x - collision_states[j].position.x);
           grad_vector.x = grad_norm*std::cos(grad_angle);
           grad_vector.y = grad_norm*std::sin(grad_angle);
+          ROS_INFO("grad_vector x,y : [%lf, %lf]", grad_vector.x, grad_vector.y);
+        } else {        
+          grad_vector = psi_col_gradient(current_state, collision_states[j]);
         }
-        
-        grad_vector = psi_col_gradient(current_state, collision_states[j]);
-        // ROS_INFO("collision_states[j]: [%lf, %lf, %lf]", collision_states[j].position.x, collision_states[j].position.y, collision_states[j].position.z);
+
         psi_collision_sum = add_vectors(psi_collision_sum,grad_vector);
       }
 
@@ -635,8 +636,8 @@ geometry_msgs::Vector3 IO_control_collision::add_vectors(const geometry_msgs::Ve
 
 
 
-double IO_control_collision::difference_norm(const geometry_msgs::Vector3 &v1, const geometry_msgs::Vector3 &v2){
-  double out_double = pow(v1.x - v2.x,2) + pow(v1.y - v2.y,2) + pow(v1.z - v2.z,2);
+double IO_control_collision::difference_norm(const geometry_msgs::Pose &v1, const geometry_msgs::Pose &v2){
+  double out_double = pow(v1.position.x - v2.position.x,2) + pow(v1.position.y - v2.position.y,2) + pow(v1.position.z - v2.position.z,2);
   return sqrt(out_double);
 }
 
