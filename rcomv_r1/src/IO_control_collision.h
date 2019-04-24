@@ -34,6 +34,7 @@ struct pose {
 struct control_cmd{
   double v;
   double w;
+  double gamma;
 };
 
 class IO_control_collision
@@ -74,6 +75,7 @@ private:
   geometry_msgs::Vector3 calc_vec(const geometry_msgs::Point& state1, const geometry_msgs::Point& state2);
   double self_norm(const geometry_msgs::Vector3 &tiny);
   control_cmd collision_avoid();
+  double difference_norm(const geometry_msgs::Vector3 &v1, const geometry_msgs::Vector3 &v2);
 
   // private variables
   // controller paramters
@@ -93,6 +95,7 @@ private:
   double wd; // reference turning rate
   double ds; // Safety radius; must not be crossed
   double dc; // Radius where collision avoidance function is activated
+  double mu2; // Parameter for collision avoidance barrier function
 
 
   // cubic ploynomials path paramters

@@ -13,7 +13,7 @@
     <arg name="lead_z" default="10" />
 
     <!-- Args specifying whether this is a Gazebo simulation or real implementation -->
-    <arg name="gazebo" default="1"/>
+    <arg name="gazebo" default="1"/>`
 
     <!-- Default parameters for agent initialization -->
     <arg name="x" default="0"/>
@@ -45,9 +45,16 @@
     <arg name="poly_k" default="20" />
     <arg name="T" default="15" />
     <arg name="endless" default="false" />
+    <arg name="agent_index" default="0"/>
+    <arg name="rover_number" default="0"/>
+
+    <!-- Parameters for collision avoidance -->
+    <arg name="ds" default="1"/>
+    <arg name="dc" default="2"/>
 
     <group ns="$(arg name_space)">
 
+        <!-- NOTE: THIS IS THE NODE THAT USES THE cmd_vel_mux TOPIC -->
         <!-- Launches the UGV and low level controller in Gazebo -->
         <include file="$(find rcomv_r1)/launch/spawn_ugv.launch">
             <arg name="namespace" value="$(arg name_space)" />
@@ -63,6 +70,7 @@
             <arg name="yaw" value="$(arg yaw)" />
         </include>
 
+    
         <node name="tf_footprint_base" pkg="tf" type="static_transform_publisher"
             args="0 0 0 0 0 0 base_link base_footprint 40" />
         <node name="fake_joint_calibration" pkg="rostopic" type="rostopic"
@@ -73,11 +81,13 @@
 
         <!-- In/Output Linearization controller node -->
         <!-- No wmsr node involved -->
-        <node name="IO_control_collision_node" pkg="rcomv_r1" type="IO_control_collision" launch-prefix="xterm -e" output="screen">
+        <node name="IO_control_collision_node" pkg="rcomv_r1" type="IO_control_collision" launch-prefix="xterm -e gdb -ex run --args" output="screen">
             
             <param name="gazebo" value="$(arg gazebo)"/>
             <param name="Ri" value="$(arg Ri)" />
             <param name="alphai" value="$(arg alphai)"/>
+            <param name="agent_index" value="$(arg agent_index)"/>
+            <param name="rover_number" value="$(arg rover_number)"/>
 
             <param name="b" value="$(arg b)" />
             <param name="k1" value="$(arg k1)" />
@@ -104,6 +114,7 @@
             <param name="endless" value="$(arg endless)" />
 
         </node>
+        
 
     </group>
 
