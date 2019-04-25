@@ -173,15 +173,15 @@ void IO_control_collision::disCallback(const ros::TimerEvent& event) {
   double vy = state.twist.twist.linear.y;
   double dot_yaw = state.twist.twist.angular.z;
 
-  ROS_INFO("-----------------------------------------");
-  ROS_INFO_STREAM(path_type<<" path");
-  ROS_INFO("Odom Reading: ");
-  ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"Time: "
-    <<ros::Time::now().toSec()-initial_time<<"s");
-  ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"position at ["<<x<<", "<<y<<"]"<<"|| orientation at "<<yaw);
-  //ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"goal position at ["<<goal.x<<", "<<goal.y<<"]");
-  ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"cmd lin vel: "<<cmd_vel.linear.x<<"|| cmd ang vel: "<<cmd_vel.angular.z);
-  ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"velocity is "<<vx<<"|| yaw rate is "<<dot_yaw);
+  // ROS_INFO("-----------------------------------------");
+  // ROS_INFO_STREAM(path_type<<" path");
+  // ROS_INFO("Odom Reading: ");
+  // ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"Time: "
+  //   <<ros::Time::now().toSec()-initial_time<<"s");
+  // ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"position at ["<<x<<", "<<y<<"]"<<"|| orientation at "<<yaw);
+  // //ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"goal position at ["<<goal.x<<", "<<goal.y<<"]");
+  // ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"cmd lin vel: "<<cmd_vel.linear.x<<"|| cmd ang vel: "<<cmd_vel.angular.z);
+  // ROS_INFO_STREAM(std::setprecision(2)<<std::fixed<<"velocity is "<<vx<<"|| yaw rate is "<<dot_yaw);
 }
 
 
@@ -278,8 +278,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   ROS_INFO("Gamma, v_coll, w_coll: [%lf, %lf, %lf]", coll_avoid.gamma, coll_avoid.v, coll_avoid.w);
 
   // transform to the actual control inputs for the unicycle model
-  cmd_vel.linear.x =  coll_avoid.gamma*coll_avoid.v; // (1.0 - coll_avoid.gamma)*(c_th * u1 + s_th * u2) +
-  cmd_vel.angular.z =  coll_avoid.gamma*coll_avoid.w; // (1.0 - coll_avoid.gamma)*(-s_th/b * u1 + c_th/b * u2) +
+  cmd_vel.linear.x =  (1.0 - coll_avoid.gamma)*(c_th * u1 + s_th * u2) + coll_avoid.gamma*coll_avoid.v; // 
+  cmd_vel.angular.z =  (1.0 - coll_avoid.gamma)*(-s_th/b * u1 + c_th/b * u2) + coll_avoid.gamma*coll_avoid.w; // 
 
   // saturation
   cmd_vel.linear.x = std::max(-vmax, std::min(cmd_vel.linear.x, vmax));
@@ -413,7 +413,7 @@ control_cmd IO_control_collision::collision_avoid(){
   if(!state_lists.empty()){ // Keeps the node from crashing before the list is populated
     std::vector<geometry_msgs::Pose> all_states = state_lists; // Freezes the state list at a certain time
     geometry_msgs::Pose current_state = all_states.at(agent_index - 1); // This agent's current state (pose)
-    ROS_INFO("current_state x,y,z: [%lf, %lf, %lf]", current_state.position.x, current_state.position.y, current_state.position.z);
+    // ROS_INFO("current_state x,y,z: [%lf, %lf, %lf]", current_state.position.x, current_state.position.y, current_state.position.z);
     all_states.erase(all_states.begin() + agent_index - 1); // Remove the agent's state from the list
     std::vector<geometry_msgs::Pose> collision_states = collision_neighbors(all_states, current_state); 
 
@@ -422,15 +422,29 @@ control_cmd IO_control_collision::collision_avoid(){
       geometry_msgs::Vector3 psi_collision_sum; psi_collision_sum.x = 0.0; psi_collision_sum.y = 0.0; psi_collision_sum.z = 0.0;
       geometry_msgs::Vector3 grad_vector; grad_vector.x = 0.0; grad_vector.y = 0.0; grad_vector.z = 0.0;
       for (int j=0; j<collision_states.size(); j++){
+        
+        // ROS_INFO("current state: [%lf, %lf, %lf] \
+        collision_states[j]: [%lf, %lf, %lf]\
+        difference_norm: %lf, \
+        ds: %lf", \
+        current_state.position.x, current_state.position.y, current_state.position.z, \
+        collision_states[j].position.x, collision_states[j].position.y, collision_states[j].position.z, \
+        difference_norm(current_state,collision_states[j]));
+        // ROS_INFO("BARFOO TO THE MIN!!!!");
         if(difference_norm(current_state,collision_states[j]) < ds){
+          // ROS_INFO("FOOBAR TO THE MAX!!!!");
           // Return maximum norm gradient in direction opposite of other agent.
           // This is necessary because value is capped at mu2. If agents are less than ds apart, the gradient will be zero.
           // !!! THE FOLLOWING CODE ONLY WORKS FOR 2D GROUND ROVERS
           double grad_norm = std::abs(2*mu2/(ds - dc) - pow(mu2,2)/pow(ds - dc,2));
           double grad_angle = std::atan2(current_state.position.y - collision_states[j].position.y,current_state.position.x - collision_states[j].position.x);
+          grad_angle = std::fmod(grad_angle + 2*M_PI, 2*M_PI);
+          ROS_INFO("grad_angle for agent %d: %lf", agent_index, grad_angle);
+          
           grad_vector.x = grad_norm*std::cos(grad_angle);
           grad_vector.y = grad_norm*std::sin(grad_angle);
-          ROS_INFO("grad_vector x,y : [%lf, %lf]", grad_vector.x, grad_vector.y);
+
+          // ROS_INFO("grad_vector x,y : [%lf, %lf]", grad_vector.x, grad_vector.y);
         } else {        
           grad_vector = psi_col_gradient(current_state, collision_states[j]);
         }
@@ -458,18 +472,19 @@ control_cmd IO_control_collision::collision_avoid(){
       for (int jj=0; jj < collision_states.size(); jj++){
         double xi = current_state.position.x; double yi = current_state.position.y; double zi = current_state.position.z;
         double xj = collision_states[jj].position.x; double yj = collision_states[jj].position.y; double zj = collision_states[jj].position.z;
-        int xij = std::sqrt(std::pow(xi - xj,2) + std::pow(yi - yj,2) + std::pow(zi - zj,2));
+        double xij = std::sqrt(std::pow(xi - xj,2) + std::pow(yi - yj,2) + std::pow(zi - zj,2));
       
         if(jj == 0 || xij < min_distance){
           min_distance = xij;
         }
       }
+      ROS_INFO("min_distance: %lf", min_distance);
       if (min_distance > dc){
         out_cmd.gamma = 0.0;
       } else if(min_distance < ds){
         out_cmd.gamma = 1.0;
       } else{
-        out_cmd.gamma = std::pow(min_distance - dc,2) / std::pow(ds - dc,2); // Convex interpolation between 1 and 0
+        out_cmd.gamma = 1.0 - (min_distance - ds) / std::abs(dc - ds); // Convex interpolation between 1 and 0
       }
     } else {
       out_cmd.gamma = 0.0;
@@ -512,7 +527,7 @@ std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const
       close_poses.push_back(other_agents[ii]);
     }
   }
-  ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %d]", dc, distance, close_poses.size());
+  // ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %d]", dc, distance, close_poses.size());
   return close_poses;
 }
 
@@ -537,15 +552,15 @@ double IO_control_collision::psi_col_helper(const geometry_msgs::Point &m_agent,
   double dc2 = 2*dc; // Line 123 of MATLAB code -- 2*dc is used.
   if (val <= dc){
     if (val >=ds) {
-      ROS_INFO("The if happened for val - dc / garbage for agent %d", agent_index);
+      // ROS_INFO("The if happened for val - dc / garbage for agent %d", agent_index);
       // !!! WATCH OUT FOR IF YOU'RE USING dc OR dc2 !!!
       output =  ((val - dc)*(val-dc)) / (val - ds + ((ds-dc)*(ds-dc))/mu2);
     } else {
-      ROS_INFO("The mu2 else happened for agent %d", agent_index);
+      // ROS_INFO("The mu2 else happened for agent %d", agent_index);
       output = mu2;
     }
   } else {
-    ROS_INFO("The zero else happened for agent %d", agent_index);
+    // ROS_INFO("The zero else happened for agent %d", agent_index);
     output = 0.0;
   }
 
@@ -578,19 +593,19 @@ geometry_msgs::Vector3 IO_control_collision::psi_col_gradient(const geometry_msg
   // ROS_INFO("perturb[0] x,y,z: [%lf, %lf, %lf]", perturb[0].x, perturb[0].y, perturb[0].z);
 
   geometry_msgs::Vector3 output;
-  output.x = (psi_col_helper(perturb[0],n_agent.position) - psi_col_helper(perturb[1],n_agent.position))/(2*h);
+  output.x = -(psi_col_helper(perturb[0],n_agent.position) - psi_col_helper(perturb[1],n_agent.position))/(2*h);
   // double temp_var_plusx = (psi_col_helper(perturb[0],n_agent.position));
   // ROS_INFO("temp_var_plusx is %lf", temp_var_plusx);
   // double temp_var_minusx = psi_col_helper(perturb[1],n_agent.position);
   // ROS_INFO("temp_var_minusx is %lf", temp_var_minusx);
 
-  output.y = (psi_col_helper(perturb[2],n_agent.position) - psi_col_helper(perturb[3],n_agent.position))/(2*h);
+  output.y = -(psi_col_helper(perturb[2],n_agent.position) - psi_col_helper(perturb[3],n_agent.position))/(2*h);
   // double temp_var_plusy = (psi_col_helper(perturb[2],n_agent.position));
   // ROS_INFO("temp_var_plusy is %lf", temp_var_plusy);
   // double temp_var_minusy = psi_col_helper(perturb[3],n_agent.position);
   // ROS_INFO("temp_var_minusy is %lf", temp_var_minusy);
 
-  output.z = (psi_col_helper(perturb[4],n_agent.position) - psi_col_helper(perturb[5],n_agent.position))/(2*h);
+  output.z = -(psi_col_helper(perturb[4],n_agent.position) - psi_col_helper(perturb[5],n_agent.position))/(2*h);
   //std::cout << "Output" << output << std::endl;
   return output;
 
