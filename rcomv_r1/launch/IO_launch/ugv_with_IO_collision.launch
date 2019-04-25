@@ -11,6 +11,7 @@
     <arg name="lead_x" default="6" />
     <arg name="lead_y" default="6" />
     <arg name="lead_z" default="10" />
+    <arg name="n" default="0"/>
 
     <!-- Args specifying whether this is a Gazebo simulation or real implementation -->
     <arg name="gazebo" default="1"/>`
@@ -89,6 +90,7 @@
             <param name="agent_index" value="$(arg agent_index)"/>
             <param name="rover_number" value="$(arg rover_number)"/>
 
+            <param name="n" value="$(arg n)"/>
             <param name="b" value="$(arg b)" />
             <param name="k1" value="$(arg k1)" />
             <param name="k2" value="$(arg k2)"/>
