@@ -53,8 +53,7 @@
     <arg name="ds" default="1"/>
     <arg name="dc" default="2"/>
 
-    <group ns="$(arg name_space)">
-
+    <group ns="$(arg name_space)" if="$(arg gazebo)">
         <!-- NOTE: THIS IS THE NODE THAT USES THE cmd_vel_mux TOPIC -->
         <!-- Launches the UGV and low level controller in Gazebo -->
         <include file="$(find rcomv_r1)/launch/spawn_ugv.launch">
@@ -78,8 +77,10 @@
             args="pub /calibrated std_msgs/Bool true" />
         <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    </group>
 
-
+    <group ns="$(arg name_space)">
+    
         <!-- In/Output Linearization controller node -->
         <!-- No wmsr node involved -->
         <node name="IO_control_collision_node" pkg="rcomv_r1" type="IO_control_collision" launch-prefix="xterm -e gdb -ex run --args" output="screen">

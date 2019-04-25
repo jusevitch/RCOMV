@@ -22,6 +22,7 @@
 
 #include <state_graph_builder/graph.h>
 #include <state_graph_builder/posegraph.h>
+#include <state_graph_builder/posestampedgraph.h>
 
 
 // pose structure
@@ -68,6 +69,8 @@ private:
   void posestamped_subCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs);
   void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs);
   void graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs);
+  void graph_subCallback_PoseStamped(const state_graph_builder::posestampedgraph::ConstPtr& msgs);
+
 
   std::vector<geometry_msgs::Pose> collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose &current_state);
   double psi_col_helper(const geometry_msgs::Point &m_agent, const  geometry_msgs::Point &n_agent);
@@ -109,10 +112,11 @@ private:
   double initial_time;
   state_graph_builder::posegraph all_states;
   int n;
-  std::vector<geometry_msgs::Pose> state_lists;
+  std::vector<geometry_msgs::PoseStamped> state_lists;
+  std::vector<geometry_msgs::Pose> state_lists_unstamped;
   int agent_index;
 
-  bool gazebo_bool; // Must be put as true if you're running Gazebo simulations
+  int gazebo; // Must be put as true if you're running Gazebo simulations
   int rover_number; // The number of the rover. This should correspond with the VICON topic the state is published to.
   std::string sub_topic;
   std::string pub_topic;

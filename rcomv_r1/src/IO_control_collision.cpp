@@ -25,7 +25,7 @@ IO_control_collision::IO_control_collision()
   // parametric path paramters
   nh_private_.param<double>("xc", xc, 0);
   nh_private_.param<double>("yc", yc, 0);
-  nh_private_.param<double>("R", R, 4);
+  nh_private_.param<double>("R", R, 1);
   nh_private_.param<double>("wd", wd, 0.5);
   nh_private_.param<double>("t0", t0, ros::Time().toSec());
   nh_private_.param<double>("R1", R1, 4);
@@ -43,7 +43,7 @@ IO_control_collision::IO_control_collision()
   nh_private_.param<int>("agent_index", agent_index, 0);
 
   // Distinguishes between running in simulation and running in hardware
-  nh_private_.param<bool>("gazebo_bool", gazebo_bool, "true"); // Tests whether we're running it indoors or not
+  nh_private_.param<int>("gazebo", gazebo, 1); // Tests whether we're running it indoors or not
   nh_private_.param<int>("rover_number", rover_number, 0); // gives Rover number; 0 throws an error.
 
   mu2=10000;
@@ -54,7 +54,11 @@ IO_control_collision::IO_control_collision()
 
   // ------------------------------ Set Pubs/Subs -----------------------------
   // Publisher := cmd_vel_mux/input/teleop
-  pub_topic = "cmd_vel_mux/input/teleop";
+  if(gazebo){
+    pub_topic = "cmd_vel_mux/input/teleop";
+  } else {
+    pub_topic = "cmd_vel";
+  }
   pub = nh.advertise<geometry_msgs::Twist>(pub_topic, 10);
   // frequency: 50 Hz
   pub_timer = nh.createTimer(ros::Duration(0.02), &IO_control_collision::pubCallback, this);
@@ -62,10 +66,14 @@ IO_control_collision::IO_control_collision()
   dis_timer = nh.createTimer(ros::Duration(1), &IO_control_collision::disCallback, this);
 
   // Subscriber: gets all current states from state_graph_builder
-  states_sub = nh.subscribe("/graph", 1, &IO_control_collision::graph_subCallback, this);
+  if(gazebo){
+    states_sub = nh.subscribe("/graph", 1, &IO_control_collision::graph_subCallback, this);
+  } else {
+    states_sub = nh.subscribe("/graph", 1, &IO_control_collision::graph_subCallback_PoseStamped, this);
+  }
 
   //Subscriber := current states
-  if(gazebo_bool){
+  if(gazebo){
     sub_topic = "/R" + std::to_string(rover_number) + "/odom";
     odom_sub = nh.subscribe(sub_topic, 10, &IO_control_collision::odom_subCallback, this);
   } else {
@@ -153,7 +161,7 @@ void IO_control_collision::trajectory_subCallback(const rcomv_r1::CubicPath::Con
     pose temp_q = qi;
     qi = qf;
     qf = temp_q;
-    ROS_INFO("Even Cycle...");
+    // ROS_INFO("Even Cycle...");
   }
 }
 
@@ -193,7 +201,7 @@ void IO_control_collision::disCallback(const ros::TimerEvent& event) {
 // publisher callback function
 void IO_control_collision::pubCallback(const ros::TimerEvent& event)
 {
-
+  // ROS_INFO("FOOOOOOBAAAARRRRRRR TIMER");
   // Input/Output Linearization Algorithm
   double xd, yd, vd;
   double y1d, y2d, vy1d, vy2d;
@@ -204,6 +212,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   double c_th, s_th;
   double e_y1, e_y2;
   double u1, u2;
+
+  // ROS_INFO("gazebo: %d", gazebo ? 1 : 0);
 
   double t = ros::Time::now().toSec() - t0;
 
@@ -240,6 +250,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
     theta_d = atan2(yddot,xddot);
   }
   // ROS_INFO("xd, yd : [%lf, %lf]", xd, yd);
+  // ROS_INFO("xc, yc : [%lf, %lf]", xc, yc);
   double c_thd = cos(theta_d);
   double s_thd = sin(theta_d);
   y1d = xd + b*c_thd;
@@ -275,7 +286,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   
   control_cmd coll_avoid = IO_control_collision::collision_avoid(); // inputs are x,y,theta? Delays may cause problems
 
-  // ROS_INFO("Gamma, v_coll, w_coll: [%lf, %lf, %lf]", coll_avoid.gamma, coll_avoid.v, coll_avoid.w);
+  ROS_INFO("Gamma, v_coll, w_coll: [%lf, %lf, %lf]", coll_avoid.gamma, coll_avoid.v, coll_avoid.w);
 
   // transform to the actual control inputs for the unicycle model
   cmd_vel.linear.x =  (1.0 - coll_avoid.gamma)*(c_th * u1 + s_th * u2) + coll_avoid.gamma*coll_avoid.v; // 
@@ -413,16 +424,22 @@ control_cmd IO_control_collision::collision_avoid(){
   ROS_INFO("n: %d", n);
   ROS_INFO("state_lists.size() == n: %d", (state_lists.size() == n));
 
+
   // Collect list of in-neighbors
   if(!state_lists.empty() && state_lists.size() == n){ // Keeps the node from crashing before the list is populated
-    ROS_INFO("FOOOOOOBAAAAARRRR");
-    std::vector<geometry_msgs::Pose> all_states = state_lists; // Freezes the state list at a certain time
-    geometry_msgs::Pose current_state = all_states.at(agent_index - 1); // This agent's current state (pose)
+    // ROS_INFO("FOOOOOOBAAAAARRRR");
+    std::vector<geometry_msgs::PoseStamped> all_states = state_lists; // Freezes the state list at a certain time
+    geometry_msgs::Pose current_state = all_states[agent_index - 1].pose; // This agent's current state (pose)
     // ROS_INFO("current_state x,y,z: [%lf, %lf, %lf]", current_state.position.x, current_state.position.y, current_state.position.z);
     all_states.erase(all_states.begin() + agent_index - 1); // Remove the agent's state from the list
-    std::vector<geometry_msgs::Pose> collision_states = collision_neighbors(all_states, current_state); 
+    std::vector<geometry_msgs::Pose> all_states_unstamped(all_states.size());
+    for(int ii=0; ii < all_states.size(); ii++){
+      all_states_unstamped[ii] = all_states[ii].pose;
+    }
+    ROS_INFO("all_states_unstamped.size(): %d", all_states_unstamped.size());
+    std::vector<geometry_msgs::Pose> collision_states = collision_neighbors(all_states_unstamped, current_state); 
 
-    // ROS_INFO("collision_states.size(): %d", collision_states.size());
+    ROS_INFO("collision_states.size(): %d", collision_states.size());
 
     if (!collision_states.empty()){
       // Get the collision avoidance gradient term
@@ -430,7 +447,7 @@ control_cmd IO_control_collision::collision_avoid(){
       geometry_msgs::Vector3 grad_vector; grad_vector.x = 0.0; grad_vector.y = 0.0; grad_vector.z = 0.0;
       for (int j=0; j<collision_states.size(); j++){
         
-        // ROS_INFO("current state: [%lf, %lf, %lf] \
+        ROS_INFO("current state: [%lf, %lf, %lf] \
         collision_states[j]: [%lf, %lf, %lf]\
         difference_norm: %lf, \
         ds: %lf", \
@@ -446,6 +463,7 @@ control_cmd IO_control_collision::collision_avoid(){
           double grad_norm = std::abs(2*mu2/(ds - dc) - pow(mu2,2)/pow(ds - dc,2));
           double grad_angle = std::atan2(current_state.position.y - collision_states[j].position.y,current_state.position.x - collision_states[j].position.x);
           grad_angle = std::fmod(grad_angle + 2*M_PI, 2*M_PI);
+          ROS_INFO("grad_angle: %lf", grad_angle);
           // ROS_INFO("grad_angle for agent %d: %lf", agent_index, grad_angle);
           
           grad_vector.x = grad_norm*std::cos(grad_angle);
@@ -463,6 +481,7 @@ control_cmd IO_control_collision::collision_avoid(){
       // Convert the collision avoidance gradient term into linear and angular velocity commands
       double PI = 3.141592653589793;
       double theta_d = fmod(atan2(psi_collision_sum.y,psi_collision_sum.x) + 2*PI, 2*PI);
+      ROS_INFO("theta_d: %lf",theta_d);
       double theta = tf::getYaw(state.pose.pose.orientation);
       double angle_error = findDifference(theta,theta_d); // Change angle error to be in [-PI,PI]
 
@@ -476,9 +495,9 @@ control_cmd IO_control_collision::collision_avoid(){
     
       // Find out the smallest Euclidean distance between this agent and any one of the agents in collision_states
       double min_distance;
-      ROS_INFO("FOOBAR TO THE MAX!!! %d", agent_index);
+      // ROS_INFO("FOOBAR TO THE MAX!!! %d", agent_index);
       if(agent_index > 2){
-        ROS_INFO("collision_states.size(): %d", collision_states.size());
+        // ROS_INFO("collision_states.size(): %d", collision_states.size());
       }
       for (int jj=0; jj < collision_states.size(); jj++){
         double xi = current_state.position.x; double yi = current_state.position.y; double zi = current_state.position.z;
@@ -523,13 +542,27 @@ control_cmd IO_control_collision::collision_avoid(){
 void IO_control_collision::graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs){
   // The posegraph->poses attribute returns a vector of pose objects
   // state_lists should be an array of pose objects
+  // ROS_INFO("FOOBAR graph_subCallback");
+  state_lists_unstamped = msgs->poses;
+}
+
+
+
+
+void IO_control_collision::graph_subCallback_PoseStamped(const state_graph_builder::posestampedgraph::ConstPtr& msgs) {
+  // ROS_INFO("FOOBAR graph_subCallback");
   state_lists = msgs->poses;
 }
+
+
+
+
 
 // Helper function: calculate neighbors within dc of the agent
 std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose &current_state){
   double distance = 0.0;
   std::vector<geometry_msgs::Pose> close_poses;
+  ROS_INFO("other_agents.size(): %d", other_agents.size());
   for(int ii=0; ii < other_agents.size(); ii++){
     distance = std::sqrt(std::pow(current_state.position.x - other_agents[ii].position.x,2) +\
       std::pow(current_state.position.y - other_agents[ii].position.y,2) + std::pow(current_state.position.z - other_agents[ii].position.z,2));
