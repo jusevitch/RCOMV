@@ -73,12 +73,15 @@ private:
 
 
   std::vector<geometry_msgs::Pose> collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose &current_state);
+  std::vector<geometry_msgs::Pose> collision_neighbors(const std::vector<geometry_msgs::PoseStamped> &other_agents, const geometry_msgs::PoseStamped &current_state);
   double psi_col_helper(const geometry_msgs::Point &m_agent, const  geometry_msgs::Point &n_agent);
   geometry_msgs::Vector3 psi_col_gradient(const geometry_msgs::Pose &m_agent, const geometry_msgs::Pose &n_agent);
+  geometry_msgs::Vector3 psi_col_gradient(const geometry_msgs::PoseStamped &m_agent, const geometry_msgs::Pose &n_agent);
   geometry_msgs::Vector3 calc_vec(const geometry_msgs::Point& state1, const geometry_msgs::Point& state2);
   double self_norm(const geometry_msgs::Vector3 &tiny);
   control_cmd collision_avoid();
   double difference_norm(const geometry_msgs::Pose &v1, const geometry_msgs::Pose &v2);
+  double difference_norm(const geometry_msgs::PoseStamped &v1, const geometry_msgs::Pose &v2);
 
   // private variables
   // controller paramters
