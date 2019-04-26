@@ -420,9 +420,9 @@ control_cmd IO_control_collision::collision_avoid(){
   // Initialize the output
   control_cmd out_cmd; out_cmd.v = 0.0; out_cmd.w = 0.0;
 
-  ROS_INFO("state_lists.size(): %d", state_lists.size());
-  ROS_INFO("n: %d", n);
-  ROS_INFO("state_lists.size() == n: %d", (state_lists.size() == n));
+  // ROS_INFO("state_lists.size(): %d", state_lists.size());
+  // ROS_INFO("n: %d", n);
+  // ROS_INFO("state_lists.size() == n: %d", (state_lists.size() == n));
 
 
   // Collect list of in-neighbors
@@ -430,17 +430,17 @@ control_cmd IO_control_collision::collision_avoid(){
     // ROS_INFO("FOOOOOOBAAAAARRRR");
     std::vector<geometry_msgs::PoseStamped> all_states = state_lists; // Freezes the state list at a certain time
     geometry_msgs::PoseStamped current_state = all_states[agent_index - 1]; // This agent's current state (pose)
-    ROS_INFO("x,y,z for rover_number %d, agent_index %d: [%lf, %lf, %lf]", rover_number, agent_index,\
+    // ROS_INFO("x,y,z for rover_number %d, agent_index %d: [%lf, %lf, %lf]", rover_number, agent_index,\
       current_state.pose.position.x, current_state.pose.position.y, current_state.pose.position.z);
     // ROS_INFO("current_state x,y,z: [%lf, %lf, %lf]", current_state.position.x, current_state.position.y, current_state.position.z);
     all_states.erase(all_states.begin() + agent_index - 1); // Remove the agent's state from the list
     std::vector<geometry_msgs::Pose> collision_states = collision_neighbors(all_states, current_state); 
 
-    ROS_INFO("collision_states.size(): %d", collision_states.size());
+    // ROS_INFO("collision_states.size(): %d", collision_states.size());
 
     if (!collision_states.empty()){
       
-      ROS_INFO("Collision_states is not empty");
+      // ROS_INFO("Collision_states is not empty");
       
       // Get the collision avoidance gradient term
       geometry_msgs::Vector3 psi_collision_sum; psi_collision_sum.x = 0.0; psi_collision_sum.y = 0.0; psi_collision_sum.z = 0.0;
@@ -553,7 +553,7 @@ void IO_control_collision::graph_subCallback(const state_graph_builder::posegrap
 void IO_control_collision::graph_subCallback_PoseStamped(const state_graph_builder::posestampedgraph::ConstPtr& msgs) {
   // ROS_INFO("FOOBAR graph_subCallback");
   state_lists = msgs->poses;
-  ROS_INFO("[0] x,y,z: [%lf, %lf, %lf],\n [1] x,y,z: [%lf, %lf, %lf]",\
+  // ROS_INFO("[0] x,y,z: [%lf, %lf, %lf],\n [1] x,y,z: [%lf, %lf, %lf]",\
   state_lists[0].pose.position.x, state_lists[0].pose.position.y, state_lists[0].pose.position.z,\
   state_lists[1].pose.position.x, state_lists[1].pose.position.y, state_lists[1].pose.position.z);
 }
@@ -566,7 +566,7 @@ void IO_control_collision::graph_subCallback_PoseStamped(const state_graph_build
 std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose &current_state){
   double distance = 0.0;
   std::vector<geometry_msgs::Pose> close_poses;
-  ROS_INFO("other_agents.size() not overload: %d", other_agents.size());
+  // ROS_INFO("other_agents.size() not overload: %d", other_agents.size());
   for(int ii=0; ii < other_agents.size(); ii++){
     distance = std::sqrt(std::pow(current_state.position.x - other_agents[ii].position.x,2) +\
       std::pow(current_state.position.y - other_agents[ii].position.y,2) + std::pow(current_state.position.z - other_agents[ii].position.z,2));
@@ -584,11 +584,11 @@ std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const
 std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const std::vector<geometry_msgs::PoseStamped> &other_agents, const geometry_msgs::PoseStamped &current_state){
   double distance = 0.0;
   std::vector<geometry_msgs::Pose> close_poses;
-  ROS_INFO("other_agents.size() for overload: %d", other_agents.size());
+  // ROS_INFO("other_agents.size() for overload: %d", other_agents.size());
   for(int ii=0; ii < other_agents.size(); ii++){
     distance = std::sqrt(std::pow(current_state.pose.position.x - other_agents[ii].pose.position.x,2) +\
       std::pow(current_state.pose.position.y - other_agents[ii].pose.position.y,2) + std::pow(current_state.pose.position.z - other_agents[ii].pose.position.z,2));
-    ROS_INFO("other_agents.x, otheragents.y, other agents.z: [%lf, %lf, %lf], \n \
+    // ROS_INFO("other_agents.x, otheragents.y, other agents.z: [%lf, %lf, %lf], \n \
     current_state.x, current_state.y, current_state.z: [%lf, %lf, %lf]",\
     other_agents[ii].pose.position.x, other_agents[ii].pose.position.y, other_agents[ii].pose.position.z,\
     current_state.pose.position.x, current_state.pose.position.y, current_state.pose.position.z);

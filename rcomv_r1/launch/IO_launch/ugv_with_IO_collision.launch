@@ -116,6 +116,9 @@
             <param name="T" value="$(arg T)" />
             <param name="endless" value="$(arg endless)" />
 
+            <param name="ds" value="$(arg ds)"/>
+            <param name="dc" value="$(arg dc)"/>
+
         </node>
         
 
