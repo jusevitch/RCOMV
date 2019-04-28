@@ -34,6 +34,11 @@ InOutLinController::InOutLinController()
   nh_private_.param<double>("poly_k", poly_k, 20);
   nh_private_.param<double>("T", T, 15);
   nh_private_.param<bool>("endless", endless_flag, false);
+
+  // For indoor use
+  nh_private_.param<bool>("indoors_rover_bool", indoors_rover_bool, true); // Tests whether we're running it indoors or not
+  nh_private_.param<int>("rover_number", rover_number, 0); // gives Rover number; 0 throws an error.
+
   even_cycle = false;
   //
   odometry_connected = false;
@@ -42,25 +47,36 @@ InOutLinController::InOutLinController()
 
   // ------------------------------ Set Pubs/Subs -----------------------------
   // Publisher := cmd_vel_mux/input/teleop
-  pub = nh.advertise<geometry_msgs::Twist>("cmd_vel_mux/input/teleop", 10);
+  if(indoors_rover_bool){
+    indoor_pub_topic = "/R" + std::to_string(rover_number) + "/cmd_vel";
+    pub = nh.advertise<geometry_msgs::Twist>(indoor_pub_topic, 10);
+  } else {
+    pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel/", 10); //  cmd_vel_mux/input/teleop
+  }
   // frequency: 50 Hz
   pub_timer = nh.createTimer(ros::Duration(0.02), &InOutLinController::pubCallback, this);
   // frequency: 1 Hz
   dis_timer = nh.createTimer(ros::Duration(1), &InOutLinController::disCallback, this);
 
   //Subscriber := current states
-  odom_sub = nh.subscribe("odom", 10, &InOutLinController::odom_subCallback, this);
+  if(indoors_rover_bool){
+    indoor_sub_topic = "/R" + std::to_string(rover_number);
+    indoors_sub = nh.subscribe(indoor_sub_topic, 10, &InOutLinController::indoor_subCallback, this);
+  } else{
+    odom_sub = nh.subscribe("odom", 10, &InOutLinController::odom_subCallback, this);
+  }
 
   //Subscriber := reference trajectory parameters
   trajectory_sub = nh.subscribe("ref", 10, &InOutLinController::trajectory_subCallback, this);
 
+  // ROS_INFO("this worked in constructor \n");
 }
 
 // destructor
 InOutLinController::~InOutLinController()
 {
-  cmd_vel.linear.x = 0;
-  cmd_vel.angular.z = 0;
+  cmd_vel.linear.x = 0.0;
+  cmd_vel.angular.z = 0.0;
   pub.publish(cmd_vel);
   ros::shutdown();
 }
@@ -78,6 +94,23 @@ void InOutLinController::odom_subCallback(const nav_msgs::Odometry::ConstPtr& ms
   state.child_frame_id = msgs->child_frame_id;
   state.pose = msgs->pose;
   state.twist = msgs->twist;
+}
+
+void InOutLinController::indoor_subCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs)
+{
+  if (odometry_connected == false)
+  {
+      odometry_connected = true;
+      t0 = ros::Time::now().toSec(); // intial time
+  }
+  state.header = msgs->header;
+  // state.child_frame_id = msgs->child_frame_id;
+  state.pose.pose.position.x = msgs->pose.position.x;
+  state.pose.pose.position.y = msgs->pose.position.y;
+  state.pose.pose.position.z = msgs->pose.position.z;
+
+  state.pose.pose.orientation = msgs->pose.orientation;
+
 }
 
 void InOutLinController::trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs)
@@ -139,18 +172,21 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
   double u1, u2;
 
   double t = ros::Time::now().toSec() - t0;
+  
+  ROS_INFO("Theta: %lf \n", theta);
 
   // the reference states and velocity: circular path
   if (path_type.compare(std::string("circular")) == 0) {
-     xd = xc + R*cos(wd*t) + Ri*cos(theta+alphai);
-     yd = yc + R*sin(wd*t) + Ri*sin(theta+alphai);
+     xd = xc + R*cos(wd*t) + Ri*cos(wd*t+alphai);
+     yd = yc + R*sin(wd*t) + Ri*sin(wd*t+alphai);
      vd = hypot(wd*(-R*sin(wd*t) - Ri*sin(theta+alphai)),
                 wd*(R*cos(wd*t) + Ri*cos(theta+alphai)));
+     ROS_INFO("(xd, yd) : (%lf, %lf)", xd, yd);
   }
   // the reference states and velocity: eight-shaped path
   if (path_type.compare(std::string("eight_shaped")) == 0) {
-     xd = xc + R1*sin(2*wd*t) + Ri*cos(theta+alphai);
-     yd = yc + R2*sin(wd*t) + Ri*sin(theta+alphai);
+     xd = xc + R1*sin(2*wd*t) + Ri*cos(wd*t+alphai);
+     yd = yc + R2*sin(wd*t) + Ri*sin(wd*t+alphai);
      //vd = hypot((2*R1*wd*cos(2*wd*t)), (R2*wd*cos(wd*t)));
      vd = hypot((2*wd*R1*cos(2*wd*t) - wd*Ri*sin(theta+alphai)),
                 wd*(R2*cos(wd*t) + Ri*cos(theta+alphai)));
@@ -160,16 +196,35 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
       CubePolyPath(qi, qf, poly_k, T, t, xd, yd, vd, wd);
   }
 
+  double xddot, yddot, theta_d, xdoubledot, ydoubledot, thetaddot;
+
   // the reference output
-  c_th = cos(theta);
-  s_th = sin(theta);
-  y1d = xd + b*c_th;
-  y2d = yd + b*s_th;
+  if(path_type.compare(std::string("circular")) == 0) {
+    theta_d = fmod(wd*t + (M_PI / 2.0) + 2*M_PI, 2*M_PI);
+  } else if(path_type.compare(std::string("eight_shaped")) == 0) {
+    xddot = wd*(2*R1*cos(2*wd*t) - Ri*sin(wd*t + alphai)); // First derivative of xd
+    yddot = wd*(R2*cos(wd*t) + Ri*cos(wd*t + alphai)); // First derivative of yd
+    theta_d = atan2(yddot,xddot);
+  }
+  double c_thd = cos(theta_d);
+  double s_thd = sin(theta_d);
+  y1d = xd + b*c_thd;
+  y2d = yd + b*s_thd;
   // the time derivative of the reference output
-  vy1d = c_th * vd - b * s_th * wd;
-  vy2d = s_th * vd + b * c_th * wd;
+  if(path_type.compare(std::string("circular")) == 0) {
+    vy1d = -wd*(R*sin(wd*t) + Ri*sin(wd*t + alphai) + b*sin(theta_d)); // c_thd * vd - b * s_thd * wd;
+    vy2d = wd*(R*cos(wd*t) + Ri*cos(wd*t + alphai) + b*cos(theta_d)); // s_thd * vd + b * c_thd * wd;
+  } else if(path_type.compare(std::string("eight_shaped")) == 0) {
+    double xdoubledot = -pow(wd,2)*(4*R1*sin(2*wd*t) + Ri*cos(wd*t + alphai)); // Second derivative of xd
+    double ydoubledot = -pow(wd,2)*(R2*sin(wd*t) + Ri*sin(wd*t+alphai)); // Second derivative of yd
+    double thetaddot = (xddot / (pow(xddot,2) + pow(yddot,2)))*ydoubledot - (yddot / (pow(xddot,2) + pow(yddot,2)))*xdoubledot;
+    vy1d = xddot - b*sin(theta_d)*thetaddot;
+    vy2d = yddot + b*cos(theta_d)*thetaddot;
+  }
 
   // the output error
+  c_th = cos(theta);
+  s_th = sin(theta);
   y1 = x + b*c_th;
   y2 = y + b*s_th;
   e_y1 = y1d - y1;
@@ -177,7 +232,7 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
 
   // compute the control inputs for the linearized output model
   u1 = vy1d + k1 * e_y1;
-  u2 = vy2d + k2 * e_y2;
+  u2 =  vy2d + k2 * e_y2;
   // transform to the actual control inputs for the unicycle model
   cmd_vel.linear.x = c_th * u1 + s_th * u2;
   cmd_vel.angular.z = -s_th/b * u1 + c_th/b * u2;
@@ -225,7 +280,7 @@ double QuaternionToYaw(const nav_msgs::Odometry &msgs)
 }
 
 // helper function
-// return the reference trajectory and velocities for any arbitrary cubic polynomial trajectory 
+// return the reference trajectory and velocities for any arbitrary cubic polynomial trajectory
 void InOutLinController::CubePolyPath(pose qi, pose qf, double k, double T, double t,
                   double &xd, double &yd, double &vd, double &wd) {
   // uniform time law
