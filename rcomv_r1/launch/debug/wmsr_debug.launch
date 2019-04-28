@@ -1,0 +1,9 @@
+<launch>
+  <node
+    pkg="rcomv_r1"
+    type="wmsr_node"
+    name="blah"
+    launch-prefix="xterm -e gdb --args"
+/>
+
+</launch>
