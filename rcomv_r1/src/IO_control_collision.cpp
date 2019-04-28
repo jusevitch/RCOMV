@@ -420,9 +420,9 @@ control_cmd IO_control_collision::collision_avoid(){
   // Initialize the output
   control_cmd out_cmd; out_cmd.v = 0.0; out_cmd.w = 0.0;
 
-  // ROS_INFO("state_lists.size(): %d", state_lists.size());
-  // ROS_INFO("n: %d", n);
-  // ROS_INFO("state_lists.size() == n: %d", (state_lists.size() == n));
+  ROS_INFO("state_lists.size(): %d", state_lists.size());
+  ROS_INFO("n: %d", n);
+  ROS_INFO("state_lists.size() == n: %d", (state_lists.size() == n));
 
 
   // Collect list of in-neighbors
@@ -436,11 +436,11 @@ control_cmd IO_control_collision::collision_avoid(){
     all_states.erase(all_states.begin() + agent_index - 1); // Remove the agent's state from the list
     std::vector<geometry_msgs::Pose> collision_states = collision_neighbors(all_states, current_state); 
 
-    // ROS_INFO("collision_states.size(): %d", collision_states.size());
+    ROS_INFO("collision_states.size(): %d", collision_states.size());
 
     if (!collision_states.empty()){
       
-      // ROS_INFO("Collision_states is not empty");
+      ROS_INFO("Collision_states is not empty");
       
       // Get the collision avoidance gradient term
       geometry_msgs::Vector3 psi_collision_sum; psi_collision_sum.x = 0.0; psi_collision_sum.y = 0.0; psi_collision_sum.z = 0.0;
@@ -543,8 +543,9 @@ void IO_control_collision::graph_subCallback(const state_graph_builder::posegrap
   // The posegraph->poses attribute returns a vector of pose objects
   // state_lists should be an array of pose objects
   // ROS_INFO("FOOBAR graph_subCallback");
-  state_lists_unstamped = msgs->poses;
-  
+  for(int ii=1; ii < msgs->poses.size(); ii++){
+    state_lists[ii].pose = msgs->poses[ii];
+  }
 }
 
 

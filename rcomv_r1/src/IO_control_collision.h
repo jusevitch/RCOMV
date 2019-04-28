@@ -116,7 +116,6 @@ private:
   state_graph_builder::posegraph all_states;
   int n;
   std::vector<geometry_msgs::PoseStamped> state_lists;
-  std::vector<geometry_msgs::Pose> state_lists_unstamped;
   int agent_index;
 
   int gazebo; // Must be put as true if you're running Gazebo simulations
