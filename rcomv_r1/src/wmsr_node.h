@@ -23,6 +23,7 @@
 #include <nav_msgs/Odometry.h>
 #include <state_graph_builder/graph.h>
 #include <state_graph_builder/posegraph.h>
+#include <state_graph_builder/posestampedgraph.h>
 
 #include <stdlib.h>
 #include <math.h>
@@ -81,6 +82,7 @@ private:
 
   //ROS Subscriber to build the adjacency matrix
   ros::Subscriber states_sub;
+  ros::Subscriber state_out_sub;
 
   // messages
   ref_msgs inform_states; // reference center location
@@ -99,6 +101,7 @@ private:
   void new_pubCallback(const ros::TimerEvent& event);
   void state_subCallback(const state_msgs::ConstPtr& msgs, const int list_idx);
   void graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs);
+  void graphstamped_subCallback(const state_graph_builder::posestampedgraph::ConstPtr& msgs);
 
   // vector for odometry in the barrier functions
   std::vector<tiny_msgs> swarm_odom;
@@ -110,6 +113,7 @@ private:
 
   // private variables for intermediate calculations
   //int weight_x, weight_y, weight_z;   // weights for the neighbor agents
+  bool env;
   int n, k;   // number of agents and number of neighbors in the graph
   int idx;    // the index of the current agent, range from 1 to n
   int role;   // the role of hte current agents: Malicious=1, Normal=2, Leader=3
