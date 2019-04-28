@@ -67,7 +67,7 @@ IO_control_collision::IO_control_collision()
 
   // Subscriber: gets all current states from state_graph_builder
   if(gazebo){
-    states_sub = nh.subscribe("/graph", 1, &IO_control_collision::graph_subCallback, this);
+    states_sub = nh.subscribe("/graph", 1, &IO_control_collision::graph_subCallback_PoseStamped, this);
   } else {
     states_sub = nh.subscribe("/graph", 1, &IO_control_collision::graph_subCallback_PoseStamped, this);
   }
