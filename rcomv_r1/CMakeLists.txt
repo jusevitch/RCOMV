@@ -196,7 +196,9 @@ add_executable(switch src/switch.cpp )
 add_dependencies(switch ${catkin_EXPORTED_TARGETS})
 target_link_libraries(switch ${catkin_LIBRARIES})
 
-
+add_executable(msrpa_node src/msrpa.cpp src/msrpa.h)
+add_dependencies(msrpa_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(msrpa_node ${catkin_LIBRARIES})
 #############
 ## Install ##
 #############
