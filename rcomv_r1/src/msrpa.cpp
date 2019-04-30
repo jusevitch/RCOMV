@@ -21,12 +21,6 @@ MSRPA::MSRPA()
 
     nh_private_.param<int>("F", F, 0);
 
-    nh_private_.param<float>("rc", rc, 1010);
-    nh_private_.param<float>("rp", rp, 1000);
-
-    nh_private_.param<float>("ds", ds, 2);
-    nh_private_.param<float>("dc", dc, 5);
-
     nh_private_.param<int>("eta",eta,10);
 
     nh_private_.param<double>("radius",radius,10);
