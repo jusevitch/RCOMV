@@ -124,8 +124,11 @@ MSRPA::~MSRPA()
 {
   ros::shutdown();
 }
-
-//  Subscriber Callback Function: subscribes reference paths of other WMSR nodes
+// switch node to start simulations
+void MSRPA::switch_subCallback(const std_msgs::Bool::ConstPtr& msg){
+  switch_signal.data = msg->data;
+}
+//  Subscriber Callback Function: subscribes reference paths of other nodes
 void MSRPA::ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_idx)
 {
   cvec[list_idx].type = msgs->type;
