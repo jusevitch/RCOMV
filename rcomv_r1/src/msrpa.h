@@ -61,6 +61,8 @@ private:
   std_msgs::Bool switch_signal;
   void switch_subCallback(const std_msgs::Bool::ConstPtr& msg);
 
+  ros::Subscriber leader_cmd_sub;
+  void leader_subCallback(const ref_msgs::ConstPtr& msgs);
 
   // ROS  Publishers and Timers
   ros::Publisher ref_pub;  // publish reference to other neighbor MSRPA Nodes
@@ -91,7 +93,7 @@ private:
   Matrix Anan; //helper for calculating B
   int F;    // allowed maximum number of adversaries
 
-  double radius, t0, xc, yc, Rad, omegad, phi0, leng, psi, vel, start_L;  // parameters to define the trajectory
+  double Rf, t0, xc, yc, Rad, omegad, phi0, Leng, psi, v, start_L;  // parameters to define the trajectory
 
   uint iteration=0;
 

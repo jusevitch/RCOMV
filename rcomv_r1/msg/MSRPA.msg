@@ -1,11 +1,11 @@
 # type : = circular, square
 #
 # trajectory : =
-#		circular = [t0, xc, yc, R, wd, phi0]
-#		square = [t0, xc, yc, L, psi, v, start_L]
+#		(circular) [t0, xc, yc, Rad, wd, phi0]
+#		(square)   [t0, xc, yc, Leng, psi, v, start_L]
 #
 # formation : =
-# 		circular = [Rf, n]
+# 		(circular) [Rf, n]
 
 string type
 float64[] trajectory
