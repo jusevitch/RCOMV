@@ -109,7 +109,7 @@ private:
   sref_msgs get_leader_reference(uint t);
   ref_msgs get_malicious_reference();
   ref_msgs control;
-  ref_msgs reference;
+  ref_msgs reset_message;
   sref_msgs update_reference(const sref_msgs reference, const sref_msgs control);
   sref_msgs castToPoseAndSubtract(const tiny_msgs point, const sref_msgs pose);
   ref_msgs NANMSG;

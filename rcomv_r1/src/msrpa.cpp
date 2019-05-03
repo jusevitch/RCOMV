@@ -74,6 +74,8 @@ MSRPA::MSRPA()
     reference = NANMSG;
   }
 
+  // "reference" is the value to be sent to the IO_collision_control nodes
+  // What is control??
   control = reference;
   initialize_cvec();
   Calc_Laplacian();
@@ -164,8 +166,8 @@ void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
   Consensus(idx - 1);
   inform_states = cvec[idx - 1]; // own index
   if (iteration % eta == 0)
-    reference = control;
-  out_pub.publish(reference);     // updated reference value
+    reference = control; // Change the reference message to the internal state.
+  out_pub.publish(reference);     // updated reference value // Publish the internal state to the IO_collision_control nodes
   ref_pub.publish(inform_states); //MSRPA messages
   //ROS_INFO("Iteration: [%ld]", iteration);
   //ROS_INFO("cvec [%lf]", cvec[idx-1].x);
@@ -180,6 +182,7 @@ void MSRPA::initialize_cvec()
   }
 }
 
+// Why do we have this function???
 sref_msgs MSRPA::update_reference(const sref_msgs reference, const sref_msgs control)
 {
   sref_msgs output;
@@ -422,7 +425,7 @@ void MSRPA::Consensus(int i)
             {
               cvec[i].formation.push_back(c[o]);
             }
-            control = cvec[i];
+            control = cvec[i]; // Why this line???
           }
         }
       }
@@ -462,6 +465,7 @@ sref_msgs MSRPA::castToPoseAndSubtract(const tiny_msgs point, const sref_msgs po
   return output;
 }
 
+// Function allowing you to publish messages to leaders from command line
 void MSRPA::leader_subCallback(const ref_msgs::ConstPtr& msgs){
   // Test to see if leader
   ROS_INFO("role: %d", role);
