@@ -82,7 +82,12 @@ IO_control_collision::IO_control_collision()
   }
 
   //Subscriber := reference trajectory parameters
-  trajectory_sub = nh.subscribe("ref", 10, &IO_control_collision::trajectory_subCallback, this);
+  // WARNING: THE NAME OF THIS TOPIC CONFLICTS WITH THE MSRPA TOPIC. Fix before using.
+  // trajectory_sub = nh.subscribe("ref", 10, &IO_control_collision::trajectory_subCallback, this);
+
+  // Subscriber : MS-RPA callback function
+  
+  msrpa_sub = nh.subscribe("ref", 1, &IO_control_collision::msrpa_Callback, this);
 
 }
 
@@ -558,6 +563,24 @@ void IO_control_collision::graph_subCallback_PoseStamped(const state_graph_build
   state_lists[0].pose.position.x, state_lists[0].pose.position.y, state_lists[0].pose.position.z,\
   state_lists[1].pose.position.x, state_lists[1].pose.position.y, state_lists[1].pose.position.z);
 }
+
+
+
+
+void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs){
+  
+  // Need to add square trajectory functionality. To be created.
+
+  if(msgs->type.compare("circular") == 0){
+    t0 = msgs->trajectory[0];
+    xc = msgs->trajectory[1];
+    yc = msgs->trajectory[2];
+    R = msgs->trajectory[3];
+    wd = msgs->trajectory[4];
+    phi0 = msgs->trajectory[5];
+  }
+}
+
 
 
 

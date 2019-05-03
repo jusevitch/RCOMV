@@ -93,12 +93,13 @@ private:
   Matrix Anan; //helper for calculating B
   int F;    // allowed maximum number of adversaries
 
-  double Rf, t0, xc, yc, Rad, omegad, phi0, Leng, psi, v, start_L;  // parameters to define the trajectory
+  double Rf, t0, xc, yc, Rad, wd, phi0, Leng, psi, v, start_L;  // parameters to define the trajectory
 
   uint iteration=0;
 
   void Calc_Laplacian();
   
+  std::string common_namespace;
   std::vector<ref_msgs> cvec;
   void Consensus(int i);
   std::vector<FMatrix> BFunc();

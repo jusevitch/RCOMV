@@ -11,6 +11,7 @@
 #include <nav_msgs/Odometry.h>
 
 #include <rcomv_r1/CubicPath.h>
+#include <rcomv_r1/MSRPA.h>
 
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
@@ -61,8 +62,9 @@ private:
   ros::Subscriber odom_sub;
   ros::Subscriber trajectory_sub;
   ros::Subscriber states_sub;
+  ros::Subscriber msrpa_sub;
 
-  // callback functions
+  // Callback functions
   void pubCallback(const ros::TimerEvent& event);
   void disCallback(const ros::TimerEvent& event);  // display callback function
   void odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs);
@@ -70,6 +72,10 @@ private:
   void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs);
   void graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs);
   void graph_subCallback_PoseStamped(const state_graph_builder::posestampedgraph::ConstPtr& msgs);
+
+  // Callback functions for the MS-RPA algorithm. This callback function updates the trajectory parameters when it receives values from MS-RPA nodes.
+  void msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs);
+
 
 
   std::vector<geometry_msgs::Pose> collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose &current_state);

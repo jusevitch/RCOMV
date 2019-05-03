@@ -23,9 +23,7 @@ MSRPA::MSRPA()
   nh_private_.param<int>("role", role, 2); // What do role numbers correspond to again?
 
   nh_private_.param<int>("F", F, 0);
-
   nh_private_.param<int>("eta", eta, 10);
-
   nh_private_.param<double>("Rf", Rf, 10);
 
   //Trajectory parameters:
@@ -33,12 +31,16 @@ MSRPA::MSRPA()
   nh_private_.param<double>("xc", xc, 0);
   nh_private_.param<double>("yc", yc, 0);
   nh_private_.param<double>("Rad", Rad, 100);
-  nh_private_.param<double>("omegad", omegad, 0); // omegad in the code
+  nh_private_.param<double>("wd", wd, 0); // wd in the code
   nh_private_.param<double>("phi0", phi0, 0);
   nh_private_.param<double>("Leng", Leng, 10);
   nh_private_.param<double>("psi", psi, 0);
   nh_private_.param<double>("v", v, 0);
   nh_private_.param<double>("start_L", start_L, 0);
+
+  // Common namespace of all nodes. This variable helps the node know what topics to subscribe to 
+  //  to receive MS-RPA information from other nodes in the network.
+  nh_private_.param<std::string>("common_namespace", common_namespace, "/ugv");
 
   NANMSG.type = "circular";
   double nanmsg = std::numeric_limits<double>::quiet_NaN();
@@ -56,7 +58,7 @@ MSRPA::MSRPA()
   if (role == 3)
   {
     reference.type = "circular";
-    reference.trajectory = {t0, xc, yc, Rad, omegad, phi0};
+    reference.trajectory = {t0, xc, yc, Rad, wd, phi0};
     reference.formation = {Rf, static_cast<double>(n)};
     inform_states = reference;
   }
@@ -95,10 +97,12 @@ MSRPA::MSRPA()
     leader_cmd_sub = nh.subscribe<ref_msgs>("/leader_cmd", 1, &MSRPA::leader_subCallback, this);
   }
 
+  // The "ref" topic is the topic which should be streamed to the IO_control_collision node
   out_pub = nh.advertise<ref_msgs>("ref", 10);
 
   // Publisher: reference
   // pub topic is relative to the node namespace
+  // The "MSRPA/ref" topic is for MSRPA nodes to send values to their outneighbors
   std::string pub_topic = "MSRPA/ref";
   ref_pub = nh.advertise<ref_msgs>(pub_topic, 2);
   // Publisher Timer
@@ -114,7 +118,7 @@ MSRPA::MSRPA()
     // Initialize subscriber
     int sub_idx = (idx - i) > 0 ? (idx - i) : (n + idx - i);
     // sub topics are resolved in global namespace
-    std::string sub_topic = "/ugv" + std::to_string(sub_idx) + "/MSRPA/ref";
+    std::string sub_topic = "/" + common_namespace + std::to_string(sub_idx) + "/MSRPA/ref";
 
     ref_subs.push_back(nh.subscribe<ref_msgs>(sub_topic, 2,
                                               boost::bind(&MSRPA::ref_subCallback, this, _1, i - 1)));
@@ -459,54 +463,17 @@ void MSRPA::leader_subCallback(const ref_msgs::ConstPtr& msgs){
   // Test to see if leader
   ROS_INFO("role: %d", role);
   if(role == 3) {
-
-    ROS_INFO("role == 3 worked");
-    // Change the TRAJECTORY parameters
-    if(msgs->type.compare("circular") == 0){
-      ROS_INFO("type.compare('circular') worked");
-      if(msgs->trajectory[0] != t0 ||\
-          msgs->trajectory[1] != xc ||\
-          msgs->trajectory[2] != yc ||\
-          msgs->trajectory[3] != Rad||\
-          msgs->trajectory[4] != omegad ||\
-          msgs->trajectory[5] != phi0) {
-            t0 = msgs->trajectory[0];
-            xc = msgs->trajectory[1];
-            yc = msgs->trajectory[2];
-            Rad= msgs->trajectory[3];
-            omegad = msgs->trajectory[4];
-            phi0 = msgs->trajectory[5];
-      }
-    } else if(msgs->type.compare("square") == 0) {
-      if(msgs->trajectory[0] != t0 ||\
-          msgs->trajectory[1] != xc ||\
-          msgs->trajectory[2] != yc ||\
-          msgs->trajectory[3] != Leng ||\
-          msgs->trajectory[4] != psi ||\
-          msgs->trajectory[5] != v ||\
-          msgs->trajectory[6] != start_L) {
-            t0 = msgs->trajectory[0];
-            xc = msgs->trajectory[1];
-            yc = msgs->trajectory[2];
-            Leng = msgs->trajectory[3];
-            psi = msgs->trajectory[4];
-            v = msgs->trajectory[5];
-            start_L = msgs->trajectory[6];
-          }
+    if(((msgs->type.compare("circular") == 0) || (msgs->type.compare("square") == 0)) &&\
+    msgs->trajectory.size() >= 7 &&\
+    msgs->formation.size() >= 2) {
+      control = *msgs;
+      control.formation[1] = n; // Note: we don't offer the capability of changing n yet.
     } else {
-      ROS_INFO("Message type didn't match circular or square.");
-    }
-
-    // Change the FORMATION parameters
-    if(msgs->formation[0] != Rf) {
-      Rf = msgs->formation[0];
-
-      // Note: we don't offer the capability of changing n yet.
+      ROS_INFO("ERROR: message to leaders was incorrect. Check the length of the vectors.");
     }
   }
-
-  ROS_INFO("t0, xc, yc: [%lf, %lf, %lf]", t0, xc, yc);
 }
+
 
 
 // main function
