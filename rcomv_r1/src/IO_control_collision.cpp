@@ -23,13 +23,16 @@ IO_control_collision::IO_control_collision()
   nh_private_.param<std::string>("path_type", path_type, "circular");
   //
   // parametric path paramters
+  nh_private_.param<double>("t0", t0, ros::Time().toSec());
   nh_private_.param<double>("xc", xc, 0);
   nh_private_.param<double>("yc", yc, 0);
   nh_private_.param<double>("R", R, 1);
   nh_private_.param<double>("wd", wd, 0.5);
-  nh_private_.param<double>("t0", t0, ros::Time().toSec());
+  nh_private_.param<double>("phi0", phi0, 0.0);
   nh_private_.param<double>("R1", R1, 4);
   nh_private_.param<double>("R2", R2, 4);
+
+
   // cubic ploynomials path paramters
   nh_private_.param<double>("qi_x", qi.x, 5); nh_private_.param<double>("qi_y", qi.y, 0); nh_private_.param<double>("qi_theta", qi.theta, 1.57);
   nh_private_.param<double>("qf_x", qf.x, -5); nh_private_.param<double>("qf_y", qf.y, 0); nh_private_.param<double>("qf_theta", qf.theta, 4.71);
@@ -64,6 +67,8 @@ IO_control_collision::IO_control_collision()
   pub_timer = nh.createTimer(ros::Duration(0.02), &IO_control_collision::pubCallback, this);
   // frequency: 1 Hz
   dis_timer = nh.createTimer(ros::Duration(1), &IO_control_collision::disCallback, this);
+  // frequency: 50 Hz
+  update_param_timer = nh.createTimer(ros::Duration(0.02), &IO_control_collision::change_trajectories, this);
 
   // Subscriber: gets all current states from state_graph_builder
   if(gazebo){
@@ -84,6 +89,7 @@ IO_control_collision::IO_control_collision()
   //Subscriber := reference trajectory parameters
   // WARNING: THE NAME OF THIS TOPIC CONFLICTS WITH THE MSRPA TOPIC. Fix before using.
   // trajectory_sub = nh.subscribe("ref", 10, &IO_control_collision::trajectory_subCallback, this);
+
 
   // Subscriber : MS-RPA callback function
   
@@ -254,8 +260,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
     yddot = wd*(R2*cos(wd*t) + Ri*cos(wd*t + alphai)); // First derivative of yd
     theta_d = atan2(yddot,xddot);
   }
-  // ROS_INFO("xd, yd : [%lf, %lf]", xd, yd);
-  // ROS_INFO("xc, yc : [%lf, %lf]", xc, yc);
+  ROS_INFO("xd, yd : [%lf, %lf]", xd, yd);
+  ROS_INFO("xc, yc : [%lf, %lf]", xc, yc);
   double c_thd = cos(theta_d);
   double s_thd = sin(theta_d);
   y1d = xd + b*c_thd;
@@ -571,17 +577,44 @@ void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs)
   
   // Need to add square trajectory functionality. To be created.
 
+  // Add new variables to the queue. Their values will be passed to the controller once t >= t0_q.
   if(msgs->type.compare("circular") == 0){
-    t0 = msgs->trajectory[0];
-    xc = msgs->trajectory[1];
-    yc = msgs->trajectory[2];
-    R = msgs->trajectory[3];
-    wd = msgs->trajectory[4];
-    phi0 = msgs->trajectory[5];
+    type_q = msgs->type;
+    t0_q = msgs->trajectory[0];
+    xc_q = msgs->trajectory[1];
+    yc_q = msgs->trajectory[2];
+    R_q = msgs->trajectory[3];
+    wd_q = msgs->trajectory[4];
+    phi0_q = msgs->trajectory[5];
+    ROS_INFO("ms_rpa callback worked");
   }
 }
 
 
+void IO_control_collision::change_trajectories(const ros::TimerEvent& event){
+
+  // Check the current time against the next t0 in the queue: t0_q.
+  // If t >= t0_q, store t0_q -> t0 and change variables to the parameters of the next trajectory
+
+  double t = ros::Time::now().toSec();
+
+  if(t >= t0_q){
+    if(type_q.compare("circular") == 0){
+      path_type = type_q;
+      t0 = t0_q;
+      xc = xc_q;
+      yc = yc_q;
+      R = R_q;
+      wd = wd_q;
+      phi0 =phi0_q;
+      ROS_INFO("Parameters switched: \n t0, xc, yc, R, wd, phi0: [%lf,%lf, %lf, %lf, %lf, %lf]", t0, xc, yc, R, wd, phi0);
+    }
+
+    // Add square trajectories here
+
+  }
+
+}
 
 
 

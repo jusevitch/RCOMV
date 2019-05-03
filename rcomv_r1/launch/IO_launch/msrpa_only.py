@@ -9,9 +9,6 @@ from math import pi, cos, sin
 from random import randint, sample
 import easylaunch as el
 
-
-### TODO: MAKE THIS PROGRAM TAKE FILENAME COMMANDS FROM COMMAND LINE
-
 ## Variables
 
 common_namespace = "R" # Root of the namespace for all nodes
@@ -31,17 +28,6 @@ eta = 10
 
 ## Create launchFile object
 launch = el.launchFile()
-
-    # nh_private_.param<double>("t0", t0, 0);
-    # nh_private_.param<double>("xc", xc, 0);
-    # nh_private_.param<double>("yc", yc, 0);
-    # nh_private_.param<double>("Rad", Rad, 100);
-    # nh_private_.param<double>("omegad", omegad, 0);
-    # nh_private_.param<double>("phi0", phi0, 0);
-    # nh_private_.param<double>("leng", leng, 10);
-    # nh_private_.param<double>("psi", psi, 0);
-    # nh_private_.param<double>("v", v, 0);
-    # nh_private_.param<double>("start_L", start_L, 0);
 
 # Args for launchFile
 launch.arg = {

@@ -55,6 +55,7 @@ MSRPA::MSRPA()
   }
 
   // Initialize msgs
+  ROS_INFO("t0, xc, yc, Rad, wd, phi0, role: [%lf, %lf, %lf, %lf, %lf, %lf], %d", t0, xc, yc, Rad, wd, phi0, role);  
   if (role == 3)
   {
     reference.type = "circular";
@@ -132,6 +133,8 @@ MSRPA::MSRPA()
   }
 
   ROS_INFO_STREAM("Started ugv" << idx << " MSRPA Node.");
+
+  
 }
 
 // Destructor
