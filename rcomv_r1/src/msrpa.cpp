@@ -37,6 +37,7 @@ MSRPA::MSRPA()
   nh_private_.param<double>("psi", psi, 0);
   nh_private_.param<double>("v", v, 0);
   nh_private_.param<double>("start_L", start_L, 0);
+  nh_private_.param<std::string>("trajectory_type", trajectory_type, "None")
 
   // Common namespace of all nodes. This variable helps the node know what topics to subscribe to 
   //  to receive MS-RPA information from other nodes in the network.
@@ -58,25 +59,26 @@ MSRPA::MSRPA()
   ROS_INFO("t0, xc, yc, Rad, wd, phi0, role: [%lf, %lf, %lf, %lf, %lf, %lf], %d", t0, xc, yc, Rad, wd, phi0, role);  
   if (role == 3)
   {
-    reference.type = "circular";
-    reference.trajectory = {t0, xc, yc, Rad, wd, phi0};
-    reference.formation = {Rf, static_cast<double>(n)};
-    inform_states = reference;
+   reset_message.type = trajectory_type;
+   reset_message.trajectory = {t0, xc, yc, Rad, wd, phi0};
+   reset_message.formation = {Rf, static_cast<double>(n)};
+    inform_states =reset_message;
   }
   else if (role == 1)
   {
-    reference = get_malicious_reference();
-    inform_states = reference;
+   reset_message= get_malicious_reference();
+    inform_states =reset_message;
   }
   else
   {
+    reset_message.type = "None";
     inform_states = NANMSG;
-    reference = NANMSG;
+   reset_message= NANMSG;
   }
 
   // "reference" is the value to be sent to the IO_collision_control nodes
   // What is control??
-  control = reference;
+  control = reset_message; // Initialize the control message
   initialize_cvec();
   Calc_Laplacian();
 
@@ -103,7 +105,7 @@ MSRPA::MSRPA()
   // The "ref" topic is the topic which should be streamed to the IO_control_collision node
   out_pub = nh.advertise<ref_msgs>("ref", 10);
 
-  // Publisher: reference
+  // Publisher:reset_message
   // pub topic is relative to the node namespace
   // The "MSRPA/ref" topic is for MSRPA nodes to send values to their outneighbors
   std::string pub_topic = "MSRPA/ref";
@@ -151,7 +153,7 @@ void MSRPA::switch_subCallback(const std_msgs::Bool::ConstPtr &msg)
   switch_signal.data = msg->data;
 }
 
-//  Subscriber Callback Function: subscribes reference paths of other nodes
+//  Subscriber Callback Function: subscribesreset_messagepaths of other nodes
 void MSRPA::ref_subCallback(const ref_msgs::ConstPtr &msgs, const int list_idx)
 {
   cvec[list_idx].type = msgs->type;
@@ -164,10 +166,13 @@ void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
 {
 
   Consensus(idx - 1);
-  inform_states = cvec[idx - 1]; // own index
+  out_pub.publish(cvec[idx-1]);  // Publish the internal state to the IO_collision_control nodes
+  
   if (iteration % eta == 0)
-    reference = control; // Change the reference message to the internal state.
-  out_pub.publish(reference);     // updated reference value // Publish the internal state to the IO_collision_control nodes
+    inform_states = reset_message; // Change the reset_message message to the internal state.
+  else
+    inform_states = cvec[idx - 1]; // own index
+
   ref_pub.publish(inform_states); //MSRPA messages
   //ROS_INFO("Iteration: [%ld]", iteration);
   //ROS_INFO("cvec [%lf]", cvec[idx-1].x);
@@ -183,16 +188,16 @@ void MSRPA::initialize_cvec()
 }
 
 // Why do we have this function???
-sref_msgs MSRPA::update_reference(const sref_msgs reference, const sref_msgs control)
+sref_msgs MSRPA::update_reference(const sref_msgs reset_message, const sref_msgs control)
 {
   sref_msgs output;
 
-  output.pose.position.x = reference.pose.position.x + control.pose.position.x;
-  output.pose.position.y = reference.pose.position.y + control.pose.position.y;
-  output.pose.position.z = reference.pose.position.z + control.pose.position.z;
-  output.pose.orientation.x = reference.pose.orientation.x + control.pose.orientation.x;
-  output.pose.orientation.y = reference.pose.orientation.y + control.pose.orientation.y;
-  output.pose.orientation.z = reference.pose.orientation.z + control.pose.orientation.z;
+  output.pose.position.x = reset_message.pose.position.x + control.pose.position.x;
+  output.pose.position.y = reset_message.pose.position.y + control.pose.position.y;
+  output.pose.position.z = reset_message.pose.position.z + control.pose.position.z;
+  output.pose.orientation.x = reset_message.pose.orientation.x + control.pose.orientation.x;
+  output.pose.orientation.y = reset_message.pose.orientation.y + control.pose.orientation.y;
+  output.pose.orientation.z = reset_message.pose.orientation.z + control.pose.orientation.z;
   return output;
 }
 
@@ -291,10 +296,13 @@ std::vector<double> MSRPA::multiply_scalar_vec(const double val, const std::vect
   return output;
 }
 
-std::vector<FMatrix> MSRPA::BFunc()
+std::vector<FMatrix> MSRPA::BFunc() // Updates and returns the B matrix (where B is defined in the original MATLAB code)
 {
   std::vector<FMatrix> Output;
   Output.resize(9);
+
+  // Note: the size of 9 above is because MSRPA.msg currently (5/3/19) has at most 9 floats in it. This value will need to be updated later.
+
   for (int i = 0; i < Output.size(); i++)
   {
     Output.at(i).resize(n, std::vector<double>(n));
@@ -314,13 +322,16 @@ std::vector<FMatrix> MSRPA::BFunc()
         Output[o][j][d] = Anan[j][d] * cvec[d].formation[o - 7];
       }
 
-      if (cvec[d].type == "circular")
+      if (cvec[d].type == "circular") // This will also need to be changed to include square and other trajectories
         Output[6][j][d] = 0.0;
     }
   }
   return Output;
 }
 
+
+////////////////////////////////////////////
+// OLD CODE! SHWARYA'S FUNCTION.
 void MSRPA::Consensus(int i)
 { //are you passing an index of idx-1??
   iteration += 1;
@@ -350,15 +361,16 @@ void MSRPA::Consensus(int i)
       int z = 0;
       for (int t = 0; t < n; t++)
       {
+        // B[Matrix #][Matrix row #][Matrix column #]
         if (!std::isnan(B[0][i][t]) && t != i)
         {
           follow_ref.push_back(p);
           follow_ref.at(z).resize(9);
           for (int o = 0; o < 9; o++)
           {
-            follow_ref[z][o] = B[o][i][t];
+            follow_ref[z][o] = B[o][i][t]; // i is agent's index number - 1, 0 <= t < n
           }
-          z += 1;
+          z += 1; // z increases from 0 to n-1 due to the for loop with t
           //ROS_INFO("B for [%d, %d] for agent %d: [%lf, %lf] %d", i,t, i+1, B[6][i][t], B[7][i][t], std::isnan(B[0][i][t]));
         }
       }
@@ -379,7 +391,7 @@ void MSRPA::Consensus(int i)
           for (int j = 1; j < follow_ref.size(); j++)
           {
             std::vector<double> comp = follow_ref[j];
-            if (((comp[0] - xref) < 0.1) && ((comp[1] - yref) < 0.1))
+            if (((comp[0] - xref) < 0.1) && ((comp[1] - yref) < 0.1)) // I think Shwarya was trying to take into account possible numerical error. But 0.1 seems too large of a tolerance...
             { //we have another occurrence!
               myCount += 1;
             }
@@ -442,7 +454,7 @@ void MSRPA::Consensus(int i)
   { //leader
     //ref_msgs leadp=get_leader_reference(floor(iteration/eta)+1);
     //cvec[i] = leadp.pose.position;
-    cvec[i] = reference;
+    cvec[i] = reset_message;
   }
   else if (role == 1)
   { //malicious
@@ -453,6 +465,7 @@ void MSRPA::Consensus(int i)
   //UPDATE B
   B = BFunc();
 }
+////////////////////////////////////////////
 
 sref_msgs MSRPA::castToPoseAndSubtract(const tiny_msgs point, const sref_msgs pose)
 {

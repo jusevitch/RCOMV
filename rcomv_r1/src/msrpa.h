@@ -100,6 +100,7 @@ private:
   void Calc_Laplacian();
   
   std::string common_namespace;
+  std::string trajectory_type;
   std::vector<ref_msgs> cvec;
   void Consensus(int i);
   std::vector<FMatrix> BFunc();
