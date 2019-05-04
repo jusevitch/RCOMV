@@ -78,7 +78,7 @@ MSRPA::MSRPA()
 
   // "reference" is the value to be sent to the IO_collision_control nodes
   // What is control??
-  control = reset_message; // Initialize the control message
+  internal_state = reset_message; // Initialize the control message
   initialize_cvec();
   Calc_Laplacian();
 
@@ -116,7 +116,8 @@ MSRPA::MSRPA()
                                  &MSRPA::ref_pubCallback, this);
 
   // Subscribers: (msgs list to hold the msgs from subscibed topics)
-  // Why does i start from 1? This is wrong.
+
+  // This is specific to k-circulant graphs
   for (int i = 1; i <= k; i++)
   {
 
@@ -180,8 +181,8 @@ void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
 
 void MSRPA::initialize_cvec()
 {
-  cvec.resize(n);
-  for (int i = 0; i < n; i++)
+  cvec.resize(k); // This only needs to be as big as the number of in-neighbors
+  for (int i = 0; i < k; i++)
   {
     cvec[i] = NANMSG;
   }
@@ -327,6 +328,43 @@ std::vector<FMatrix> MSRPA::BFunc() // Updates and returns the B matrix (where B
     }
   }
   return Output;
+}
+
+
+void MSRPA::Consensus(int i)
+{
+  // New version
+
+  // Messages from in-neighbors are all in cvec already
+  // Compare all messages, test if this agent has received F+1 of the same message
+  std::vector<std::vector<int> > groups_with_same_messages;
+  // Create a temporary vector to store the indices of all agents with messages the same as agent ii's
+  std::vector<int> agents_with_same_messages;
+
+  // Loop over all messages from in-neighbors and pick out the groups with the same messages
+  // This can be made more efficient
+  for(int ii=0; ii < k; ii++){
+    agents_with_same_messages.clear();
+    agents_with_same_messages.push_back(ii);
+
+    for(int jj=ii+1; jj < k; jj++){
+      if(test_message_equal(cvec[ii], cvec[jj])){
+        agents_with_same_messages.push_back(jj);
+      }
+    }
+
+    if (agents_with_same_messages.size() >= F+1){
+      groups_with_same_messages.push_back(agents_with_same_messages);
+    }
+  }
+
+  // If F+1 have been receive, update any relevant variables
+
+  if(groups_with_same_messages.size() > 1){
+    ROS_INFO("ERROR!! Two values received by agent %d with more than F+1 instances each. Check your algorithm.", idx);
+  } else if(groups_with_same_messages.size() == 1) {
+    internal_state = cvec[groups_with_same_messages[0][0]]; // Recall that groups_with_... is a vector of vectors of ints. This passes an int to cvec. 
+  } // else: the internal state remains the same.
 }
 
 
@@ -486,14 +524,23 @@ void MSRPA::leader_subCallback(const ref_msgs::ConstPtr& msgs){
     if(((msgs->type.compare("circular") == 0) || (msgs->type.compare("square") == 0)) &&\
     msgs->trajectory.size() >= 7 &&\
     msgs->formation.size() >= 2) {
-      control = *msgs;
-      control.formation[1] = n; // Note: we don't offer the capability of changing n yet.
+      internal_state = *msgs;
+      internal_state.formation[1] = n; // Note: we don't offer the capability of changing n yet.
     } else {
       ROS_INFO("ERROR: message to leaders was incorrect. Check the length of the vectors.");
     }
   }
 }
 
+
+bool test_messages_equal(const ref_msgs message1, const ref_msgs message2) {
+  // Tests if two ref_msgs are equal
+  if ((message1.type.compare(message2.type) == 0) && (message1.trajectory == message2.trajectory) && (message1.formation == message2.formation)){
+    return true;
+  } else {
+    return false;
+  }
+}
 
 
 // main function
