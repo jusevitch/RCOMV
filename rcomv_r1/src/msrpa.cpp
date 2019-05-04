@@ -166,15 +166,31 @@ void MSRPA::ref_subCallback(const ref_msgs::ConstPtr &msgs, const int list_idx)
 void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
 {
 
-  Consensus(idx - 1);
-  out_pub.publish(cvec[idx-1]);  // Publish the internal state to the IO_collision_control nodes
+  Consensus(idx - 1); // Update internal_state
   
-  if (iteration % eta == 0)
-    inform_states = reset_message; // Change the reset_message message to the internal state.
-  else
-    inform_states = cvec[idx - 1]; // own index
+  bool internal_state_is_NANMSG = test_messages_equal(internal_state, NANMSG);
+  
+  if (iteration % eta == 0){
+    // If iteration % eta == 0 and internal_state is not NANMSG, set reference_state = internal_state
+    // internal_state == NANMSG means that the agent didn't get the same message from at least F+1 other agents
+    if (!(internal_state_is_NANMSG)){
+      reference_state = internal_state;
+    }
 
-  ref_pub.publish(inform_states); //MSRPA messages
+    // Publish reference_state. if internal_state is NANMSG, reference_state will be the same as the previous timestep
+    out_pub.publish(reference_state);
+    internal_state = reset_message; // Resets the internal state. 
+
+    if (role == 3){
+      ref_pub.publish(internal_state); // Publish only if agent is a leader (or malicious--add later)
+    }
+  } else {
+    if (!(internal_state_is_NANMSG)){
+      // If internal state is not the NaN message, publish it to out-neighbors
+      ref_pub.publish(internal_state); //MSRPA messages
+    }
+  }
+
   //ROS_INFO("Iteration: [%ld]", iteration);
   //ROS_INFO("cvec [%lf]", cvec[idx-1].x);
 }
@@ -342,7 +358,7 @@ void MSRPA::Consensus(int i)
   std::vector<int> agents_with_same_messages;
 
   // Loop over all messages from in-neighbors and pick out the groups with the same messages
-  // This can be made more efficient
+  // This can be made more efficient, but it's a little tricky to implement.
   for(int ii=0; ii < k; ii++){
     agents_with_same_messages.clear();
     agents_with_same_messages.push_back(ii);
@@ -370,139 +386,139 @@ void MSRPA::Consensus(int i)
 
 ////////////////////////////////////////////
 // OLD CODE! SHWARYA'S FUNCTION.
-void MSRPA::Consensus(int i)
-{ //are you passing an index of idx-1??
-  iteration += 1;
+// void MSRPA::Consensus(int i)
+// { //are you passing an index of idx-1??
+//   iteration += 1;
 
-  if (iteration == 1)
-    B = BFunc(); //already creating the B matrix in case
+//   if (iteration == 1)
+//     B = BFunc(); //already creating the B matrix in case
 
-  if (iteration > 1)
-  {
+//   if (iteration > 1)
+//   {
 
-    if ((iteration % eta) == (eta - 1))
-    {
-      if (role == 1)
-      {
+//     if ((iteration % eta) == (eta - 1))
+//     {
+//       if (role == 1)
+//       {
 
-        control = get_malicious_reference();
-      }
-    }
+//         control = get_malicious_reference();
+//       }
+//     }
 
-    if (role == 2)
-    {
-      FMatrix follow_ref;
-      FMatrix ref2;
-      std::vector<double> p;
-      //follow_ref.resize(n);
-      //populate B matrix entries onto pair vector
-      int z = 0;
-      for (int t = 0; t < n; t++)
-      {
-        // B[Matrix #][Matrix row #][Matrix column #]
-        if (!std::isnan(B[0][i][t]) && t != i)
-        {
-          follow_ref.push_back(p);
-          follow_ref.at(z).resize(9);
-          for (int o = 0; o < 9; o++)
-          {
-            follow_ref[z][o] = B[o][i][t]; // i is agent's index number - 1, 0 <= t < n
-          }
-          z += 1; // z increases from 0 to n-1 due to the for loop with t
-          //ROS_INFO("B for [%d, %d] for agent %d: [%lf, %lf] %d", i,t, i+1, B[6][i][t], B[7][i][t], std::isnan(B[0][i][t]));
-        }
-      }
-      if (z > 0)
-      {
-        std::sort(follow_ref.begin(), follow_ref.end());
-        std::vector<double> vec = follow_ref[0];
-        double xref = vec[0];
-        double yref = vec[1];
-        std::vector<int> counts;
-        int myCount = 1;
-        //ref2.push_back(follow_ref[0]);
-        //ROS_INFO("ref2 [%lf, %lf]", follow_ref[0][0], follow_ref[0][1]);
+//     if (role == 2)
+//     {
+//       FMatrix follow_ref;
+//       FMatrix ref2;
+//       std::vector<double> p;
+//       //follow_ref.resize(n);
+//       //populate B matrix entries onto pair vector
+//       int z = 0;
+//       for (int t = 0; t < n; t++)
+//       {
+//         // B[Matrix #][Matrix row #][Matrix column #]
+//         if (!std::isnan(B[0][i][t]) && t != i)
+//         {
+//           follow_ref.push_back(p);
+//           follow_ref.at(z).resize(9);
+//           for (int o = 0; o < 9; o++)
+//           {
+//             follow_ref[z][o] = B[o][i][t]; // i is agent's index number - 1, 0 <= t < n
+//           }
+//           z += 1; // z increases from 0 to n-1 due to the for loop with t
+//           //ROS_INFO("B for [%d, %d] for agent %d: [%lf, %lf] %d", i,t, i+1, B[6][i][t], B[7][i][t], std::isnan(B[0][i][t]));
+//         }
+//       }
+//       if (z > 0)
+//       {
+//         std::sort(follow_ref.begin(), follow_ref.end());
+//         std::vector<double> vec = follow_ref[0];
+//         double xref = vec[0];
+//         double yref = vec[1];
+//         std::vector<int> counts;
+//         int myCount = 1;
+//         //ref2.push_back(follow_ref[0]);
+//         //ROS_INFO("ref2 [%lf, %lf]", follow_ref[0][0], follow_ref[0][1]);
 
-        if (follow_ref.size() > 1)
-        {
+//         if (follow_ref.size() > 1)
+//         {
 
-          for (int j = 1; j < follow_ref.size(); j++)
-          {
-            std::vector<double> comp = follow_ref[j];
-            if (((comp[0] - xref) < 0.1) && ((comp[1] - yref) < 0.1)) // I think Shwarya was trying to take into account possible numerical error. But 0.1 seems too large of a tolerance...
-            { //we have another occurrence!
-              myCount += 1;
-            }
-            else
-            {
+//           for (int j = 1; j < follow_ref.size(); j++)
+//           {
+//             std::vector<double> comp = follow_ref[j];
+//             if (((comp[0] - xref) < 0.1) && ((comp[1] - yref) < 0.1)) // I think Shwarya was trying to take into account possible numerical error. But 0.1 seems too large of a tolerance...
+//             { //we have another occurrence!
+//               myCount += 1;
+//             }
+//             else
+//             {
 
-              counts.push_back(myCount);
-              myCount = 1;
-              vec[0] = xref;
-              vec[1] = yref;
-              xref = comp[0];
-              yref = comp[1];
-              ref2.push_back(vec);
-            }
-          }
-        }
-        ref2.push_back(follow_ref[follow_ref.size() - 1]);
-        counts.push_back(myCount);
+//               counts.push_back(myCount);
+//               myCount = 1;
+//               vec[0] = xref;
+//               vec[1] = yref;
+//               xref = comp[0];
+//               yref = comp[1];
+//               ref2.push_back(vec);
+//             }
+//           }
+//         }
+//         ref2.push_back(follow_ref[follow_ref.size() - 1]);
+//         counts.push_back(myCount);
 
-        if (!follow_ref.empty())
-        {
-          std::vector<int>::iterator maximum;
-          maximum = std::max_element(std::begin(counts), std::end(counts));
-          int max_idx = std::distance(counts.begin(), maximum);
-          int max_counts = *maximum;
-          if (idx == 3)
-          {
-            //ROS_INFO("MAX_COUNTS: %d, %d, %ld, %lf, %lf", max_counts, max_idx, counts.size(), ref2[max_idx][0], ref2[max_idx][1]);
-          }
+//         if (!follow_ref.empty())
+//         {
+//           std::vector<int>::iterator maximum;
+//           maximum = std::max_element(std::begin(counts), std::end(counts));
+//           int max_idx = std::distance(counts.begin(), maximum);
+//           int max_counts = *maximum;
+//           if (idx == 3)
+//           {
+//             //ROS_INFO("MAX_COUNTS: %d, %d, %ld, %lf, %lf", max_counts, max_idx, counts.size(), ref2[max_idx][0], ref2[max_idx][1]);
+//           }
 
-          if (max_counts >= (F + 1))
-          {
-            auto c = ref2[max_idx];
-            cvec[i].trajectory.clear();
-            cvec[i].formation.clear();
-            for (int o = 0; o < 7; o++)
-            {
-              cvec[i].trajectory.push_back(c[o]);
-            }
-            if (cvec[i].type == "circular")
-              cvec[i].trajectory[6] = 0.0;
-            for (int o = 7; o < 9; o++)
-            {
-              cvec[i].formation.push_back(c[o]);
-            }
-            control = cvec[i]; // Why this line???
-          }
-        }
-      }
-    }
-  }
+//           if (max_counts >= (F + 1))
+//           {
+//             auto c = ref2[max_idx];
+//             cvec[i].trajectory.clear();
+//             cvec[i].formation.clear();
+//             for (int o = 0; o < 7; o++)
+//             {
+//               cvec[i].trajectory.push_back(c[o]);
+//             }
+//             if (cvec[i].type == "circular")
+//               cvec[i].trajectory[6] = 0.0;
+//             for (int o = 7; o < 9; o++)
+//             {
+//               cvec[i].formation.push_back(c[o]);
+//             }
+//             control = cvec[i]; // Why this line???
+//           }
+//         }
+//       }
+//     }
+//   }
 
-  //We are only updating x at this time step with u(t-1)
-  if (iteration % eta == 0 && role == 2)
-  {
-    cvec[i] = NANMSG;
-  }
+//   //We are only updating x at this time step with u(t-1)
+//   if (iteration % eta == 0 && role == 2)
+//   {
+//     cvec[i] = NANMSG;
+//   }
 
-  if (role == 3)
-  { //leader
-    //ref_msgs leadp=get_leader_reference(floor(iteration/eta)+1);
-    //cvec[i] = leadp.pose.position;
-    cvec[i] = reset_message;
-  }
-  else if (role == 1)
-  { //malicious
-    ref_msgs mali = get_malicious_reference();
-    cvec[i] = mali;
-  }
+//   if (role == 3)
+//   { //leader
+//     //ref_msgs leadp=get_leader_reference(floor(iteration/eta)+1);
+//     //cvec[i] = leadp.pose.position;
+//     cvec[i] = reset_message;
+//   }
+//   else if (role == 1)
+//   { //malicious
+//     ref_msgs mali = get_malicious_reference();
+//     cvec[i] = mali;
+//   }
 
-  //UPDATE B
-  B = BFunc();
-}
+//   //UPDATE B
+//   B = BFunc();
+// }
 ////////////////////////////////////////////
 
 sref_msgs MSRPA::castToPoseAndSubtract(const tiny_msgs point, const sref_msgs pose)
@@ -524,6 +540,8 @@ void MSRPA::leader_subCallback(const ref_msgs::ConstPtr& msgs){
     if(((msgs->type.compare("circular") == 0) || (msgs->type.compare("square") == 0)) &&\
     msgs->trajectory.size() >= 7 &&\
     msgs->formation.size() >= 2) {
+      reset_state = *msgs;
+      reset_state.formation[1] = n;
       internal_state = *msgs;
       internal_state.formation[1] = n; // Note: we don't offer the capability of changing n yet.
     } else {
