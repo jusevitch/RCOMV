@@ -14,8 +14,8 @@ import easylaunch as el
 common_namespace = "R" # Root of the namespace for all nodes
 
 n = 10
-k = 7
-F = 0
+k = 2
+F = 1
 
 formation_r = 5
 formation_angle = []
@@ -107,7 +107,7 @@ malicious = sample(range(1,n),F)
 for j in malicious:
     array_msrpa[j].param["role"] = str(1)
 
-leaders = [1]
+leaders = [1, 2]
 
 for j in leaders:
     array_msrpa[j].param["role"] = str(3)

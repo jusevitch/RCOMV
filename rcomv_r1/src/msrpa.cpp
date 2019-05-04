@@ -37,13 +37,13 @@ MSRPA::MSRPA()
   nh_private_.param<double>("psi", psi, 0);
   nh_private_.param<double>("v", v, 0);
   nh_private_.param<double>("start_L", start_L, 0);
-  nh_private_.param<std::string>("trajectory_type", trajectory_type, "None")
+  nh_private_.param<std::string>("trajectory_type", trajectory_type, "None");
 
   // Common namespace of all nodes. This variable helps the node know what topics to subscribe to 
   //  to receive MS-RPA information from other nodes in the network.
   nh_private_.param<std::string>("common_namespace", common_namespace, "/ugv");
 
-  NANMSG.type = "circular";
+  NANMSG.type = "NaN";
   double nanmsg = std::numeric_limits<double>::quiet_NaN();
   ;
   for (int i = 0; i < 7; i++)
@@ -71,14 +71,14 @@ MSRPA::MSRPA()
   }
   else
   {
-    reset_message.type = "None";
     inform_states = NANMSG;
-   reset_message= NANMSG;
+    reset_message= NANMSG;
   }
 
   // "reference" is the value to be sent to the IO_collision_control nodes
   // What is control??
-  internal_state = reset_message; // Initialize the control message
+  internal_state = reset_message; // Initialize the internal_state
+  reference_state = reset_message; // Initialize the reference_state
   initialize_cvec();
   Calc_Laplacian();
 
@@ -168,8 +168,21 @@ void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
 
   Consensus(idx - 1); // Update internal_state
   
-  bool internal_state_is_NANMSG = test_messages_equal(internal_state, NANMSG);
+  // Compares the type strings to see if internal_state is NaN. Only the string needs to be compared;
+  // normal messages should NOT have "NaN" as their trajectorytype.
+  bool internal_state_is_NANMSG = (internal_state.type.compare(NANMSG.type) == 0);
+
+// ROS_INFO("NANMSG.type: %s", NANMSG.type.c_str());
+//   ROS_INFO("internal_state.type: %s \n\
+//   internal_state.trajectory = [%lf, %lf, %lf, %lf, %lf, %lf, %lf] \n\
+//   internal_state.formation = [%lf, %lf]",
+//   internal_state.type.c_str(),\
+//   internal_state.trajectory[0], internal_state.trajectory[1], internal_state.trajectory[2], internal_state.trajectory[3], internal_state.trajectory[4], internal_state.trajectory[5], internal_state.trajectory[6],\
+//   internal_state.formation[0], internal_state.formation[1]);
+  // ROS_INFO("internal_state_is_NANMSG: %d", internal_state_is_NANMSG ? 1 : 0);
   
+  // ROS_INFO("Iteration: [%ld]", iteration);
+  // ROS_INFO("interation mod eta: %d", iteration % eta);
   if (iteration % eta == 0){
     // If iteration % eta == 0 and internal_state is not NANMSG, set reference_state = internal_state
     // internal_state == NANMSG means that the agent didn't get the same message from at least F+1 other agents
@@ -177,21 +190,28 @@ void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
       reference_state = internal_state;
     }
 
-    // Publish reference_state. if internal_state is NANMSG, reference_state will be the same as the previous timestep
-    out_pub.publish(reference_state);
+    if (reference_state.type.compare(NANMSG.type) != 0) {
+      // Publish reference_state to IO_control_collision. 
+      // If internal_state is NANMSG, reference_state will be the same as the previous timestep.
+      // If reference_stae is NANMSG, nothing will be published.
+      out_pub.publish(reference_state);
+    }
+
     internal_state = reset_message; // Resets the internal state. 
 
     if (role == 3){
       ref_pub.publish(internal_state); // Publish only if agent is a leader (or malicious--add later)
+      // ROS_INFO("This published");
     }
   } else {
     if (!(internal_state_is_NANMSG)){
       // If internal state is not the NaN message, publish it to out-neighbors
       ref_pub.publish(internal_state); //MSRPA messages
-    }
+      // ROS_INFO("This published for agent %d", idx);
+    } 
   }
 
-  //ROS_INFO("Iteration: [%ld]", iteration);
+  
   //ROS_INFO("cvec [%lf]", cvec[idx-1].x);
 }
 
@@ -349,38 +369,49 @@ std::vector<FMatrix> MSRPA::BFunc() // Updates and returns the B matrix (where B
 
 void MSRPA::Consensus(int i)
 {
-  // New version
 
-  // Messages from in-neighbors are all in cvec already
-  // Compare all messages, test if this agent has received F+1 of the same message
-  std::vector<std::vector<int> > groups_with_same_messages;
-  // Create a temporary vector to store the indices of all agents with messages the same as agent ii's
-  std::vector<int> agents_with_same_messages;
+  // Debugging only
+  // print_cvec();
 
-  // Loop over all messages from in-neighbors and pick out the groups with the same messages
-  // This can be made more efficient, but it's a little tricky to implement.
-  for(int ii=0; ii < k; ii++){
-    agents_with_same_messages.clear();
-    agents_with_same_messages.push_back(ii);
+  // REQUIRED. Increases iteration number.
+  iteration += 1;
+  
+  // Only applies if agent is normal (role == 2)
+  if (role == 2) {
+    // Messages from in-neighbors are all in cvec already
+    // Compare all messages, test if this agent has received F+1 of the same message
+    std::vector<std::vector<int> > groups_with_same_messages;
+    // Create a temporary vector to store the indices of all agents with messages the same as agent ii's
+    std::vector<int> agents_with_same_messages;
 
-    for(int jj=ii+1; jj < k; jj++){
-      if(test_message_equal(cvec[ii], cvec[jj])){
-        agents_with_same_messages.push_back(jj);
+    // Loop over all messages from in-neighbors and pick out the groups with the same messages
+    // This can be made more efficient, but it's a little tricky to implement.
+    for(int ii=0; ii < k; ii++){
+      agents_with_same_messages.clear();
+      agents_with_same_messages.push_back(ii);
+
+      for(int jj=ii+1; jj < k; jj++){
+        // ROS_INFO("test_messages_equal for agent %d: %d", idx, test_messages_equal(cvec[ii], cvec[jj]) ? 1 : 0);
+        if(test_messages_equal(cvec[ii], cvec[jj])){
+          agents_with_same_messages.push_back(jj);
+        }
+      }
+
+      if (agents_with_same_messages.size() >= F+1){
+        groups_with_same_messages.push_back(agents_with_same_messages);
       }
     }
 
-    if (agents_with_same_messages.size() >= F+1){
-      groups_with_same_messages.push_back(agents_with_same_messages);
-    }
+    // If F+1 have been receive, update any relevant variables
+
+    if(groups_with_same_messages.size() > 1){
+      // ROS_INFO("ERROR!! Two values received by agent %d with more than F+1 instances each. Check your algorithm.", idx);
+    } else if(groups_with_same_messages.size() == 1) {
+      internal_state = cvec[groups_with_same_messages[0][0]]; // Recall that groups_with_... is a vector of vectors of ints. This passes an int to cvec. 
+      // ROS_INFO("internal_state was updated");
+      // ROS_INFO("internal_state.type: %s ", internal_state.type.c_str());
+    } // else: the internal state remains the same.
   }
-
-  // If F+1 have been receive, update any relevant variables
-
-  if(groups_with_same_messages.size() > 1){
-    ROS_INFO("ERROR!! Two values received by agent %d with more than F+1 instances each. Check your algorithm.", idx);
-  } else if(groups_with_same_messages.size() == 1) {
-    internal_state = cvec[groups_with_same_messages[0][0]]; // Recall that groups_with_... is a vector of vectors of ints. This passes an int to cvec. 
-  } // else: the internal state remains the same.
 }
 
 
@@ -540,8 +571,8 @@ void MSRPA::leader_subCallback(const ref_msgs::ConstPtr& msgs){
     if(((msgs->type.compare("circular") == 0) || (msgs->type.compare("square") == 0)) &&\
     msgs->trajectory.size() >= 7 &&\
     msgs->formation.size() >= 2) {
-      reset_state = *msgs;
-      reset_state.formation[1] = n;
+      reset_message = *msgs;
+      reset_message.formation[1] = n;
       internal_state = *msgs;
       internal_state.formation[1] = n; // Note: we don't offer the capability of changing n yet.
     } else {
@@ -551,7 +582,7 @@ void MSRPA::leader_subCallback(const ref_msgs::ConstPtr& msgs){
 }
 
 
-bool test_messages_equal(const ref_msgs message1, const ref_msgs message2) {
+bool MSRPA::test_messages_equal(const ref_msgs message1, const ref_msgs message2) {
   // Tests if two ref_msgs are equal
   if ((message1.type.compare(message2.type) == 0) && (message1.trajectory == message2.trajectory) && (message1.formation == message2.formation)){
     return true;
@@ -560,6 +591,23 @@ bool test_messages_equal(const ref_msgs message1, const ref_msgs message2) {
   }
 }
 
+// Testing purposes only
+void MSRPA::print_cvec(){
+  // ROS_INFO("cvec.size(): %d", cvec.size());
+  
+  if (cvec.size() > 0){
+    for(int ii=0; ii < cvec.size(); ii++){
+    ROS_INFO("cvec[%d].type: %s \n\
+    cvec.trajectory = [%lf, %lf, %lf, %lf, %lf, %lf, %lf] \n\
+    cvec.formation = [%lf, %lf]",
+    ii, cvec[ii].type.c_str(),\
+    cvec[ii].trajectory[0], cvec[ii].trajectory[1], cvec[ii].trajectory[2], cvec[ii].trajectory[3], cvec[ii].trajectory[4], cvec[ii].trajectory[5], cvec[ii].trajectory[6],\
+    cvec[ii].formation[0], cvec[ii].formation[1]);
+    }
+  } else {
+    ROS_INFO("Length of cvec is zero");
+  }
+}
 
 // main function
 int main(int argc, char **argv)

@@ -84,7 +84,12 @@ private:
   void ref_pubCallback(const ros::TimerEvent& event);
   void out_pubCallback(const ros::TimerEvent& event);
   
+  // Test equality of messages
+  bool test_messages_equal(const ref_msgs message1, const ref_msgs message2);
   
+  // Testing purposes only
+   void print_cvec();
+
   // private variables for intermediate calculations
   //int weight_x, weight_y, weight_z;   // weights for the neighbor agents
   int n, k;   // number of agents and number of neighbors in the graph
@@ -112,6 +117,8 @@ private:
   ref_msgs get_malicious_reference();
   ref_msgs control;
   ref_msgs reset_message;
+  ref_msgs internal_state;
+  ref_msgs reference_state;
   sref_msgs update_reference(const sref_msgs reference, const sref_msgs control);
   sref_msgs castToPoseAndSubtract(const tiny_msgs point, const sref_msgs pose);
   ref_msgs NANMSG;
