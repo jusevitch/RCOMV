@@ -63,11 +63,31 @@ IO_control_collision::IO_control_collision()
   if (gazebo_msgs)
   {
     pub_topic = "cmd_vel_mux/input/teleop";
+
+    // Subscriber: gets all current states from state_graph_builder
+    states_sub = nh.subscribe("/graph", 1, &IO_control_collision::graph_subCallback_PoseStamped, this);
+
+    //Subscriber := current states
+    sub_topic = "/R" + std::to_string(rover_number) + "/odom";
+    odom_sub = nh.subscribe(sub_topic, 10, &IO_control_collision::odom_subCallback, this);
+
+    // Subscribes to obstacle topic
+    obstacle_sub = nh.subscribe("/gazebo/model_states", 1, &IO_control_collision::obstacle_Callback, this);
   }
   else
   {
     pub_topic = "cmd_vel";
+
+    // Subscriber: gets all current states from state_graph_builder
+    states_sub = nh.subscribe("/graph", 1, &IO_control_collision::graph_subCallback_PoseStamped, this);
+
+    //Subscriber := current states
+    sub_topic = "/R" + std::to_string(rover_number); // Need to remap the topic name in the launch files
+    odom_sub = nh.subscribe(sub_topic, 10, &IO_control_collision::posestamped_subCallback, this);
+
+    // Need to insert an obstacle callback which works in hardware
   }
+
   pub = nh.advertise<geometry_msgs::Twist>(pub_topic, 10);
   // frequency: 50 Hz
   pub_timer = nh.createTimer(ros::Duration(0.02), &IO_control_collision::pubCallback, this);
@@ -75,28 +95,6 @@ IO_control_collision::IO_control_collision()
   dis_timer = nh.createTimer(ros::Duration(1), &IO_control_collision::disCallback, this);
   // frequency: 50 Hz
   update_param_timer = nh.createTimer(ros::Duration(0.02), &IO_control_collision::change_trajectories, this);
-
-  // Subscriber: gets all current states from state_graph_builder
-  if (gazebo_msgs)
-  {
-    states_sub = nh.subscribe("/graph", 1, &IO_control_collision::graph_subCallback_PoseStamped, this);
-  }
-  else
-  {
-    states_sub = nh.subscribe("/graph", 1, &IO_control_collision::graph_subCallback_PoseStamped, this);
-  }
-
-  //Subscriber := current states
-  if (gazebo_msgs)
-  {
-    sub_topic = "/R" + std::to_string(rover_number) + "/odom";
-    odom_sub = nh.subscribe(sub_topic, 10, &IO_control_collision::odom_subCallback, this);
-  }
-  else
-  {
-    sub_topic = "/R" + std::to_string(rover_number); // Need to remap the topic name in the launch files
-    odom_sub = nh.subscribe(sub_topic, 10, &IO_control_collision::posestamped_subCallback, this);
-  }
 
   //Subscriber := reference trajectory parameters
   // WARNING: THE NAME OF THIS TOPIC CONFLICTS WITH THE MSRPA TOPIC. Fix before using.
@@ -423,7 +421,7 @@ control_cmd IO_control_collision::collision_avoid()
   out_cmd.v = 0.0;
   out_cmd.w = 0.0;
 
-  ROS_INFO("state_lists.size(): %d", state_lists.size());
+  ROS_INFO("state_lists.size(): %lu", state_lists.size());
   ROS_INFO("n: %d", n);
   ROS_INFO("state_lists.size() == n: %d", (state_lists.size() == n));
 
@@ -431,15 +429,18 @@ control_cmd IO_control_collision::collision_avoid()
   if (!state_lists.empty() && state_lists.size() == n)
   { // Keeps the node from crashing before the list is populated
     // ROS_INFO("FOOOOOOBAAAAARRRR");
-    std::vector<geometry_msgs::PoseStamped> all_states = state_lists;       // Freezes the state list at a certain time
+    std::vector<geometry_msgs::PoseStamped> all_states = state_lists;       // Freezes the state list
+    std::vector<geometry_msgs::PoseStamped> obstacle_states = obstacles;    // Freezes the obstacle list 
+
     geometry_msgs::PoseStamped current_state = all_states[agent_index - 1]; // This agent's current state (pose)
     // ROS_INFO("x,y,z for rover_number %d, agent_index %d: [%lf, %lf, %lf]", rover_number, agent_index,\
       current_state.pose.position.x, current_state.pose.position.y, current_state.pose.position.z);
     // ROS_INFO("current_state x,y,z: [%lf, %lf, %lf]", current_state.position.x, current_state.position.y, current_state.position.z);
     all_states.erase(all_states.begin() + agent_index - 1); // Remove the agent's state from the list
     std::vector<geometry_msgs::Pose> collision_states = collision_neighbors(all_states, current_state);
+    std::vector<geometry_msgs::Pose> obstacle_collision_states = collision_neighbors(obstacle_states, current_state);
 
-    ROS_INFO("collision_states.size(): %d", collision_states.size());
+    // ROS_INFO("collision_states.size(): %d", collision_states.size());
 
     if (!collision_states.empty())
     {
@@ -510,26 +511,47 @@ control_cmd IO_control_collision::collision_avoid()
 
       // Find out the smallest Euclidean distance between this agent and any one of the agents in collision_states
       double min_distance;
-      // ROS_INFO("FOOBAR TO THE MAX!!! %d", agent_index);
-      if (agent_index > 2)
-      {
-        // ROS_INFO("collision_states.size(): %d", collision_states.size());
-      }
+      double xi;
+      double yi;
+      double zi;
+      double xj;
+      double yj;
+      double zj;
+      double xij;
+
       for (int jj = 0; jj < collision_states.size(); jj++)
       {
-        double xi = current_state.pose.position.x;
-        double yi = current_state.pose.position.y;
-        double zi = current_state.pose.position.z;
-        double xj = collision_states[jj].position.x;
-        double yj = collision_states[jj].position.y;
-        double zj = collision_states[jj].position.z;
-        double xij = std::sqrt(std::pow(xi - xj, 2) + std::pow(yi - yj, 2) + std::pow(zi - zj, 2));
+        xi = current_state.pose.position.x;
+        yi = current_state.pose.position.y;
+        zi = current_state.pose.position.z;
+        xj = collision_states[jj].position.x;
+        yj = collision_states[jj].position.y;
+        zj = collision_states[jj].position.z;
+        xij = std::sqrt(std::pow(xi - xj, 2) + std::pow(yi - yj, 2) + std::pow(zi - zj, 2));
 
         if (jj == 0 || xij < min_distance)
         {
           min_distance = xij;
         }
       }
+      // Parse through the obstacles
+      for(int jj = 0; jj < obstacle_collision_states.size(); jj++)
+      {
+        xi = current_state.pose.position.x;
+        yi = current_state.pose.position.y;
+        zi = current_state.pose.position.z;
+        xj = obstacle_collision_states[jj].position.x;
+        yj = obstacle_collision_states[jj].position.y;
+        zj = obstacle_collision_states[jj].position.z;
+        xij = std::sqrt(std::pow(xi - xj, 2) + std::pow(yi - yj, 2) + std::pow(zi - zj, 2));
+
+        if (xij < min_distance)
+        {
+          min_distance = xij;
+        }
+        
+      }
+      
       // ROS_INFO("min_distance: %lf", min_distance);
       if (min_distance > dc)
       {
@@ -663,7 +685,7 @@ std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const
       close_poses.push_back(other_agents[ii]);
     }
   }
-  ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %d]", dc, distance, close_poses.size());
+  ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %lu]", dc, distance, close_poses.size());
   return close_poses;
 }
 
@@ -689,7 +711,7 @@ std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const
       close_poses.push_back(other_agents[ii].pose);
     }
   }
-  ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %d]", dc, distance, close_poses.size());
+  ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %lu]", dc, distance, close_poses.size());
   return close_poses;
 }
 

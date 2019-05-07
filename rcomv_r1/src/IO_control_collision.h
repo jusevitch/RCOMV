@@ -65,6 +65,7 @@ private:
   ros::Subscriber trajectory_sub;
   ros::Subscriber states_sub;
   ros::Subscriber msrpa_sub;
+  ros::Subscriber obstacle_sub;
 
   // Callback functions
   void pubCallback(const ros::TimerEvent& event);
