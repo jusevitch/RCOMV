@@ -430,7 +430,7 @@ control_cmd IO_control_collision::collision_avoid()
   { // Keeps the node from crashing before the list is populated
     // ROS_INFO("FOOOOOOBAAAAARRRR");
     std::vector<geometry_msgs::PoseStamped> all_states = state_lists;       // Freezes the state list
-    std::vector<geometry_msgs::PoseStamped> obstacle_states = obstacles;    // Freezes the obstacle list 
+    std::vector<PoseStamped_Radius> obstacle_states = obstacles;    // Freezes the obstacle list 
 
     geometry_msgs::PoseStamped current_state = all_states[agent_index - 1]; // This agent's current state (pose)
     // ROS_INFO("x,y,z for rover_number %d, agent_index %d: [%lf, %lf, %lf]", rover_number, agent_index,\
@@ -623,8 +623,8 @@ void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr &msgs)
 
 void IO_control_collision::obstacle_Callback(const gazebo_msgs::ModelStates::ConstPtr &msgs)
 {
-  std::vector<geometry_msgs::PoseStamped> temp_vector;
-  geometry_msgs::PoseStamped temp_pose;
+  std::vector<PoseStamped_Radius> temp_vector;
+  PoseStamped_Radius temp_pose;
   // Iterate through list of models. All obstacles should have "obs" in front of their name.
   if (msgs->name.size() > 0)
   {
@@ -632,8 +632,20 @@ void IO_control_collision::obstacle_Callback(const gazebo_msgs::ModelStates::Con
     {
       if (msgs->name[ii].substr(0, 3).compare("obs") == 0)
       {
-        temp_pose.header.stamp = ros::Time::now();
-        temp_pose.pose = msgs->pose[ii];
+        temp_pose.pose.header.stamp = ros::Time::now();
+        temp_pose.pose.pose = msgs->pose[ii];
+
+        // Extract safety radius from name
+        std::smatch m;
+        std::regex r("\\d+\\.\\d+"); // Looks for a double. The double MUST have a leading zero; e.g. 0.5.
+        std::regex_search(msgs->name[ii],m,r);
+        if(m.size() > 0){
+          std::string::size_type sz;
+          temp_pose.r_safety = std::stod(m[0],&sz);
+        } else {
+          // ROS_INFO("No radius for this obstacle! Setting default size to 0");
+          temp_pose.r_safety = 0.0;
+        }
         temp_vector.push_back(temp_pose);
       }
     }

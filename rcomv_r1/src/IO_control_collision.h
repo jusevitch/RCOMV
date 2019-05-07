@@ -21,6 +21,7 @@
 #include <math.h>
 #include <string>
 #include <vector>
+#include <regex>
 
 #include <state_graph_builder/graph.h>
 #include <state_graph_builder/posegraph.h>
@@ -38,6 +39,11 @@ struct control_cmd{
   double v;
   double w;
   double gamma;
+};
+
+struct PoseStamped_Radius{
+  geometry_msgs::PoseStamped pose;
+  double r_safety; 
 };
 
 class IO_control_collision
@@ -98,7 +104,7 @@ private:
 
 
   // List of obstacles
-  std::vector<geometry_msgs::PoseStamped> obstacles;
+  std::vector<PoseStamped_Radius> obstacles;
 
   // controller paramters
   double b; // a longitudinal distance ahead of the unicycle model
