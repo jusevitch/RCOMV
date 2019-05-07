@@ -428,16 +428,14 @@ control_cmd IO_control_collision::collision_avoid()
   // Collect list of in-neighbors
   if (!state_lists.empty() && state_lists.size() == n)
   { // Keeps the node from crashing before the list is populated
-    // ROS_INFO("FOOOOOOBAAAAARRRR");
     std::vector<geometry_msgs::PoseStamped> all_states = state_lists;       // Freezes the state list
     std::vector<PoseStamped_Radius> obstacle_states = obstacles;    // Freezes the obstacle list 
 
     geometry_msgs::PoseStamped current_state = all_states[agent_index - 1]; // This agent's current state (pose)
-    // ROS_INFO("x,y,z for rover_number %d, agent_index %d: [%lf, %lf, %lf]", rover_number, agent_index,\
-      current_state.pose.position.x, current_state.pose.position.y, current_state.pose.position.z);
-    // ROS_INFO("current_state x,y,z: [%lf, %lf, %lf]", current_state.position.x, current_state.position.y, current_state.position.z);
     all_states.erase(all_states.begin() + agent_index - 1); // Remove the agent's state from the list
-    std::vector<geometry_msgs::Pose> collision_states = collision_neighbors(all_states, current_state);
+    PoseStamped_Radius all_states_PSR = states_to_PS_Radius(all_states)
+
+    std::vector<PoseStamped_Radius> collision_states = collision_neighbors(all_states, current_state);
     std::vector<geometry_msgs::Pose> obstacle_collision_states = collision_neighbors(obstacle_states, current_state);
 
     // ROS_INFO("collision_states.size(): %d", collision_states.size());
@@ -881,6 +879,18 @@ double IO_control_collision::difference_norm(const geometry_msgs::PoseStamped &v
 {
   double out_double = pow(v1.pose.position.x - v2.position.x, 2) + pow(v1.pose.position.y - v2.position.y, 2) + pow(v1.pose.position.z - v2.position.z, 2);
   return sqrt(out_double);
+}
+
+std::vector<PoseStamped_Radius> IO_control_collision::states_to_PS_Radius(const geometry_msgs::PoseStamped &v1){
+  std::vector<PoseStamped_Radius> out_vector;
+  PoseStamped_Radius temp;
+  for(int ii = 0; ii < v1.size(); ii++)
+  {
+    temp.pose = v1[ii].pose;
+    temp.r_safety = ds; // All agents are homogeneous; this is known to all of them
+    out_vector.push_back(temp);
+  }
+  return out_vector;
 }
 
 // main function: create a IO_control_collision class type that handles everything

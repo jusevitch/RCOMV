@@ -99,7 +99,7 @@ private:
   control_cmd collision_avoid();
   double difference_norm(const geometry_msgs::Pose &v1, const geometry_msgs::Pose &v2);
   double difference_norm(const geometry_msgs::PoseStamped &v1, const geometry_msgs::Pose &v2);
-
+  std::vector<PoseStamped_Radius> states_to_PS_Radius(const geometry_msgs::PoseStamped &v1);
   // private variables
 
 
