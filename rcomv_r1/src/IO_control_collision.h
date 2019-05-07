@@ -20,6 +20,7 @@
 #include <math.h>
 #include <string>
 #include <vector>
+#include <functional> // std::bind; Requires C++11 or later; use boost::bind otherwise
 
 #include <state_graph_builder/graph.h>
 #include <state_graph_builder/posegraph.h>
@@ -64,6 +65,7 @@ private:
   ros::Subscriber trajectory_sub;
   ros::Subscriber states_sub;
   ros::Subscriber msrpa_sub;
+  std::vector<ros::Subscriber> obstacle_subs;
 
   // Callback functions
   void pubCallback(const ros::TimerEvent& event);
@@ -149,6 +151,8 @@ private:
   int rover_number; // The number of the rover. This should correspond with the VICON topic the state is published to.
   std::string sub_topic;
   std::string pub_topic;
+  int number_of_obstacles;
+  std::vector<geometry_msgs::PoseStamped> obstacles;
 
 
 

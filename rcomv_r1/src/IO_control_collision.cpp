@@ -49,11 +49,24 @@ IO_control_collision::IO_control_collision()
   nh_private_.param<int>("gazebo", gazebo, 1); // Tests whether we're running it indoors or not
   nh_private_.param<int>("rover_number", rover_number, 0); // gives Rover number; 0 throws an error.
 
+  // Parameter to determine number of obstacles to watch for. HARDWARE ONLY.
+  nh_private_.param<int>("number_of_obstacles", number_of_obstacles,0);
+
   mu2=10000;
   even_cycle = false;
   //
   odometry_connected = false;
   initial_time = ros::Time().toSec();
+
+  obstacles.resize(number_of_obstacles);
+  for(int ii = 0; ii < obstacles.size(); ii++)
+  {
+    // Set it to some ridiculous number so that the obstacles don't interfere with the agents until their actual position is obtained
+    obstacles[ii].pose.position.x = -1000;
+    obstacles[ii].pose.position.y = -1000;
+    obstacles[ii].pose.position.z = -1000;
+  }
+  
 
   // ------------------------------ Set Pubs/Subs -----------------------------
   // Publisher := cmd_vel_mux/input/teleop
@@ -94,6 +107,17 @@ IO_control_collision::IO_control_collision()
   // Subscriber : MS-RPA callback function
   
   msrpa_sub = nh.subscribe("ref", 1, &IO_control_collision::msrpa_Callback, this);
+  
+  // Obstacle subscriber
+  std::string obs_sub_name;
+  if (!gazebo){
+    for(int ii = 0; ii < number_of_obstacles; ii++)
+    {
+      obs_sub_name = "/vicon/obs" + std::to_string(ii) + "/obs" + std::to_string(ii);
+      obstacle_subs.push_back(nh.subscribe(obs_sub_name, 1, std::bind(&IO_control_collision::vicon_obstacle,this,_1,ii), this));
+    }
+    
+  }
 
 }
 
@@ -590,6 +614,14 @@ void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs)
   }
 }
 
+
+void IO_control_collision::vicon_obstacle(const geometry_msgs::TransformStamped::ConstPtr& msgs, int ii){
+  obstacles[ii].header.stamp = ros::Time::now();
+  obstacles[ii].pose.position.x = msgs->translation.x;
+  obstacles[ii].pose.position.y = msgs->translation.y;
+  obstacles[ii].pose.position.z = msgs->translation.z;
+  obstacles[ii].pose.orientation = msgs->rotation;
+}
 
 void IO_control_collision::change_trajectories(const ros::TimerEvent& event){
 
