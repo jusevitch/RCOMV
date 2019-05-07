@@ -40,6 +40,11 @@ struct control_cmd{
   double gamma;
 };
 
+struct PoseStamped_Radius{
+  geometry_msgs::PoseStamped pose;
+  double r_safety; 
+};
+
 class IO_control_collision
 {
 public:
@@ -76,6 +81,7 @@ private:
   void graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs);
   void graph_subCallback_PoseStamped(const state_graph_builder::posestampedgraph::ConstPtr& msgs);
   void change_trajectories(const ros::TimerEvent& event);
+  void vicon_obstacle(const geometry_msgs::TransformStamped::ConstPtr& msgs, int ii);
 
   // Callback functions for the MS-RPA algorithm. This callback function updates the trajectory parameters when it receives values from MS-RPA nodes.
   void msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs);
@@ -152,7 +158,8 @@ private:
   std::string sub_topic;
   std::string pub_topic;
   int number_of_obstacles;
-  std::vector<geometry_msgs::PoseStamped> obstacles;
+  std::vector<PoseStamped_Radius> obstacles;
+  std::vector<double> obstacle_radii;
 
 
 

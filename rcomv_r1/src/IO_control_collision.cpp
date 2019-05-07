@@ -51,6 +51,7 @@ IO_control_collision::IO_control_collision()
 
   // Parameter to determine number of obstacles to watch for. HARDWARE ONLY.
   nh_private_.param<int>("number_of_obstacles", number_of_obstacles,0);
+  nh_private_.param<std::vector<double> >("obstacle_radii", obstacle_radii, std::vector<double>());
 
   mu2=10000;
   even_cycle = false;
@@ -62,9 +63,10 @@ IO_control_collision::IO_control_collision()
   for(int ii = 0; ii < obstacles.size(); ii++)
   {
     // Set it to some ridiculous number so that the obstacles don't interfere with the agents until their actual position is obtained
-    obstacles[ii].pose.position.x = -1000;
-    obstacles[ii].pose.position.y = -1000;
-    obstacles[ii].pose.position.z = -1000;
+    obstacles[ii].pose.pose.position.x = -1000;
+    obstacles[ii].pose.pose.position.y = -1000;
+    obstacles[ii].pose.pose.position.z = -1000;
+    obstacles[ii].r_safety = obstacle_radii[ii]; // Set the safety radius.
   }
   
 
@@ -114,7 +116,7 @@ IO_control_collision::IO_control_collision()
     for(int ii = 0; ii < number_of_obstacles; ii++)
     {
       obs_sub_name = "/vicon/obs" + std::to_string(ii) + "/obs" + std::to_string(ii);
-      obstacle_subs.push_back(nh.subscribe(obs_sub_name, 1, std::bind(&IO_control_collision::vicon_obstacle,this,_1,ii), this));
+      obstacle_subs.push_back(nh.subscribe<geometry_msgs::TransformStamped>(obs_sub_name, 1, boost::bind(&IO_control_collision::vicon_obstacle, this, _1, ii)));
     }
     
   }
@@ -615,12 +617,12 @@ void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs)
 }
 
 
-void IO_control_collision::vicon_obstacle(const geometry_msgs::TransformStamped::ConstPtr& msgs, int ii){
-  obstacles[ii].header.stamp = ros::Time::now();
-  obstacles[ii].pose.position.x = msgs->translation.x;
-  obstacles[ii].pose.position.y = msgs->translation.y;
-  obstacles[ii].pose.position.z = msgs->translation.z;
-  obstacles[ii].pose.orientation = msgs->rotation;
+void IO_control_collision::vicon_obstacle(const geometry_msgs::TransformStamped::ConstPtr& msgs, const int ii){
+  obstacles[ii].pose.header = msgs->header;
+  obstacles[ii].pose.pose.position.x = msgs->transform.translation.x;
+  obstacles[ii].pose.pose.position.y = msgs->transform.translation.y;
+  obstacles[ii].pose.pose.position.z = msgs->transform.translation.z;
+  obstacles[ii].pose.pose.orientation = msgs->transform.rotation;
 }
 
 void IO_control_collision::change_trajectories(const ros::TimerEvent& event){
@@ -690,6 +692,7 @@ std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const
   ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %d]", dc, distance, close_poses.size());
   return close_poses;
 }
+
 
 
 
