@@ -13,8 +13,8 @@ import easylaunch as el
 common_namespace = "R" # Root of the namespace for all nodes
 
 n = 10
-k = 7
-F = 0
+k = 3
+F = 1
 
 formation_r = 5
 formation_angle = []
@@ -227,10 +227,15 @@ malicious = sample(range(1,n),F)
 for j in malicious:
     array_msrpa[j].param["role"] = str(1)
 
-leaders = [1]
+leaders = [1,2,3]
 
 for j in leaders:
-    array_msrpa[j].param["role"] = str(3)
+    array_msrpa[j-1].param["role"] = str(3)
+    array_msrpa[j-1].param["trajectory_type"] = "circular"
+
+for j in [4,5,6]:
+    array_msrpa[j-1].output = "screen"
+    array_msrpa[j-1].launch_prefix = "xterm -e gdb -ex run --args"
 
 
 launch.node += array_msrpa

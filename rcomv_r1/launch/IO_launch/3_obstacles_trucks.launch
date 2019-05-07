@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<launch>
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="paused" value="true"/>
+    <arg name="world_name" value="$(find rcomv_r1)/worlds/basic.world"/>
+  </include>
+  <node args="-file $(find rcomv_r1)/models/pickup/model.sdf -sdf -model obs1 -x 20.0 -y 0.0" name="obs1" pkg="gazebo_ros" type="spawn_model"/>
+  <node args="-file $(find rcomv_r1)/models/pickup/model.sdf -sdf -model obs2 -x -10.0 -y 17.32" name="obs2" pkg="gazebo_ros" type="spawn_model"/>
+  <node args="-file $(find rcomv_r1)/models/pickup/model.sdf -sdf -model obs3 -x -10.0 -y -17.32" name="obs3" pkg="gazebo_ros" type="spawn_model"/>
+</launch>
+

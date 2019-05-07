@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+
+<launch>
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find rcomv_r1)/worlds/obstacles.world"/>
+        <arg name="paused" value="true"/>
+    </include>
+
+    <!-- Other obstacles -->
+
+    <node name="obs2" pkg="gazebo_ros" type="spawn_model" args="-file $(find rcomv_r1)/models/pickup/model.sdf -sdf -model obj2 -x -10 -y 10"/>
+
+
+</launch>
