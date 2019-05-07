@@ -9,6 +9,7 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Vector3.h>
 #include <nav_msgs/Odometry.h>
+#include <gazebo_msgs/ModelStates.h>
 
 #include <rcomv_r1/CubicPath.h>
 #include <rcomv_r1/MSRPA.h>
@@ -73,6 +74,7 @@ private:
   void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs);
   void graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs);
   void graph_subCallback_PoseStamped(const state_graph_builder::posestampedgraph::ConstPtr& msgs);
+  void obstacle_Callback(const gazebo_msgs::ModelStates::ConstPtr& msgs);
   void change_trajectories(const ros::TimerEvent& event);
 
   // Callback functions for the MS-RPA algorithm. This callback function updates the trajectory parameters when it receives values from MS-RPA nodes.
@@ -92,6 +94,11 @@ private:
   double difference_norm(const geometry_msgs::PoseStamped &v1, const geometry_msgs::Pose &v2);
 
   // private variables
+
+
+  // List of obstacles
+  std::vector<geometry_msgs::PoseStamped> obstacles;
+
   // controller paramters
   double b; // a longitudinal distance ahead of the unicycle model
   double k1, k2, k3; // control gains
@@ -145,7 +152,7 @@ private:
   std::vector<geometry_msgs::PoseStamped> state_lists;
   int agent_index;
 
-  int gazebo; // Must be put as true if you're running Gazebo simulations
+  int gazebo_msgs; // Must be put as true if you're running Gazebo simulations
   int rover_number; // The number of the rover. This should correspond with the VICON topic the state is published to.
   std::string sub_topic;
   std::string pub_topic;
