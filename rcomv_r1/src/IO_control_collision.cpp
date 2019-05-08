@@ -693,8 +693,21 @@ std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const
   return close_poses;
 }
 
-
-
+// Overloaded for parsing obstacles
+std::vector<PoseStamped_Radius> IO_control_collision::collision_neighbors(const IO_control_collision::PoseStamped_Radius &obstacle_vector, const geometry_msgs::PoseStamped &current_state){
+  double distance = 0.0;
+  std::vector<PoseStamped_Radius> close_poses;
+  for(int ii=0; ii < obstacle_vector.size(); ii++){
+    distance = std::sqrt(std::pow(current_state.pose.position.x - obstacle_vector[ii].pose.pose.position.x,2) +\
+      std::pow(current_state.pose.position.y - obstacle_vector[ii].pose.pose.position.y,2) + std::pow(current_state.pose.position.z - obstacle_vector[ii].pose.pose.position.z,2));    
+    if(distance < dc + obstacle_vector[ii].r_safety){
+      // Save the close poses
+      close_poses.push_back(other_agents[ii].pose);
+    }
+  }
+  // ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %d]", dc, distance, close_poses.size());
+  return close_poses;
+}
 
 
 double IO_control_collision::psi_col_helper(const geometry_msgs::Point &m_agent, const  geometry_msgs::Point &n_agent){

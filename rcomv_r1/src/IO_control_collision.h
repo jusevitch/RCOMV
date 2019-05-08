@@ -90,6 +90,7 @@ private:
 
   std::vector<geometry_msgs::Pose> collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose &current_state);
   std::vector<geometry_msgs::Pose> collision_neighbors(const std::vector<geometry_msgs::PoseStamped> &other_agents, const geometry_msgs::PoseStamped &current_state);
+  std::vector<PoseStamped_Radius> collision_neighbors(const IO_control_collision::PoseStamped_Radius &obstacle_vector, const geometry_msgs::PoseStamped &current_state)
   double psi_col_helper(const geometry_msgs::Point &m_agent, const  geometry_msgs::Point &n_agent);
   geometry_msgs::Vector3 psi_col_gradient(const geometry_msgs::Pose &m_agent, const geometry_msgs::Pose &n_agent);
   geometry_msgs::Vector3 psi_col_gradient(const geometry_msgs::PoseStamped &m_agent, const geometry_msgs::Pose &n_agent);
