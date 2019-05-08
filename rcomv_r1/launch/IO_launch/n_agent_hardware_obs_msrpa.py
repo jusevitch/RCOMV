@@ -13,7 +13,7 @@ import easylaunch as el
 
 common_namespace = "R" # Root of the namespace for all nodes
 
-n = 3
+n = 1
 k = 1
 F = 0
 
@@ -31,7 +31,11 @@ xc = 0
 yc = 0
 wd = 0.09
 
-gdb_xterm_output = 0
+number_of_obstacles = 1
+
+obstacle_radii = [1.0]
+
+gdb_xterm_output = 1
 
 ## Create launchFile object
 
@@ -69,7 +73,8 @@ rover_args = {
     "gazebo": "0",
     "xc": str(xc),
     "yc": str(yc),
-    "obstacle_radii": "[1.0 2.0 3.0]"
+    "obstacle_radii": str(obstacle_radii),
+    "number_of_obstacles": str(number_of_obstacles)
 }
 
 # Why did I use str(0) instead of "0"? I have no idea...it's all the same.
@@ -130,7 +135,8 @@ ugv.defarg = [
     "gazebo",
     "xc",
     "yc",
-    "obstacle radii"
+    "obstacle_radii",
+    "number_of_obstacles"
 ]
 
 ugv.arg = {
@@ -175,6 +181,9 @@ for j in range(0,n):
 
 launch.include += ugv_list
 
+# vicon_bridge node
+
+launch.include += [el.include(file="$(find vicon_bridge)/launch/vicon.launch")]
 
 
 ## Node elements

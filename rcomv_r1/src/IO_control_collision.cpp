@@ -51,13 +51,17 @@ IO_control_collision::IO_control_collision()
 
   // Parameter to determine number of obstacles to watch for. HARDWARE ONLY.
   nh_private_.param<int>("number_of_obstacles", number_of_obstacles,0);
-  nh_private_.param<std::vector<double> >("obstacle_radii", obstacle_radii, std::vector<double>());
+  nh_private_.getParam("obstacle_radii", obstacle_radii);
+
 
   mu2=10000;
   even_cycle = false;
   //
   odometry_connected = false;
   initial_time = ros::Time().toSec();
+
+  ROS_INFO("number_of_obstacles: %d", number_of_obstacles);
+  ROS_INFO("obstacle_radii.size(): %lu", obstacle_radii.size());
 
   obstacles.resize(number_of_obstacles);
   for(int ii = 0; ii < obstacles.size(); ii++)
@@ -101,6 +105,7 @@ IO_control_collision::IO_control_collision()
     odom_sub = nh.subscribe(sub_topic,10, &IO_control_collision::posestamped_subCallback, this);
   }
 
+
   //Subscriber := reference trajectory parameters
   // WARNING: THE NAME OF THIS TOPIC CONFLICTS WITH THE MSRPA TOPIC. Fix before using.
   // trajectory_sub = nh.subscribe("ref", 10, &IO_control_collision::trajectory_subCallback, this);
@@ -113,9 +118,11 @@ IO_control_collision::IO_control_collision()
   // Obstacle subscriber
   std::string obs_sub_name;
   if (!gazebo){
+    ROS_INFO("number_of_obstacles: %d", number_of_obstacles);
     for(int ii = 0; ii < number_of_obstacles; ii++)
     {
       obs_sub_name = "/vicon/obs" + std::to_string(ii) + "/obs" + std::to_string(ii);
+      ROS_INFO("obs_sub_name: %s", obs_sub_name.c_str());
       obstacle_subs.push_back(nh.subscribe<geometry_msgs::TransformStamped>(obs_sub_name, 1, boost::bind(&IO_control_collision::vicon_obstacle, this, _1, ii)));
     }
     
@@ -218,6 +225,12 @@ void IO_control_collision::disCallback(const ros::TimerEvent& event) {
   double vy = state.twist.twist.linear.y;
   double dot_yaw = state.twist.twist.angular.z;
 
+for(int ii = 0; ii < number_of_obstacles; ii++)
+    {
+      std::string obs_sub_name = "/vicon/obs" + std::to_string(ii) + "/obs" + std::to_string(ii);
+      ROS_INFO("obs_sub_name: %s", obs_sub_name.c_str());
+    }
+
   // ROS_INFO("-----------------------------------------");
   // ROS_INFO_STREAM(path_type<<" path");
   // ROS_INFO("Odom Reading: ");
@@ -286,8 +299,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
     yddot = wd*(R2*cos(wd*t) + Ri*cos(wd*t + alphai)); // First derivative of yd
     theta_d = atan2(yddot,xddot);
   }
-  ROS_INFO("xd, yd : [%lf, %lf]", xd, yd);
-  ROS_INFO("xc, yc : [%lf, %lf]", xc, yc);
+  // ROS_INFO("xd, yd : [%lf, %lf]", xd, yd);
+  // ROS_INFO("xc, yc : [%lf, %lf]", xc, yc);
   double c_thd = cos(theta_d);
   double s_thd = sin(theta_d);
   y1d = xd + b*c_thd;
@@ -323,7 +336,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   
   control_cmd coll_avoid = IO_control_collision::collision_avoid(); // inputs are x,y,theta? Delays may cause problems
 
-  ROS_INFO("Gamma, v_coll, w_coll: [%lf, %lf, %lf]", coll_avoid.gamma, coll_avoid.v, coll_avoid.w);
+  // ROS_INFO("Gamma, v_coll, w_coll: [%lf, %lf, %lf]", coll_avoid.gamma, coll_avoid.v, coll_avoid.w);
 
   // transform to the actual control inputs for the unicycle model
   cmd_vel.linear.x =  (1.0 - coll_avoid.gamma)*(c_th * u1 + s_th * u2) + coll_avoid.gamma*coll_avoid.v; // 
@@ -457,9 +470,9 @@ control_cmd IO_control_collision::collision_avoid(){
   // Initialize the output
   control_cmd out_cmd; out_cmd.v = 0.0; out_cmd.w = 0.0;
 
-  ROS_INFO("state_lists.size(): %d", state_lists.size());
-  ROS_INFO("n: %d", n);
-  ROS_INFO("state_lists.size() == n: %d", (state_lists.size() == n));
+  // ROS_INFO("state_lists.size(): %d", state_lists.size());
+  // ROS_INFO("n: %d", n);
+  // ROS_INFO("state_lists.size() == n: %d", (state_lists.size() == n));
 
 
   // Collect list of in-neighbors
@@ -473,11 +486,11 @@ control_cmd IO_control_collision::collision_avoid(){
     all_states.erase(all_states.begin() + agent_index - 1); // Remove the agent's state from the list
     std::vector<geometry_msgs::Pose> collision_states = collision_neighbors(all_states, current_state); 
 
-    ROS_INFO("collision_states.size(): %d", collision_states.size());
+    // ROS_INFO("collision_states.size(): %d", collision_states.size());
 
     if (!collision_states.empty()){
       
-      ROS_INFO("Collision_states is not empty");
+      // ROS_INFO("Collision_states is not empty");
       
       // Get the collision avoidance gradient term
       geometry_msgs::Vector3 psi_collision_sum; psi_collision_sum.x = 0.0; psi_collision_sum.y = 0.0; psi_collision_sum.z = 0.0;
@@ -500,7 +513,7 @@ control_cmd IO_control_collision::collision_avoid(){
           double grad_norm = std::abs(2*mu2/(ds - dc) - pow(mu2,2)/pow(ds - dc,2));
           double grad_angle = std::atan2(current_state.pose.position.y - collision_states[j].position.y,current_state.pose.position.x - collision_states[j].position.x);
           grad_angle = std::fmod(grad_angle + 2*M_PI, 2*M_PI);
-          ROS_INFO("grad_angle: %lf", grad_angle);
+          // ROS_INFO("grad_angle: %lf", grad_angle);
           // ROS_INFO("grad_angle for agent %d: %lf", agent_index, grad_angle);
           
           grad_vector.x = grad_norm*std::cos(grad_angle);
@@ -612,7 +625,7 @@ void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs)
     R_q = msgs->trajectory[3];
     wd_q = msgs->trajectory[4];
     phi0_q = msgs->trajectory[5];
-    ROS_INFO("ms_rpa callback worked");
+    // ROS_INFO("ms_rpa callback worked");
   }
 }
 
@@ -624,7 +637,6 @@ void IO_control_collision::vicon_obstacle(const geometry_msgs::TransformStamped:
   obstacles[ii].pose.pose.position.z = msgs->transform.translation.z;
   obstacles[ii].pose.pose.orientation = msgs->transform.rotation;
 
-  ROS_INFO("obstacle_radii.size(): %lu \n obstacle_radius[0]: %lf", obstacle_radii.size(), obstacle_radii[0]);
 }
 
 void IO_control_collision::change_trajectories(const ros::TimerEvent& event){
@@ -643,7 +655,7 @@ void IO_control_collision::change_trajectories(const ros::TimerEvent& event){
       R = R_q;
       wd = wd_q;
       phi0 =phi0_q;
-      ROS_INFO("Parameters switched: \n t0, xc, yc, R, wd, phi0: [%lf,%lf, %lf, %lf, %lf, %lf]", t0, xc, yc, R, wd, phi0);
+      // ROS_INFO("Parameters switched: \n t0, xc, yc, R, wd, phi0: [%lf,%lf, %lf, %lf, %lf, %lf]", t0, xc, yc, R, wd, phi0);
     }
 
     // Add square trajectories here
@@ -668,7 +680,7 @@ std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const
       close_poses.push_back(other_agents[ii]);
     }
   }
-  ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %d]", dc, distance, close_poses.size());
+  // ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %d]", dc, distance, close_poses.size());
   return close_poses;
 }
 
@@ -691,7 +703,7 @@ std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const
       close_poses.push_back(other_agents[ii].pose);
     }
   }
-  ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %d]", dc, distance, close_poses.size());
+  // ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %d]", dc, distance, close_poses.size());
   return close_poses;
 }
 

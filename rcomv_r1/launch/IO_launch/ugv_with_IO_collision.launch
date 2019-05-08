@@ -48,6 +48,8 @@
     <arg name="endless" default="false" />
     <arg name="agent_index" default="0"/>
     <arg name="rover_number" default="0"/>
+    <arg name="number_of_obstacles" default="0"/>
+    <arg name="obstacle_radii" default="[]"/>
 
     <!-- Parameters for collision avoidance -->
     <arg name="ds" default="1"/>
@@ -121,6 +123,9 @@
             <param name="ds" value="$(arg ds)"/>
             <param name="dc" value="$(arg dc)"/>
 
+
+            <param name="number_of_obstacles" value="$(arg number_of_obstacles)"/>
+            <rosparam param="obstacle_radii" subst_value="True">$(arg obstacle_radii)</rosparam>
         </node>
 
         <!-- In/Output Linearization controller node WITH debugging-->
@@ -160,6 +165,9 @@
 
             <param name="ds" value="$(arg ds)"/>
             <param name="dc" value="$(arg dc)"/>
+
+            <param name="number_of_obstacles" value="$(arg number_of_obstacles)"/>
+            <rosparam param="obstacle_radii" subst_value="True">$(arg obstacle_radii) </rosparam>
 
         </node>
         
