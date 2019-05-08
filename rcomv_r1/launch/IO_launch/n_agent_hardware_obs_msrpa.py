@@ -3,7 +3,7 @@
 
 import sys
 ## Append easylaunch directory to path
-sys.path.append('/media/james/Data/code2/easylaunch')
+sys.path.append('/home/dasc/Downloads/MSR/launch/easylaunch')
 
 from math import pi, cos, sin
 from random import randint, sample
@@ -17,13 +17,13 @@ n = 2
 k = 1
 F = 0
 
-formation_r = 1
+formation_r = 1.0
 formation_angle = []
 
 for i in range(n):
     formation_angle.append(i*2*pi/n + pi/2)
 
-trajectory_r = 2
+trajectory_r = 1.5
 
 eta = 10
 
@@ -33,9 +33,9 @@ wd = 0.09
 
 number_of_obstacles = 1
 
-obstacle_radii = [1.0]
+obstacle_radii = [0.3]
 
-rover_numbers = [3,4]
+rover_numbers = [4,5]
 
 gdb_xterm_output = 1
 
@@ -64,14 +64,14 @@ rover_args = {
     "b": "0.05",
     "k1": "0.5",
     "k2": "0.5",
-    "vmax": "1.5",
-    "wmax": "4",
+    "vmax": "0.5",
+    "wmax": "1.3",
     "wd": str(wd),
     "R": str(trajectory_r),
     "R1": "1",
     "R2": "1",
-    "ds": ".25",
-    "dc":".5",
+    "ds": ".5",
+    "dc":"1.0",
     "gazebo": "0",
     "xc": str(xc),
     "yc": str(yc),
@@ -90,7 +90,7 @@ msrpa_args = {
     "yc": str(yc),
     "Rad": str(trajectory_r),
     "wd": str(wd),
-    "phi0": str(0),
+    "phi0": str(0.0),
     "leng": str(10),
     "psi": str(0),
     "v": str(0),
@@ -108,12 +108,12 @@ launch.arg = {**rover_args, **msrpa_args}
 launch.include = []
 
 # include element - Gazebo empty_world.launch
-ew = el.include(file="$(find gazebo_ros)/launch/empty_world.launch")
-ew.arg = {
-    "world_name": "$(find rcomv_uav)/worlds/$(arg world_name).world",
-    "paused": "true"
-}
-launch.include.append(ew)
+# ew = el.include(file="$(find gazebo_ros)/launch/empty_world.launch")
+# ew.arg = {
+#     "world_name": "$(find rcomv_uav)/worlds/$(arg world_name).world",
+#     "paused": "true"
+# }
+# launch.include.append(ew)
 
 # include element - ugv. We'll copy this to make all the ugvs.
 
@@ -172,10 +172,10 @@ for j in range(0,n):
         "x": "0",
         "y": str(5*j - 5*n/2),
         "z": "0.1",
-        "rover_number": str(j+3),
+        "rover_number": str(rover_numbers[j]),
         "agent_index": str(j+1),
-        "ugv_name": "R" + str(j+3),
-        "name_space": "R" + str(j+3),
+        "ugv_name": "R" + str(rover_numbers[j]),
+        "name_space": "R" + str(rover_numbers[j]),
         "Ri": str(formation_r),
         "alphai": str(formation_angle[j])
     }
@@ -185,7 +185,7 @@ launch.include += ugv_list
 
 # vicon_bridge node
 
-launch.include += [el.include(file="$(find vicon_bridge)/launch/vicon.launch")]
+# launch.include += [el.include(file="$(find vicon_bridge)/launch/vicon.launch")]
 
 
 ## Node elements
@@ -193,8 +193,8 @@ launch.include += [el.include(file="$(find vicon_bridge)/launch/vicon.launch")]
 launch.node = []
 
 # Switch node
-switch_node = el.node(name="switch_node", pkg="rcomv_r1", type="switch")
-launch.node.append(switch_node)
+# switch_node = el.node(name="switch_node", pkg="rcomv_r1", type="switch")
+# launch.node.append(switch_node)
 
 # Ugv nodes
 builder_node = el.node(name="builder_node", pkg="state_graph_builder", type="builder")

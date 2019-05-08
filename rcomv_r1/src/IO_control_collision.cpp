@@ -14,8 +14,8 @@ IO_control_collision::IO_control_collision()
   nh_private_.param<double>("k1", k1, 0.0);
   nh_private_.param<double>("k2", k2, 4.0);
   nh_private_.param<double>("k3", k3, 10.0); // Proportional gain for collision avoidance direction tracking
-  nh_private_.param<double>("vmax", vmax, 6);
-  nh_private_.param<double>("wmax", wmax, 4);
+  nh_private_.param<double>("vmax", vmax, 0.5);
+  nh_private_.param<double>("wmax", wmax, 1.0);
   nh_private_.param<double>("Ri", Ri, 0);
   nh_private_.param<double>("alphai", alphai, 0);
 
@@ -27,7 +27,7 @@ IO_control_collision::IO_control_collision()
   nh_private_.param<double>("xc", xc, 0);
   nh_private_.param<double>("yc", yc, 0);
   nh_private_.param<double>("R", R, 1);
-  nh_private_.param<double>("wd", wd, 0.5);
+  nh_private_.param<double>("wd", wd, 0.0);
   nh_private_.param<double>("phi0", phi0, 0.0);
   nh_private_.param<double>("R1", R1, 4);
   nh_private_.param<double>("R2", R2, 4);
@@ -470,9 +470,9 @@ control_cmd IO_control_collision::collision_avoid(){
   // Initialize the output
   control_cmd out_cmd; out_cmd.v = 0.0; out_cmd.w = 0.0;
 
-  // ROS_INFO("state_lists.size(): %d", state_lists.size());
-  // ROS_INFO("n: %d", n);
-  // ROS_INFO("state_lists.size() == n: %d", (state_lists.size() == n));
+  ROS_INFO("state_lists.size(): %d", state_lists.size());
+  ROS_INFO("n: %d", n);
+  ROS_INFO("state_lists.size() == n: %d", (state_lists.size() == n));
 
 
   // Collect list of in-neighbors
@@ -487,9 +487,11 @@ control_cmd IO_control_collision::collision_avoid(){
     std::vector<PoseStamped_Radius> collision_states = collision_neighbors(all_states, current_state); 
     std::vector<PoseStamped_Radius> obstacle_collision_states = collision_neighbors(obstacles, current_state);
 
+    ROS_INFO("collision_states.size() before obstacles for agent R%d: %lu", rover_number, collision_states.size());
+
     collision_states.insert(collision_states.end(), obstacle_collision_states.begin(), obstacle_collision_states.end());
 
-    // ROS_INFO("collision_states.size(): %d", collision_states.size());
+    
 
     if (!collision_states.empty()){
       

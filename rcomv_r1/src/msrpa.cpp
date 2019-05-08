@@ -88,16 +88,16 @@ MSRPA::MSRPA()
   //we are not publishing the goals to the PID controller anymore so it is 100% irrelevant
 
   // Subscriber: subscribe the switch topic
-  switch_sub = nh.subscribe("/switch", 10, &MSRPA::switch_subCallback, this);
+  // switch_sub = nh.subscribe("/switch", 10, &MSRPA::switch_subCallback, this);
   // wait until receiving the turn on signal
-  while (switch_signal.data == false)
-  {
+  // while (switch_signal.data == false)
+  // {
 
-    ros::spinOnce();
-    ROS_INFO("Wait until all robots are spawned, stay at initial positions.");
+  //   ros::spinOnce();
+  //   ROS_INFO("Wait until all robots are spawned, stay at initial positions.");
 
-    ros::Duration(0.1).sleep();
-  }
+  //   ros::Duration(0.1).sleep();
+  // }
 
   ROS_INFO("Simulation is ready, turn on MSRPA node...");
 
