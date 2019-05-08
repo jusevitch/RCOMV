@@ -57,6 +57,9 @@
     <arg name="ds" default="1"/>
     <arg name="dc" default="2"/>
 
+    <!-- Parameter for gdb and xterm output -->
+    <arg name="gdb_xterm_output" default="0"/>
+
     <group ns="$(arg name_space)" if="$(arg gazebo)">
         <!-- NOTE: THIS IS THE NODE THAT USES THE cmd_vel_mux TOPIC -->
         <!-- Launches the UGV and low level controller in Gazebo -->
@@ -85,9 +88,48 @@
 
     <group ns="$(arg name_space)">
     
-        <!-- In/Output Linearization controller node -->
+        <!-- In/Output Linearization controller node with NO debugging -->
+        <node unless="$(arg gdb_xterm_output)" name="IO_control_collision_node" pkg="rcomv_r1" type="IO_control_collision">
+            
+            <param name="gazebo" value="$(arg gazebo)"/>
+            <param name="Ri" value="$(arg Ri)" />
+            <param name="alphai" value="$(arg alphai)"/>
+            <param name="agent_index" value="$(arg agent_index)"/>
+            <param name="rover_number" value="$(arg rover_number)"/>
+
+            <param name="n" value="$(arg n)"/>
+            <param name="b" value="$(arg b)" />
+            <param name="k1" value="$(arg k1)" />
+            <param name="k2" value="$(arg k2)"/>
+            <param name="vmax" value="$(arg vmax)" />
+            <param name="wmax" value="$(arg wmax)"/>
+
+            <param name="path_type" value="$(arg path_type)" />
+            <param name="xc" value="$(arg xc)" />
+            <param name="yc" value="$(arg yc)" />
+            <param name="R" value="$(arg R)" />
+            <param name="R1" value="$(arg R1)" />
+            <param name="R2" value="$(arg R2)" />
+            <param name="wd" value="$(arg wd)" />
+
+            <param name="qi_x" value="$(arg qi_x)" />
+            <param name="qi_y" value="$(arg qi_y)" />
+            <param name="qi_theta" value="$(arg qi_theta)" />
+            <param name="qf_x" value="$(arg qf_x)" />
+            <param name="qf_y" value="$(arg qf_y)" />
+            <param name="qf_theta" value="$(arg qf_theta)" />
+            <param name="poly_k" value="$(arg poly_k)" />
+            <param name="T" value="$(arg T)" />
+            <param name="endless" value="$(arg endless)" />
+
+            <param name="ds" value="$(arg ds)"/>
+            <param name="dc" value="$(arg dc)"/>
+
+        </node>
+
+        <!-- In/Output Linearization controller node WITH debugging-->
         <!-- No wmsr node involved -->
-        <node name="IO_control_collision_node" pkg="rcomv_r1" type="IO_control_collision" launch-prefix="xterm -e gdb -ex run --args" output="screen">
+        <node if="$(arg gdb_xterm_output)" name="IO_control_collision_node" pkg="rcomv_r1" type="IO_control_collision" launch-prefix="xterm -e gdb -ex run --args" output="screen">
             
             <param name="gazebo" value="$(arg gazebo)"/>
             <param name="Ri" value="$(arg Ri)" />

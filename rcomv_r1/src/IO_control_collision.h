@@ -57,6 +57,7 @@ private:
   ros::Publisher pub;
   ros::Timer pub_timer;
   ros::Timer dis_timer;  // display timer, for debug
+  ros::Timer update_param_timer;
 
   // subscriber
   ros::Subscriber odom_sub;
@@ -64,7 +65,7 @@ private:
   ros::Subscriber states_sub;
   ros::Subscriber msrpa_sub;
 
-  // callback functions
+  // Callback functions
   void pubCallback(const ros::TimerEvent& event);
   void disCallback(const ros::TimerEvent& event);  // display callback function
   void odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs);
@@ -72,7 +73,11 @@ private:
   void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs);
   void graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs);
   void graph_subCallback_PoseStamped(const state_graph_builder::posestampedgraph::ConstPtr& msgs);
-  void msrpa_subCallback(const rcomv_r1::MSRPA& msgs);
+  void change_trajectories(const ros::TimerEvent& event);
+
+  // Callback functions for the MS-RPA algorithm. This callback function updates the trajectory parameters when it receives values from MS-RPA nodes.
+  void msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs);
+
 
 
   std::vector<geometry_msgs::Pose> collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose &current_state);
@@ -102,12 +107,16 @@ private:
   double R; // radius for cirular path
   double R1, R2; // radius for eight_shaped path
   double wd; // reference turning rate
-  double ds; // Safety radius; must not be crossed
+  double phi0; // Initial starting point on circle trajectory w.r.t. the zero angle position in the global frame.
+
+  // Safety parameters
+  double ds; // Safety radius; must not be crossed 
   double dc; // Radius where collision avoidance function is activated
   double mu2; // Parameter for collision avoidance barrier function
   double phi0; // angle for trajectory
   double L, psi, V, startLIdx; // parameters for square path
 
+  // Add square parameters
 
   // cubic ploynomials path paramters
   pose qi, qf; // initial, final pose
@@ -115,6 +124,21 @@ private:
   double T;  // total travel time
   bool endless_flag; // true: switch the final and inital locations every T secs
   bool even_cycle; // true: it's in a even cycle, false: it's in a odd cycle
+
+
+  // Parameters for the trajectory in the queue:
+
+  std::string type_q;
+  double t0_q;
+  double xc_q;
+  double yc_q;
+  double R_q;
+  double wd_q;
+  double phi0_q;
+
+  // Add square q parameters
+
+
 
   bool odometry_connected; // flag of odometry
   double initial_time;
