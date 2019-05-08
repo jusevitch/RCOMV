@@ -336,7 +336,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   
   control_cmd coll_avoid = IO_control_collision::collision_avoid(); // inputs are x,y,theta? Delays may cause problems
 
-  // ROS_INFO("Gamma, v_coll, w_coll: [%lf, %lf, %lf]", coll_avoid.gamma, coll_avoid.v, coll_avoid.w);
+  ROS_INFO("Gamma, v_coll, w_coll: [%lf, %lf, %lf]", coll_avoid.gamma, coll_avoid.v, coll_avoid.w);
 
   // transform to the actual control inputs for the unicycle model
   cmd_vel.linear.x =  (1.0 - coll_avoid.gamma)*(c_th * u1 + s_th * u2) + coll_avoid.gamma*coll_avoid.v; // 
@@ -345,6 +345,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   // saturation
   cmd_vel.linear.x = std::max(-vmax, std::min(cmd_vel.linear.x, vmax));
   cmd_vel.angular.z = std::max(-wmax, std::min(cmd_vel.angular.z, wmax));
+
+  // ROS_INFO("After saturation: v, w: [%lf, %lf]", cmd_vel.linear.x, cmd_vel.angular.z);
 
   // endless_flag is false: stop when t > T for cubic polynomial path
   // endless_flag is true: reset t0 and odd_cycle flag
@@ -470,9 +472,9 @@ control_cmd IO_control_collision::collision_avoid(){
   // Initialize the output
   control_cmd out_cmd; out_cmd.v = 0.0; out_cmd.w = 0.0;
 
-  ROS_INFO("state_lists.size(): %d", state_lists.size());
-  ROS_INFO("n: %d", n);
-  ROS_INFO("state_lists.size() == n: %d", (state_lists.size() == n));
+  // ROS_INFO("state_lists.size(): %d", state_lists.size());
+  // ROS_INFO("n: %d", n);
+  // ROS_INFO("state_lists.size() == n: %d", (state_lists.size() == n));
 
 
   // Collect list of in-neighbors
@@ -487,11 +489,10 @@ control_cmd IO_control_collision::collision_avoid(){
     std::vector<PoseStamped_Radius> collision_states = collision_neighbors(all_states, current_state); 
     std::vector<PoseStamped_Radius> obstacle_collision_states = collision_neighbors(obstacles, current_state);
 
-    ROS_INFO("collision_states.size() before obstacles for agent R%d: %lu", rover_number, collision_states.size());
+    ROS_INFO("# collision agents, # obstacles for agent R%d: [%lu, %lu]", rover_number, collision_states.size(), obstacle_collision_states.size());
 
     collision_states.insert(collision_states.end(), obstacle_collision_states.begin(), obstacle_collision_states.end());
-
-    
+    ROS_INFO("Size of collision_states after insertion: %lu", collision_states.size());
 
     if (!collision_states.empty()){
       
@@ -558,13 +559,14 @@ control_cmd IO_control_collision::collision_avoid(){
         double xi = current_state.pose.position.x; double yi = current_state.pose.position.y; double zi = current_state.pose.position.z;
         double xj = collision_states[jj].pose.pose.position.x; double yj = collision_states[jj].pose.pose.position.y; double zj = collision_states[jj].pose.pose.position.z;
         double xij = std::sqrt(std::pow(xi - xj,2) + std::pow(yi - yj,2) + std::pow(zi - zj,2));
-      
+        ROS_INFO("xij, r_safety[jj]: [%lf, %lf]", xij, collision_states[jj].r_safety);
         if(jj == 0 || xij < min_distance){
           min_distance = xij;
           min_distance_r_safety = collision_states[jj].r_safety;
         }
       }
-      // ROS_INFO("min_distance: %lf", min_distance);
+      ROS_INFO("min_distance, r0: [%lf, %lf]", min_distance, min_distance_r_safety);
+      ROS_INFO("dc + r0, ds + r0: [%lf, %lf]", dc + min_distance_r_safety, ds + min_distance_r_safety);
       if (min_distance > dc + min_distance_r_safety){
         out_cmd.gamma = 0.0;
       } else if(min_distance < ds + min_distance_r_safety){
@@ -704,8 +706,8 @@ std::vector<PoseStamped_Radius> IO_control_collision::collision_neighbors(const 
     current_state.x, current_state.y, current_state.z: [%lf, %lf, %lf]",\
     other_agents[ii].pose.position.x, other_agents[ii].pose.position.y, other_agents[ii].pose.position.z,\
     current_state.pose.position.x, current_state.pose.position.y, current_state.pose.position.z);
-    
-    if(distance < dc){
+    // ROS_INFO("distance, ")
+    if(distance < dc + ds){ // r_safety for all agents is equal to ds
       // Save the close poses
       temp_PSR.pose = other_agents[ii];
       temp_PSR.r_safety = ds; // All UGVs have same safety radius
@@ -722,7 +724,8 @@ std::vector<PoseStamped_Radius> IO_control_collision::collision_neighbors(const 
   std::vector<PoseStamped_Radius> close_poses;
   for(int ii=0; ii < obstacle_vector.size(); ii++){
     distance = std::sqrt(std::pow(current_state.pose.position.x - obstacle_vector[ii].pose.pose.position.x,2) +\
-      std::pow(current_state.pose.position.y - obstacle_vector[ii].pose.pose.position.y,2) + std::pow(current_state.pose.position.z - obstacle_vector[ii].pose.pose.position.z,2));    
+      std::pow(current_state.pose.position.y - obstacle_vector[ii].pose.pose.position.y,2) + std::pow(current_state.pose.position.z - obstacle_vector[ii].pose.pose.position.z,2)); 
+      // ROS_INFO("distance, r_safety: [%lf, %lf]", distance, obstacle_vector[ii].r_safety);   
     if(distance < dc + obstacle_vector[ii].r_safety){
       // Save the close poses
       close_poses.push_back(obstacle_vector[ii]);

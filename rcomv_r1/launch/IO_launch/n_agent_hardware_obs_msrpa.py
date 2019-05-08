@@ -31,9 +31,9 @@ xc = 0
 yc = -1
 wd = 0.09
 
-number_of_obstacles = 1
+number_of_obstacles = 2
 
-obstacle_radii = [0.3]
+obstacle_radii = [0.3, 0.3]
 
 rover_numbers = [4,5]
 

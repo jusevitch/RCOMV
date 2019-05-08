@@ -167,7 +167,7 @@
             <param name="dc" value="$(arg dc)"/>
 
             <param name="number_of_obstacles" value="$(arg number_of_obstacles)"/>
-            <rosparam param="obstacle_radii" subst_value="True">$(arg obstacle_radii) </rosparam>
+            <rosparam param="obstacle_radii" subst_value="true">$(arg obstacle_radii) </rosparam>
 
         </node>
         
