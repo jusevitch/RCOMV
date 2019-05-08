@@ -69,6 +69,9 @@ InOutLinController::InOutLinController()
   //Subscriber := reference trajectory parameters
   trajectory_sub = nh.subscribe("ref", 10, &InOutLinController::trajectory_subCallback, this);
 
+  //Subscriber := update parameters based on trajectory
+  msrpa_sub = nh.subscribe("msrpa", 10, &InOutLinController::msrpa_subCallback, this);
+
   // ROS_INFO("this worked in constructor \n");
 }
 
@@ -79,6 +82,48 @@ InOutLinController::~InOutLinController()
   cmd_vel.angular.z = 0.0;
   pub.publish(cmd_vel);
   ros::shutdown();
+}
+
+// callback function to update the parameters for this class
+void InOutLinController::msrpa_subCallback(const rcomv_r1::MSRPA& msg)
+{
+
+  if(msg.type=="circular") {
+    // update trajectory type
+    this->path_type = msg.type;
+    
+    // update trajectory parameters
+    this->t0 = msg.trajectory[0];
+    this->xc = msg.trajectory[1]; 
+    this->yc = msg.trajectory[2];
+    this->R = msg.trajectory[3]; 
+    this->wd = msg.trajectory[4];
+    this->phi0 = msg.trajectory[5];
+
+
+    // update formation parameters
+    this->Ri = msg.formation[0];
+  }
+
+  else if (msg.type=="square") {
+    // update trajectory type
+    this->path_type = msg.type;
+
+    // update trajectory parameters
+    this->t0 = msg.trajectory[0];
+    this->xc = msg.trajectory[1]; 
+    this->yc = msg.trajectory[2];
+    this->L = msg.trajectory[3];
+    this->psi = msg.trajectory[4];
+    this->V = msg.trajectory[5];
+    this->startLIdx = msg.trajectory[6];
+    this->T = this->L / this->V;
+
+    // update formation parameters
+    this->Ri = msg.formation[0];
+
+  }
+
 }
 
 // odometry subscriber callback function
@@ -184,7 +229,7 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
      ROS_INFO("(xd, yd) : (%lf, %lf)", xd, yd);
   }
   // the reference states and velocity: eight-shaped path
-  if (path_type.compare(std::string("eight_shaped")) == 0) {
+  else if (path_type.compare(std::string("eight_shaped")) == 0) {
      xd = xc + R1*sin(2*wd*t) + Ri*cos(wd*t+alphai);
      yd = yc + R2*sin(wd*t) + Ri*sin(wd*t+alphai);
      //vd = hypot((2*R1*wd*cos(2*wd*t)), (R2*wd*cos(wd*t)));
@@ -192,7 +237,7 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
                 wd*(R2*cos(wd*t) + Ri*cos(theta+alphai)));
   }
   // the reference states and velocity: cubic polynomial path
-  if (path_type.compare(std::string("cubic")) == 0) {
+  else if (path_type.compare(std::string("cubic")) == 0) {
       CubePolyPath(qi, qf, poly_k, T, t, xd, yd, vd, wd);
   }
 
@@ -214,14 +259,51 @@ void InOutLinController::pubCallback(const ros::TimerEvent& event)
   if(path_type.compare(std::string("circular")) == 0) {
     vy1d = -wd*(R*sin(wd*t) + Ri*sin(wd*t + alphai) + b*sin(theta_d)); // c_thd * vd - b * s_thd * wd;
     vy2d = wd*(R*cos(wd*t) + Ri*cos(wd*t + alphai) + b*cos(theta_d)); // s_thd * vd + b * c_thd * wd;
-  } else if(path_type.compare(std::string("eight_shaped")) == 0) {
+  } 
+  else if(path_type.compare(std::string("eight_shaped")) == 0) {
     double xdoubledot = -pow(wd,2)*(4*R1*sin(2*wd*t) + Ri*cos(wd*t + alphai)); // Second derivative of xd
     double ydoubledot = -pow(wd,2)*(R2*sin(wd*t) + Ri*sin(wd*t+alphai)); // Second derivative of yd
     double thetaddot = (xddot / (pow(xddot,2) + pow(yddot,2)))*ydoubledot - (yddot / (pow(xddot,2) + pow(yddot,2)))*xdoubledot;
     vy1d = xddot - b*sin(theta_d)*thetaddot;
     vy2d = yddot + b*cos(theta_d)*thetaddot;
   }
+  else if( path_type.compare(std::string("square")) == 0) {
+      // modulo the time for infinite looping
+      double t_corrected = (t >= 8*T) ? fmod(t, 8*T) : t;
 
+      // parameters for square
+      if ( 0 <= t_corrected && t_corrected < T) {
+        y1d = xc + L;
+        y2d = yc + V*t_corrected;
+        vy1d = 0;
+        vy2d = V;
+      } 
+      else if ( T <= t_corrected && t_corrected < 3*T) {
+        y1d = xc + L - V*(t_corrected-T);
+        y2d = yc + L;
+        vy1d = -V;
+        vy2d = 0;
+      }
+      else if ( 3*T <= t_corrected && t_corrected < 5*T) {
+        y1d = xc - L;
+        y2d = yc + L -V*(t_corrected-3*T);
+        vy1d = 0;
+        vy2d = -V;
+      }
+      else if ( 5*T <= t_corrected && t_corrected < 7*T) {
+        y1d = xc - L + V*(t_corrected-5*T);
+        y2d = yc - L;
+        vy1d = V;
+        vy2d = 0;
+      }
+      else if ( 7*T <= t_corrected && t_corrected < 8*T) {
+        y1d = xc + L;
+        y2d = yc - L + V*(t_corrected-8*T);
+        vy1d = 0;
+        vy2d = V;
+      }
+  }
+  
   // the output error
   c_th = cos(theta);
   s_th = sin(theta);

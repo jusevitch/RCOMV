@@ -48,6 +48,10 @@
     <arg name="endless" default="false" />
     <arg name="agent_index" default="0"/>
     <arg name="rover_number" default="0"/>
+    <arg name="L" default="1"/>
+    <arg name="psi" default="0"/>
+    <arg name="V" default="1"/>
+    <arg name="startLIdx" default="0"/>
 
     <!-- Parameters for collision avoidance -->
     <arg name="ds" default="1"/>
@@ -118,6 +122,11 @@
 
             <param name="ds" value="$(arg ds)"/>
             <param name="dc" value="$(arg dc)"/>
+
+            <param name="V" value="$(arg V)"/>
+            <param name="L" value="$(arg L)"/>
+            <param name="psi" value="$(arg psi)"/>
+            <param name="startLIdx" value="$(arg startLIdx)"/>
 
         </node>
         

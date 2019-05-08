@@ -10,6 +10,7 @@
 #include <nav_msgs/Odometry.h>
 
 #include <rcomv_r1/CubicPath.h>
+#include <rcomv_r1/MSRPA.h>
 
 #include <tf/transform_broadcaster.h>
 
@@ -48,6 +49,8 @@ private:
   ros::Subscriber odom_sub;
   ros::Subscriber trajectory_sub;
   ros::Subscriber indoors_sub;
+  ros::Subscriber msrpa_sub;
+
 
   // callback funcrions
   void pubCallback(const ros::TimerEvent& event);
@@ -55,6 +58,7 @@ private:
   void odom_subCallback(const nav_msgs::Odometry::ConstPtr& msgs);
   void indoor_subCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs);
   void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs);
+  void msrpa_subCallback(const rcomv_r1::MSRPA& msgs);
 
   // private variables
   // controller paramters
@@ -72,6 +76,8 @@ private:
   double R; // radius for cirular path
   double R1, R2; // radius for eight_shaped path
   double wd; // reference turning rate
+  double phi0; // angle for trajectory
+  double L, psi, V, startLIdx; // parameters for square path
 
   // cubic ploynomials path paramters
   pose qi, qf; // initial, final pose

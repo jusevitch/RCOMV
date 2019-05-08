@@ -11,6 +11,7 @@
 #include <nav_msgs/Odometry.h>
 
 #include <rcomv_r1/CubicPath.h>
+#include <rcomv_r1/MSRPA.h>
 
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
@@ -61,6 +62,7 @@ private:
   ros::Subscriber odom_sub;
   ros::Subscriber trajectory_sub;
   ros::Subscriber states_sub;
+  ros::Subscriber msrpa_sub;
 
   // callback functions
   void pubCallback(const ros::TimerEvent& event);
@@ -70,6 +72,7 @@ private:
   void trajectory_subCallback(const rcomv_r1::CubicPath::ConstPtr& msgs);
   void graph_subCallback(const state_graph_builder::posegraph::ConstPtr& msgs);
   void graph_subCallback_PoseStamped(const state_graph_builder::posestampedgraph::ConstPtr& msgs);
+  void msrpa_subCallback(const rcomv_r1::MSRPA& msgs);
 
 
   std::vector<geometry_msgs::Pose> collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose &current_state);
@@ -102,6 +105,8 @@ private:
   double ds; // Safety radius; must not be crossed
   double dc; // Radius where collision avoidance function is activated
   double mu2; // Parameter for collision avoidance barrier function
+  double phi0; // angle for trajectory
+  double L, psi, V, startLIdx; // parameters for square path
 
 
   // cubic ploynomials path paramters

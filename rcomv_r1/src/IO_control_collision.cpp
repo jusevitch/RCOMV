@@ -84,6 +84,10 @@ IO_control_collision::IO_control_collision()
   //Subscriber := reference trajectory parameters
   trajectory_sub = nh.subscribe("ref", 10, &IO_control_collision::trajectory_subCallback, this);
 
+
+  //Subscriber := update parameters based on trajectory
+  msrpa_sub = nh.subscribe("msrpa", 10, &IO_control_collision::msrpa_subCallback, this);
+
 }
 
 // destructor
@@ -97,6 +101,49 @@ IO_control_collision::~IO_control_collision()
 
 
 
+
+
+// callback function to update the parameters for this class
+void IO_control_collision::msrpa_subCallback(const rcomv_r1::MSRPA& msg)
+{
+
+  if(msg.type=="circular") {
+    // update trajectory type
+    this->path_type = msg.type;
+    
+    // update trajectory parameters
+    this->t0 = msg.trajectory[0];
+    this->xc = msg.trajectory[1]; 
+    this->yc = msg.trajectory[2];
+    this->R = msg.trajectory[3]; 
+    this->wd = msg.trajectory[4];
+    this->phi0 = msg.trajectory[5];
+
+
+    // update formation parameters
+    this->Ri = msg.formation[0];
+  }
+
+  else if (msg.type=="square") {
+    // update trajectory type
+    this->path_type = msg.type;
+
+    // update trajectory parameters
+    this->t0 = msg.trajectory[0];
+    this->xc = msg.trajectory[1]; 
+    this->yc = msg.trajectory[2];
+    this->L = msg.trajectory[3];
+    this->psi = msg.trajectory[4];
+    this->V = msg.trajectory[5];
+    this->startLIdx = msg.trajectory[6];
+    this->T = this->L / this->V;
+
+    // update formation parameters
+    this->Ri = msg.formation[0];
+
+  }
+
+}
 
 
 
@@ -219,10 +266,10 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
 
   // the reference states and velocity: circular path
   if (path_type.compare(std::string("circular")) == 0) {
-     xd = xc + R*cos(wd*t) + Ri*cos(wd*t+alphai);
-     yd = yc + R*sin(wd*t) + Ri*sin(wd*t+alphai);
-     vd = hypot(wd*(-R*sin(wd*t) - Ri*sin(theta+alphai)),
-                wd*(R*cos(wd*t) + Ri*cos(theta+alphai)));
+    xd = xc + R*cos(wd*t + this->phi0 ) + Ri*cos(wd*t + this->phi0 + alphai);
+    yd = yc + R*sin(wd*t + this->phi0 ) + Ri*sin(wd*t + this->phi0 + alphai);
+    vd = hypot(wd*(-R*sin(wd*t + this->phi0 ) - Ri*sin(theta+alphai)),
+                wd*(R*cos(wd*t + this->phi0 ) + Ri*cos(theta+alphai)));
   }
   // the reference states and velocity: eight-shaped path
   if (path_type.compare(std::string("eight_shaped")) == 0) {
@@ -243,7 +290,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
 
   // the reference output
   if(path_type.compare(std::string("circular")) == 0) {
-    theta_d = fmod(wd*t + (M_PI / 2.0) + 2*M_PI, 2*M_PI);
+    theta_d = fmod(wd*t + this->phi0 + (M_PI / 2.0) + 2*M_PI, 2*M_PI);
   } else if(path_type.compare(std::string("eight_shaped")) == 0) {
     xddot = wd*(2*R1*cos(2*wd*t) - Ri*sin(wd*t + alphai)); // First derivative of xd
     yddot = wd*(R2*cos(wd*t) + Ri*cos(wd*t + alphai)); // First derivative of yd
@@ -257,9 +304,10 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   y2d = yd + b*s_thd;
   // the time derivative of the reference output
   if(path_type.compare(std::string("circular")) == 0) {
-    vy1d = -wd*(R*sin(wd*t) + Ri*sin(wd*t + alphai) + b*sin(theta_d)); // c_thd * vd - b * s_thd * wd;
-    vy2d = wd*(R*cos(wd*t) + Ri*cos(wd*t + alphai) + b*cos(theta_d)); // s_thd * vd + b * c_thd * wd;
-  } else if(path_type.compare(std::string("eight_shaped")) == 0) {
+    vy1d = -wd*(R*sin(wd*t + this->phi0 ) + Ri*sin(wd*t + this->phi0 + alphai) + b*sin(theta_d)); // c_thd * vd - b * s_thd * wd;
+    vy2d = wd*(R*cos(wd*t + this->phi0 ) + Ri*cos(wd*t + this->phi0 + alphai) + b*cos(theta_d)); // s_thd * vd + b * c_thd * wd;
+  } 
+  else if(path_type.compare(std::string("eight_shaped")) == 0) {
     double xdoubledot = -pow(wd,2)*(4*R1*sin(2*wd*t) + Ri*cos(wd*t + alphai)); // Second derivative of xd
     double ydoubledot = -pow(wd,2)*(R2*sin(wd*t) + Ri*sin(wd*t+alphai)); // Second derivative of yd
     double thetaddot = (xddot / (pow(xddot,2) + pow(yddot,2)))*ydoubledot - (yddot / (pow(xddot,2) + pow(yddot,2)))*xdoubledot;
@@ -267,6 +315,42 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
     vy2d = yddot + b*cos(theta_d)*thetaddot;
   }
 
+  else if( path_type.compare(std::string("square")) == 0) {
+      // modulo the time for infinite looping
+      double t_corrected = (t >= 8*T) ? fmod(t, 8*T) : t;
+
+      // parameters for square
+      if ( 0 <= t_corrected && t_corrected < T) {
+        y1d = xc + L;
+        y2d = yc + V*t_corrected;
+        vy1d = 0;
+        vy2d = V;
+      } 
+      else if ( T <= t_corrected && t_corrected < 3*T) {
+        y1d = xc + L - V*(t_corrected-T);
+        y2d = yc + L;
+        vy1d = -V;
+        vy2d = 0;
+      }
+      else if ( 3*T <= t_corrected && t_corrected < 5*T) {
+        y1d = xc - L;
+        y2d = yc + L -V*(t_corrected-3*T);
+        vy1d = 0;
+        vy2d = -V;
+      }
+      else if ( 5*T <= t_corrected && t_corrected < 7*T) {
+        y1d = xc - L + V*(t_corrected-5*T);
+        y2d = yc - L;
+        vy1d = V;
+        vy2d = 0;
+      }
+      else if ( 7*T <= t_corrected && t_corrected < 8*T) {
+        y1d = xc + L;
+        y2d = yc - L + V*(t_corrected-8*T);
+        vy1d = 0;
+        vy2d = V;
+    }
+  }
   // ROS_INFO("xd, yd, thetad: [%lf, %lf, %lf]", xd, yd, theta_d);
 
   c_th = cos(theta);
@@ -535,7 +619,6 @@ control_cmd IO_control_collision::collision_avoid(){
 // -------------------------
 // Updates the states of all the other agents from state_graph_builder
 // -------------------------
-
 
 
 // Helper function: update states of other agents
