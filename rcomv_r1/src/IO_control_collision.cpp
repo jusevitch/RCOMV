@@ -484,13 +484,14 @@ control_cmd IO_control_collision::collision_avoid(){
       current_state.pose.position.x, current_state.pose.position.y, current_state.pose.position.z);
     // ROS_INFO("current_state x,y,z: [%lf, %lf, %lf]", current_state.position.x, current_state.position.y, current_state.position.z);
     all_states.erase(all_states.begin() + agent_index - 1); // Remove the agent's state from the list
-    std::vector<geometry_msgs::Pose> collision_states = collision_neighbors(all_states, current_state); 
+    std::vector<PoseStamped_Radius> collision_states = collision_neighbors(all_states, current_state); 
+    std::vector<PoseStamped_Radius> obstacle_collision_states = collision_neighbors(obstacles, current_state);
+
+    collision_states.insert(collision_states.end(), obstacle_collision_states.begin(), obstacle_collision_states.end());
 
     // ROS_INFO("collision_states.size(): %d", collision_states.size());
 
     if (!collision_states.empty()){
-      
-      // ROS_INFO("Collision_states is not empty");
       
       // Get the collision avoidance gradient term
       geometry_msgs::Vector3 psi_collision_sum; psi_collision_sum.x = 0.0; psi_collision_sum.y = 0.0; psi_collision_sum.z = 0.0;
@@ -505,13 +506,13 @@ control_cmd IO_control_collision::collision_avoid(){
         // collision_states[j].position.x, collision_states[j].position.y, collision_states[j].position.z, \
         // difference_norm(current_state,collision_states[j]));
         // ROS_INFO("BARFOO TO THE MIN!!!!");
-        if(difference_norm(current_state,collision_states[j]) < ds){
+        if(difference_norm(current_state,collision_states[j]) < ds + collision_states[j].r_safety){
           // ROS_INFO("FOOBAR TO THE MAX!!!!");
           // Return maximum norm gradient in direction opposite of other agent.
           // This is necessary because value is capped at mu2. If agents are less than ds apart, the gradient will be zero.
           // !!! THE FOLLOWING CODE ONLY WORKS FOR 2D GROUND ROVERS
-          double grad_norm = std::abs(2*mu2/(ds - dc) - pow(mu2,2)/pow(ds - dc,2));
-          double grad_angle = std::atan2(current_state.pose.position.y - collision_states[j].position.y,current_state.pose.position.x - collision_states[j].position.x);
+          double grad_norm = std::abs(2*mu2/(ds - dc) - pow(mu2,2)/pow(ds - dc,2)); // This equation may need to change due to the r_safety changes.
+          double grad_angle = std::atan2(current_state.pose.position.y - collision_states[j].pose.pose.position.y,current_state.pose.position.x - collision_states[j].pose.pose.position.x);
           grad_angle = std::fmod(grad_angle + 2*M_PI, 2*M_PI);
           // ROS_INFO("grad_angle: %lf", grad_angle);
           // ROS_INFO("grad_angle for agent %d: %lf", agent_index, grad_angle);
@@ -541,30 +542,33 @@ control_cmd IO_control_collision::collision_avoid(){
       if(abs(angle_error) < PI/4.0){
         out_cmd.v = sqrt(pow(psi_collision_sum.x,2) + pow(psi_collision_sum.y,2));
       }
+
       // Calculate the variable gamma which interpolates between tracking the trajectory and the collision avoidance
     
       // Find out the smallest Euclidean distance between this agent and any one of the agents in collision_states
       double min_distance;
+      double min_distance_r_safety;
       // ROS_INFO("FOOBAR TO THE MAX!!! %d", agent_index);
       if(agent_index > 2){
         // ROS_INFO("collision_states.size(): %d", collision_states.size());
       }
       for (int jj=0; jj < collision_states.size(); jj++){
         double xi = current_state.pose.position.x; double yi = current_state.pose.position.y; double zi = current_state.pose.position.z;
-        double xj = collision_states[jj].position.x; double yj = collision_states[jj].position.y; double zj = collision_states[jj].position.z;
+        double xj = collision_states[jj].pose.pose.position.x; double yj = collision_states[jj].pose.pose.position.y; double zj = collision_states[jj].pose.pose.position.z;
         double xij = std::sqrt(std::pow(xi - xj,2) + std::pow(yi - yj,2) + std::pow(zi - zj,2));
       
         if(jj == 0 || xij < min_distance){
           min_distance = xij;
+          min_distance_r_safety = collision_states[jj].r_safety;
         }
       }
       // ROS_INFO("min_distance: %lf", min_distance);
-      if (min_distance > dc){
+      if (min_distance > dc + min_distance_r_safety){
         out_cmd.gamma = 0.0;
-      } else if(min_distance < ds){
+      } else if(min_distance < ds + min_distance_r_safety){
         out_cmd.gamma = 1.0;
       } else{
-        out_cmd.gamma = 1.0 - (min_distance - ds) / std::abs(dc - ds); // Convex interpolation between 1 and 0
+        out_cmd.gamma = 1.0 - (min_distance - (ds + min_distance_r_safety)) / std::abs(dc - ds); // Convex interpolation between 1 and 0
       }
     } else {
       out_cmd.gamma = 0.0;
@@ -686,9 +690,10 @@ std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const
 
 // Overloaded for PoseStamped
 // Helper function: calculate neighbors within dc of the agent
-std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const std::vector<geometry_msgs::PoseStamped> &other_agents, const geometry_msgs::PoseStamped &current_state){
+std::vector<PoseStamped_Radius> IO_control_collision::collision_neighbors(const std::vector<geometry_msgs::PoseStamped> &other_agents, const geometry_msgs::PoseStamped &current_state){
   double distance = 0.0;
-  std::vector<geometry_msgs::Pose> close_poses;
+  std::vector<PoseStamped_Radius> close_poses;
+  PoseStamped_Radius temp_PSR;
   // ROS_INFO("other_agents.size() for overload: %d", other_agents.size());
   for(int ii=0; ii < other_agents.size(); ii++){
     distance = std::sqrt(std::pow(current_state.pose.position.x - other_agents[ii].pose.position.x,2) +\
@@ -700,7 +705,9 @@ std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const
     
     if(distance < dc){
       // Save the close poses
-      close_poses.push_back(other_agents[ii].pose);
+      temp_PSR.pose = other_agents[ii];
+      temp_PSR.r_safety = ds; // All UGVs have same safety radius
+      close_poses.push_back(temp_PSR);
     }
   }
   // ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %d]", dc, distance, close_poses.size());
@@ -759,6 +766,39 @@ double IO_control_collision::psi_col_helper(const geometry_msgs::Point &m_agent,
 }
 
 
+// Overloaded to take PoseStamped_Radius arguments
+double IO_control_collision::psi_col_helper(const geometry_msgs::Point &m_agent, const PoseStamped_Radius &n_agent){
+  geometry_msgs::Vector3 vecij = calc_vec(m_agent,n_agent.pose.pose.position);
+  double val=self_norm(vecij);
+  double output;
+
+  // //Reference MATLAB code
+  // if norm(xij,2) <= norm(dc,2)
+  //   mu2 = 10000; % What should this be? Not sure.
+
+  //   outscalar = (norm(xij,2) - dc)^2 / (norm(xij,2) - ds + (ds - dc)^2/mu2);
+  // elseif norm(xij,2) < ds
+  //    outscalar = mu2;
+  // else
+  //    outscalar = 0;
+  // end
+  if (val <= dc + n_agent.r_safety){
+    if (val >= ds + n_agent.r_safety) {
+      // ROS_INFO("The if happened for val - dc / garbage for agent %d", agent_index);
+      // !!! WATCH OUT FOR IF YOU'RE USING dc OR dc2 !!!
+      output =  pow(val - (dc + n_agent.r_safety),2) / (val - (ds + n_agent.r_safety) + ((ds-dc)*(ds-dc))/mu2);
+    } else {
+      // ROS_INFO("The mu2 else happened for agent %d", agent_index);
+      output = mu2;
+    }
+  } else {
+    // ROS_INFO("The zero else happened for agent %d", agent_index);
+    output = 0.0;
+  }
+
+  // ROS_INFO("Output was %lf", output);
+  return output;
+}
 
 
 
@@ -843,6 +883,45 @@ geometry_msgs::Vector3 IO_control_collision::psi_col_gradient(const geometry_msg
 
 }
 
+// Overloaded for PoseStamped_Radius
+geometry_msgs::Vector3 IO_control_collision::psi_col_gradient(const geometry_msgs::PoseStamped &m_agent, const PoseStamped_Radius &n_agent){ //this is supposed to only take the state vector
+  double h=0.001;
+  std::vector<geometry_msgs::Point> perturb;
+  for (int i=0; i<6; i++){
+    perturb.push_back(m_agent.pose.position);
+  }
+  perturb[0].x+=h;
+  perturb[1].x-=h;
+  perturb[2].y+=h;
+  perturb[3].y-=h;
+  perturb[4].z+=h;
+  perturb[5].z-=h;
+
+
+  // Testing
+  // ROS_INFO("m_agent x,y,z: [%lf, %lf, %lf]", m_agent.position.x, m_agent.position.y, m_agent.position.z);
+  // ROS_INFO("n_agent x,y,z: [%lf, %lf, %lf]", n_agent.position.x, n_agent.position.y, n_agent.position.z);
+
+  // ROS_INFO("perturb[0] x,y,z: [%lf, %lf, %lf]", perturb[0].x, perturb[0].y, perturb[0].z);
+
+  geometry_msgs::Vector3 output;
+  output.x = -(psi_col_helper(perturb[0],n_agent) - psi_col_helper(perturb[1],n_agent))/(2*h);
+  // double temp_var_plusx = (psi_col_helper(perturb[0],n_agent.position));
+  // ROS_INFO("temp_var_plusx is %lf", temp_var_plusx);
+  // double temp_var_minusx = psi_col_helper(perturb[1],n_agent.position);
+  // ROS_INFO("temp_var_minusx is %lf", temp_var_minusx);
+
+  output.y = -(psi_col_helper(perturb[2],n_agent) - psi_col_helper(perturb[3],n_agent))/(2*h);
+  // double temp_var_plusy = (psi_col_helper(perturb[2],n_agent.position));
+  // ROS_INFO("temp_var_plusy is %lf", temp_var_plusy);
+  // double temp_var_minusy = psi_col_helper(perturb[3],n_agent.position);
+  // ROS_INFO("temp_var_minusy is %lf", temp_var_minusy);
+
+  output.z = -(psi_col_helper(perturb[4],n_agent) - psi_col_helper(perturb[5],n_agent))/(2*h);
+  //std::cout << "Output" << output << std::endl;
+  return output;
+
+}
 
 
 
@@ -891,6 +970,12 @@ double IO_control_collision::difference_norm(const geometry_msgs::PoseStamped &v
   return sqrt(out_double);
 }
 
+double IO_control_collision::difference_norm(const geometry_msgs::PoseStamped &v1, const PoseStamped_Radius &vPSR){
+  double out_double = pow(v1.pose.position.x - vPSR.pose.pose.position.x,2) +\
+                      pow(v1.pose.position.y - vPSR.pose.pose.position.y,2) +\
+                      pow(v1.pose.position.z - vPSR.pose.pose.position.z,2);
+  return sqrt(out_double);
+}
 
 
 // main function: create a IO_control_collision class type that handles everything
