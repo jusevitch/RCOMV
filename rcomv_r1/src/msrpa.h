@@ -94,10 +94,13 @@ private:
   //int weight_x, weight_y, weight_z;   // weights for the neighbor agents
   int n, k;   // number of agents and number of neighbors in the graph
   int idx;    // the index of the current agent, range from 1 to n
+  int rover_number;
   int role;   // the role of hte current agents: Malicious=1, Normal=2, Leader=3
   Matrix L; //Laplacian
   Matrix Anan; //helper for calculating B
   int F;    // allowed maximum number of adversaries
+  int gazebo; // Determines whether simulation is in Gazebo or not
+  std::vector<int> in_neighbors; // List of in-neighbors. Used for hardware.
 
   double Rf, t0, xc, yc, Rad, wd, phi0, Leng, psi, v, start_L;  // parameters to define the trajectory
 

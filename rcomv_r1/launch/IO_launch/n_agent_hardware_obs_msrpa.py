@@ -13,27 +13,29 @@ import easylaunch as el
 
 common_namespace = "R" # Root of the namespace for all nodes
 
-n = 1
+n = 2
 k = 1
 F = 0
 
-formation_r = 5
+formation_r = 1
 formation_angle = []
 
 for i in range(n):
-    formation_angle.append(i*2*pi/n)
+    formation_angle.append(i*2*pi/n + pi/2)
 
-trajectory_r = 10
+trajectory_r = 2
 
 eta = 10
 
 xc = 0
-yc = 0
+yc = -1
 wd = 0.09
 
 number_of_obstacles = 1
 
 obstacle_radii = [1.0]
+
+rover_numbers = [3,4]
 
 gdb_xterm_output = 1
 
@@ -68,8 +70,8 @@ rover_args = {
     "R": str(trajectory_r),
     "R1": "1",
     "R2": "1",
-    "ds": "1",
-    "dc":"3",
+    "ds": ".25",
+    "dc":".5",
     "gazebo": "0",
     "xc": str(xc),
     "yc": str(yc),
@@ -170,10 +172,10 @@ for j in range(0,n):
         "x": "0",
         "y": str(5*j - 5*n/2),
         "z": "0.1",
-        "rover_number": str(j+1),
+        "rover_number": str(j+3),
         "agent_index": str(j+1),
-        "ugv_name": "R" + str(j+1),
-        "name_space": "R" + str(j+1),
+        "ugv_name": "R" + str(j+3),
+        "name_space": "R" + str(j+3),
         "Ri": str(formation_r),
         "alphai": str(formation_angle[j])
     }
@@ -225,13 +227,22 @@ array_msrpa = msrpa_node.copy(n)
 
 # The namespace must be set here.
 for i in range(n):
-    array_msrpa[i].ns = common_namespace + str(i+1)
+    array_msrpa[i].ns = common_namespace + str(rover_numbers[i])
 
 for i in range(n):
     array_msrpa[i].param = {
         "idx": str(i + 1),
         "role": str(2)
     }
+
+for i in range(n):
+    in_neighbor_array = []
+    for j in range(k):
+        in_neighbor_array.append(rover_numbers[i-(j+1)]) # Should work with negative indices too.
+    array_msrpa[i].rosparam = {
+        "in_neighbors": str(in_neighbor_array)
+    }
+        
 
 # Array of malicious agents
 malicious = sample(range(1,n),F)
