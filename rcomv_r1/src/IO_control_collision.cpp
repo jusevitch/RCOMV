@@ -623,6 +623,8 @@ void IO_control_collision::vicon_obstacle(const geometry_msgs::TransformStamped:
   obstacles[ii].pose.pose.position.y = msgs->transform.translation.y;
   obstacles[ii].pose.pose.position.z = msgs->transform.translation.z;
   obstacles[ii].pose.pose.orientation = msgs->transform.rotation;
+
+  ROS_INFO("obstacle_radii.size(): %lu \n obstacle_radius[0]: %lf", obstacle_radii.size(), obstacle_radii[0]);
 }
 
 void IO_control_collision::change_trajectories(const ros::TimerEvent& event){
@@ -694,7 +696,7 @@ std::vector<geometry_msgs::Pose> IO_control_collision::collision_neighbors(const
 }
 
 // Overloaded for parsing obstacles
-std::vector<PoseStamped_Radius> IO_control_collision::collision_neighbors(const IO_control_collision::PoseStamped_Radius &obstacle_vector, const geometry_msgs::PoseStamped &current_state){
+std::vector<PoseStamped_Radius> IO_control_collision::collision_neighbors(const std::vector<PoseStamped_Radius> &obstacle_vector, const geometry_msgs::PoseStamped &current_state){
   double distance = 0.0;
   std::vector<PoseStamped_Radius> close_poses;
   for(int ii=0; ii < obstacle_vector.size(); ii++){
@@ -702,7 +704,7 @@ std::vector<PoseStamped_Radius> IO_control_collision::collision_neighbors(const 
       std::pow(current_state.pose.position.y - obstacle_vector[ii].pose.pose.position.y,2) + std::pow(current_state.pose.position.z - obstacle_vector[ii].pose.pose.position.z,2));    
     if(distance < dc + obstacle_vector[ii].r_safety){
       // Save the close poses
-      close_poses.push_back(other_agents[ii].pose);
+      close_poses.push_back(obstacle_vector[ii]);
     }
   }
   // ROS_INFO("dc, distance, close_poses.size(): [%lf, %lf, %d]", dc, distance, close_poses.size());
