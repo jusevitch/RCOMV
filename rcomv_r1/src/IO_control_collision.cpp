@@ -267,6 +267,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   double e_y1, e_y2;
   double u1, u2;
   double thetad;
+  double c_thd, s_thd;
 
   // ROS_INFO("gazebo: %d", gazebo ? 1 : 0);
 
@@ -308,6 +309,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
                 wd*(R2*cos(wd*t) + Ri*cos(theta+alphai)));
 
   }
+  
+  
   // the reference states and velocity: cubic polynomial path
   if (path_type.compare(std::string("cubic")) == 0) {
       CubePolyPath(qi, qf, poly_k, T, t, xd, yd, vd, wd);
@@ -321,14 +324,62 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   // ROS_INFO("xd, yd : [%lf, %lf]", xd, yd);
   // ROS_INFO("xc, yc : [%lf, %lf]", xc, yc);
 
-  double c_thd = cos(thetad);
-  double s_thd = sin(thetad);
+  if (path_type == "square") {
+  c_thd = cos(thetad);
+  s_thd = sin(thetad);
   y1d = xd + b*c_thd;
   y2d = yd + b*s_thd;
+  } else if( path_type.compare(std::string("square")) == 0) { // Square path
+    // modulo the time for infinite looping
+    double t_corrected = (t >= 8*T) ? fmod(t, 8*T) : t;
+
+    // parameters for square
+    if ( 0 <= t_corrected && t_corrected < T) {
+      y1d = xc + L;
+      y2d = yc + V*t_corrected;
+      vy1d = 0;
+      vy2d = V;
+    } 
+    else if ( T <= t_corrected && t_corrected < 3*T) {
+      y1d = xc + L - V*(t_corrected-T);
+      y2d = yc + L;
+      vy1d = -V;
+      vy2d = 0;
+    }
+    else if ( 3*T <= t_corrected && t_corrected < 5*T) {
+      y1d = xc - L;
+      y2d = yc + L -V*(t_corrected-3*T);
+      vy1d = 0;
+      vy2d = -V;
+    }
+    else if ( 5*T <= t_corrected && t_corrected < 7*T) {
+      y1d = xc - L + V*(t_corrected-5*T);
+      y2d = yc - L;
+      vy1d = V;
+      vy2d = 0;
+    }
+    else if ( 7*T <= t_corrected && t_corrected < 8*T) {
+      y1d = xc + L;
+      y2d = yc - L + V*(t_corrected-8*T);
+      vy1d = 0;
+      vy2d = V;
+    }
+  }
 
   // the time derivative of the reference output
   vy1d = xddot - b*s_thd*thetaddot;
   vy2d = yddot + b*c_thd*thetaddot;
+  // if(path_type.compare(std::string("circular")) == 0) {
+  //   vy1d = -wd*(R*sin(wd*t + phi0) + Ri*sin(wd*t + phi0 + alphai) + b*sin(theta_d)); // c_thd * vd - b * s_thd * wd;
+  //   vy2d = wd*(R*cos(wd*t) + phi0 + Ri*cos(wd*t + phi0 + alphai) + b*cos(theta_d)); // s_thd * vd + b * c_thd * wd;
+  // } else if(path_type.compare(std::string("eight_shaped")) == 0) {
+  //   double xdoubledot = -pow(wd,2)*(4*R1*sin(2*wd*t) + Ri*cos(wd*t + alphai)); // Second derivative of xd
+  //   double ydoubledot = -pow(wd,2)*(R2*sin(wd*t) + Ri*sin(wd*t+alphai)); // Second derivative of yd
+  //   double thetaddot = (xddot / (pow(xddot,2) + pow(yddot,2)))*ydoubledot - (yddot / (pow(xddot,2) + pow(yddot,2)))*xdoubledot;
+  //   vy1d = xddot - b*sin(theta_d)*thetaddot;
+  //   vy2d = yddot + b*cos(theta_d)*thetaddot;
+  // } else 
+  
 
   // ROS_INFO("xd, yd, thetad: [%lf, %lf, %lf]", xd, yd, theta_d);
 
@@ -673,7 +724,17 @@ void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs)
     // ROS_INFO("ms_rpa callback worked");
   }
 
-  // if(msgs->)
+  if(msgs->type.compare("square") == 0){
+    type_q = msgs->type;
+    t0_q = t0 + msgs->trajectory[0];
+    xc_q = msgs->trajectory[1];
+    yc_q = msgs->trajectory[2];
+    L_q = msgs->trajectory[3];
+    psi_q = msgs->trajectory[4];
+    V_q = msgs->trajectory[5];
+    startLIdx_q = msgs->trajectory[6];
+    T_q = L_q / V_q;
+  }
 }
 
 
@@ -704,14 +765,20 @@ void IO_control_collision::change_trajectories(const ros::TimerEvent& event){
       phi0 =phi0_q;
       // ROS_INFO("Parameters switched: \n t0, xc, yc, R, wd, phi0: [%lf,%lf, %lf, %lf, %lf, %lf]", t0, xc, yc, R, wd, phi0);
     }
-    
-    // Add square trajectories here
 
+    if(type_q.compare("square") == 0){
+      path_type = type_q;
+      t0 = t0_q;
+      xc = xc_q;
+      yc = yc_q;
+      L = L_q;
+      psi = psi_q;
+      V = V_q;
+      startLIdx = startLIdx_q;
+      T = T_q;
+    }
   }
-
 }
-
-
 
 
 // Helper function: calculate neighbors within dc of the agent
@@ -774,7 +841,6 @@ std::vector<PoseStamped_Radius> IO_control_collision::collision_neighbors(const 
   return close_poses;
 }
 
-
 double IO_control_collision::psi_col_helper(const geometry_msgs::Point &m_agent, const  geometry_msgs::Point &n_agent){
   geometry_msgs::Vector3 vecij = calc_vec(m_agent,n_agent);
   double val=self_norm(vecij);
@@ -809,7 +875,6 @@ double IO_control_collision::psi_col_helper(const geometry_msgs::Point &m_agent,
   return output;
 }
 
-
 // Overloaded to take PoseStamped_Radius arguments
 double IO_control_collision::psi_col_helper(const geometry_msgs::Point &m_agent, const PoseStamped_Radius &n_agent){
   geometry_msgs::Vector3 vecij = calc_vec(m_agent,n_agent.pose.pose.position);
@@ -843,8 +908,6 @@ double IO_control_collision::psi_col_helper(const geometry_msgs::Point &m_agent,
   // ROS_INFO("Output was %lf", output);
   return output;
 }
-
-
 
 geometry_msgs::Vector3 IO_control_collision::psi_col_gradient(const geometry_msgs::Pose &m_agent, const geometry_msgs::Pose &n_agent){ //this is supposed to only take the state vector
   double h=0.001;
@@ -884,9 +947,6 @@ geometry_msgs::Vector3 IO_control_collision::psi_col_gradient(const geometry_msg
   return output;
 
 }
-
-
-
 
 geometry_msgs::Vector3 IO_control_collision::psi_col_gradient(const geometry_msgs::PoseStamped &m_agent, const geometry_msgs::Pose &n_agent){ //this is supposed to only take the state vector
   double h=0.001;
@@ -967,8 +1027,6 @@ geometry_msgs::Vector3 IO_control_collision::psi_col_gradient(const geometry_msg
 
 }
 
-
-
 geometry_msgs::Vector3 IO_control_collision::calc_vec(const geometry_msgs::Point& state1, const geometry_msgs::Point& state2){
   geometry_msgs::Vector3 outVector3;
   outVector3.x = state1.x - state2.x;
@@ -978,19 +1036,11 @@ geometry_msgs::Vector3 IO_control_collision::calc_vec(const geometry_msgs::Point
 }
 
 
-
-
-
 double IO_control_collision::self_norm(const geometry_msgs::Vector3 &tiny){
   double val;
   val = sqrt((tiny.x*tiny.x) + (tiny.y*tiny.y) + (tiny.z*tiny.z));
   return val;
 }
-
-
-
-
-
 
 geometry_msgs::Vector3 IO_control_collision::add_vectors(const geometry_msgs::Vector3 &a, const geometry_msgs::Vector3 &b){
   geometry_msgs::Vector3 result;
@@ -999,10 +1049,6 @@ geometry_msgs::Vector3 IO_control_collision::add_vectors(const geometry_msgs::Ve
   result.z = a.z + b.z;
   return result;
 }
-
-
-
-
 
 double IO_control_collision::difference_norm(const geometry_msgs::Pose &v1, const geometry_msgs::Pose &v2){
   double out_double = pow(v1.position.x - v2.position.x,2) + pow(v1.position.y - v2.position.y,2) + pow(v1.position.z - v2.position.z,2);
