@@ -333,10 +333,20 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
     y2d = yd + b*s_thd;
     vy1d = xddot - b*s_thd*thetaddot;
     vy2d = yddot + b*c_thd*thetaddot;
-  } else if( path_type.compare(std::string("square")) == 0) { // Square path
+  } 
+
+  else if( path_type.compare(std::string("square")) == 0) { // Square path
     // modulo the time for infinite looping
     double t_corrected = (t >= 8*T) ? fmod(t, 8*T) : t;
-    ROS_INFO("t, t_corrected: [%lf, %lf, %lf], T", t, t_corrected, T);
+
+    ROS_INFO("t, t_corrected, T: [%lf, %lf, %lf]", t, t_corrected, T);
+
+    if(startLIdx == 0) t_corrected+=0;
+    else if(startLIdx >= 1 && startLIdx < 3) t_corrected += T;
+    else if(startLIdx >= 3 && startLIdx < 5) t_corrected += 3*T;
+    else if(startLIdx >= 5 && startLIdx < 7) t_corrected += 5*T;
+    else t_corrected += 7*T;
+
     // parameters for square
     if ( 0 <= t_corrected && t_corrected < T) {
       ROS_INFO("state1");
@@ -373,6 +383,14 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
       vy1d = 0;
       vy2d = V;
     }
+
+
+    y1d = y1d * cos(psi) + y2d * sin(psi);
+    y2d = -y1d * sin(psi) + y2d * cos(psi);
+
+    vy1d = vy1d * cos(psi) + vy2d * sin(psi);
+    vy2d = -vy1d * sin(psi) + vy2d * cos(psi);
+
   }
 
   ROS_INFO("y1d, y2d: [%lf, %lf]", y1d, y2d);
