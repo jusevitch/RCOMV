@@ -32,7 +32,7 @@
     <arg name="vmax" default="6" />
     <arg name="wmax" default="4"/>
     <arg name="mu2" default="100"/>
-    <arg name="path_type" default="circular" />
+    <arg name="path_type" default="NaN" />
     <arg name="xc" default="0" />
     <arg name="yc" default="0" />
     <arg name="R" default="4" />

@@ -18,7 +18,7 @@ n = 3
 k = 1
 F = 0
 
-formation_r = 0.75
+formation_r = 0.0 #0.75
 formation_angle = []
 
 for ii in range(n):
@@ -32,6 +32,11 @@ xc = 0
 yc = -1
 wd = 0.09
 mu2 = 0.5
+
+Leng = 1
+psi = 0
+V = .2
+startLIdx = 0
 
 number_of_obstacles = 2
 
@@ -53,7 +58,6 @@ rover_args = {
     "enable_logging": "true",
     "enable_ground_truth": "true",
     "n": str(n),
-    "path_type": "circular",
     "qi_x": "10",
     "qi_y": "0",
     "qi_theta": "1.5708",
@@ -63,7 +67,7 @@ rover_args = {
     "poly_k": "60",
     "T": "30",
     "endless": "true",
-    "b": "0.05",
+    "b": "0.2",
     "k1": "0.5",
     "k2": "0.5",
     "k3": "2",
@@ -80,7 +84,8 @@ rover_args = {
     "xc": str(xc),
     "yc": str(yc),
     "obstacle_radii": str(obstacle_radii),
-    "number_of_obstacles": str(number_of_obstacles)
+    "number_of_obstacles": str(number_of_obstacles),
+    "path_type": "NaN"
 }
 
 # Why did I use str(0) instead of "0"? I have no idea...it's all the same.
@@ -95,10 +100,10 @@ msrpa_args = {
     "Rad": str(trajectory_r),
     "wd": str(wd),
     "phi0": str(0.0),
-    "leng": str(10),
-    "psi": str(0),
-    "v": str(0),
-    "start_L": str(0),
+    "Leng": str(Leng),
+    "psi": str(psi),
+    "V": str(V),
+    "startLIdx": str(startLIdx),
     "common_namespace": common_namespace
 }
 
@@ -124,7 +129,6 @@ launch.include = []
 ugv = el.include(file="$(find rcomv_r1)/launch/IO_launch/ugv_with_IO_collision.launch")
 ugv.defarg = [
     "enable_logging",
-    "path_type",
     "endless",
     "b",
     "k1",
@@ -144,7 +148,8 @@ ugv.defarg = [
     "xc",
     "yc",
     "obstacle_radii",
-    "number_of_obstacles"
+    "number_of_obstacles",
+    "path_type"
 ]
 
 ugv.arg = {
@@ -223,10 +228,10 @@ msrpa_node.defparam = [
     "Rad",
     "wd",
     "phi0",
-    "leng",
+    "Leng",
     "psi",
-    "v",
-    "start_L",
+    "V",
+    "startLIdx",
     "common_namespace"
 ]
 
@@ -239,7 +244,8 @@ for i in range(n):
 for i in range(n):
     array_msrpa[i].param = {
         "idx": str(i + 1),
-        "role": str(2)
+        "role": str(2),
+        "Rf": str(trajectory_r)
     }
 
 for i in range(n):
@@ -261,7 +267,7 @@ leaders = [1]
 
 for j in leaders:
     array_msrpa[j-1].param["role"] = str(3)
-    array_msrpa[j-1].param["trajectory_type"] = "circular"
+    array_msrpa[j-1].param["trajectory_type"] = "square"
 
 # for j in [4,5,6]:
 #     array_msrpa[j-1].output = "screen"

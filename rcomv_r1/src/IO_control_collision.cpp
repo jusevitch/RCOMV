@@ -21,7 +21,7 @@ IO_control_collision::IO_control_collision()
   nh_private_.param<double>("mu2", mu2, 100);
 
   // Initialize the paramters (varying, will be updated by subscribers)
-  nh_private_.param<std::string>("path_type", path_type, "circular");
+  nh_private_.param<std::string>("path_type", path_type, "NaN");
   //
   // parametric path paramters
   nh_private_.param<double>("t0", t0, ros::Time().toSec());
@@ -324,51 +324,61 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   // ROS_INFO("xd, yd : [%lf, %lf]", xd, yd);
   // ROS_INFO("xc, yc : [%lf, %lf]", xc, yc);
 
-  if (path_type == "square") {
-  c_thd = cos(thetad);
-  s_thd = sin(thetad);
-  y1d = xd + b*c_thd;
-  y2d = yd + b*s_thd;
+  ROS_INFO("path_type: %s", path_type.c_str());
+
+  if (path_type == "circular") {
+    c_thd = cos(thetad);
+    s_thd = sin(thetad);
+    y1d = xd + b*c_thd;
+    y2d = yd + b*s_thd;
+    vy1d = xddot - b*s_thd*thetaddot;
+    vy2d = yddot + b*c_thd*thetaddot;
   } else if( path_type.compare(std::string("square")) == 0) { // Square path
     // modulo the time for infinite looping
     double t_corrected = (t >= 8*T) ? fmod(t, 8*T) : t;
-
+    ROS_INFO("t, t_corrected: [%lf, %lf, %lf], T", t, t_corrected, T);
     // parameters for square
     if ( 0 <= t_corrected && t_corrected < T) {
-      y1d = xc + L;
+      ROS_INFO("state1");
+      y1d = xc + Leng;
       y2d = yc + V*t_corrected;
       vy1d = 0;
       vy2d = V;
     } 
     else if ( T <= t_corrected && t_corrected < 3*T) {
-      y1d = xc + L - V*(t_corrected-T);
-      y2d = yc + L;
+      ROS_INFO("state2");
+      y1d = xc + Leng - V*(t_corrected-T);
+      y2d = yc + Leng;
       vy1d = -V;
       vy2d = 0;
     }
     else if ( 3*T <= t_corrected && t_corrected < 5*T) {
-      y1d = xc - L;
-      y2d = yc + L -V*(t_corrected-3*T);
+      ROS_INFO("state3");
+      y1d = xc - Leng;
+      y2d = yc + Leng -V*(t_corrected-3*T);
       vy1d = 0;
       vy2d = -V;
     }
     else if ( 5*T <= t_corrected && t_corrected < 7*T) {
-      y1d = xc - L + V*(t_corrected-5*T);
-      y2d = yc - L;
+      ROS_INFO("state4");
+      y1d = xc - Leng + V*(t_corrected-5*T);
+      y2d = yc - Leng;
       vy1d = V;
       vy2d = 0;
     }
     else if ( 7*T <= t_corrected && t_corrected < 8*T) {
-      y1d = xc + L;
-      y2d = yc - L + V*(t_corrected-8*T);
+      ROS_INFO("state5");
+      y1d = xc + Leng;
+      y2d = yc - Leng + V*(t_corrected-7*T);
       vy1d = 0;
       vy2d = V;
     }
   }
 
+  ROS_INFO("y1d, y2d: [%lf, %lf]", y1d, y2d);
+
   // the time derivative of the reference output
-  vy1d = xddot - b*s_thd*thetaddot;
-  vy2d = yddot + b*c_thd*thetaddot;
+  
   // if(path_type.compare(std::string("circular")) == 0) {
   //   vy1d = -wd*(R*sin(wd*t + phi0) + Ri*sin(wd*t + phi0 + alphai) + b*sin(theta_d)); // c_thd * vd - b * s_thd * wd;
   //   vy2d = wd*(R*cos(wd*t) + phi0 + Ri*cos(wd*t + phi0 + alphai) + b*cos(theta_d)); // s_thd * vd + b * c_thd * wd;
@@ -382,6 +392,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   
 
   // ROS_INFO("xd, yd, thetad: [%lf, %lf, %lf]", xd, yd, theta_d);
+
+  if(path_type == "circular" || path_type == "square") { // Add other types later
 
   c_th = cos(theta);
   s_th = sin(theta);
@@ -401,8 +413,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   control_cmd coll_avoid = IO_control_collision::collision_avoid(); // inputs are x,y,theta? Delays may cause problems
 
   ROS_INFO("Agent %d", rover_number);
-  ROS_INFO("Gamma, v_coll, w_coll: [%lf, %lf, %lf]", coll_avoid.gamma, coll_avoid.v, coll_avoid.w);
-  ROS_INFO("mu2, k3: [%lf, %lf]", mu2, k3);
+  // ROS_INFO("Gamma, v_coll, w_coll: [%lf, %lf, %lf]", coll_avoid.gamma, coll_avoid.v, coll_avoid.w);
+  // ROS_INFO("mu2, k3: [%lf, %lf]", mu2, k3);
 
   // transform to the actual control inputs for the unicycle model
   cmd_vel.linear.x =  (1.0 - coll_avoid.gamma)*(c_th * u1 + s_th * u2) + coll_avoid.gamma*coll_avoid.v; // 
@@ -411,6 +423,10 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   // saturation
   cmd_vel.linear.x = std::max(-vmax, std::min(cmd_vel.linear.x, vmax));
   cmd_vel.angular.z = std::max(-wmax, std::min(cmd_vel.angular.z, wmax));
+  } else {
+    cmd_vel.linear.x = 0.0;
+    cmd_vel.angular.z = 0.0;
+  }
 
   // ROS_INFO("After saturation: v, w: [%lf, %lf]", cmd_vel.linear.x, cmd_vel.angular.z);
 
@@ -729,11 +745,11 @@ void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs)
     t0_q = t0 + msgs->trajectory[0];
     xc_q = msgs->trajectory[1];
     yc_q = msgs->trajectory[2];
-    L_q = msgs->trajectory[3];
+    Leng_q = msgs->trajectory[3];
     psi_q = msgs->trajectory[4];
     V_q = msgs->trajectory[5];
     startLIdx_q = msgs->trajectory[6];
-    T_q = L_q / V_q;
+    T_q = Leng_q / V_q;
   }
 }
 
@@ -771,7 +787,7 @@ void IO_control_collision::change_trajectories(const ros::TimerEvent& event){
       t0 = t0_q;
       xc = xc_q;
       yc = yc_q;
-      L = L_q;
+      Leng = Leng_q;
       psi = psi_q;
       V = V_q;
       startLIdx = startLIdx_q;

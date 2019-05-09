@@ -120,7 +120,7 @@ private:
   double R1, R2; // radius for eight_shaped path
   double wd; // reference turning rate
   double phi0; // Initial starting point on circle trajectory w.r.t. the zero angle position in the global frame.
-  double L, psi, V, startLIdx; // parameters for square path
+  double Leng, psi, V, startLIdx; // parameters for square path
 
   // Safety parameters
   double ds; // Safety radius; must not be crossed 
@@ -148,7 +148,7 @@ private:
   double phi0_q;
 
   // Add square q parameters
-  double L_q, T_q, V_q, psi_q, startLIdx_q;
+  double Leng_q, T_q, V_q, psi_q, startLIdx_q;
 
   bool odometry_connected; // flag of odometry
   double initial_time;

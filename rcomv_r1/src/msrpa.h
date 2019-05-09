@@ -102,7 +102,7 @@ private:
   int gazebo; // Determines whether simulation is in Gazebo or not
   std::vector<int> in_neighbors; // List of in-neighbors. Used for hardware.
 
-  double Rf, t0, xc, yc, Rad, wd, phi0, Leng, psi, v, start_L;  // parameters to define the trajectory
+  double Rf, t0, xc, yc, Rad, wd, phi0, Leng, psi, V, startLIdx;  // parameters to define the trajectory
 
   uint iteration=0;
 

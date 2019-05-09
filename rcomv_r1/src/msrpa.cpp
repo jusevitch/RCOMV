@@ -35,10 +35,10 @@ MSRPA::MSRPA()
   nh_private_.param<double>("Rad", Rad, 100);
   nh_private_.param<double>("wd", wd, 0); // wd in the code
   nh_private_.param<double>("phi0", phi0, 0);
-  nh_private_.param<double>("Leng", Leng, 10);
+  nh_private_.param<double>("Leng", Leng, 0);
   nh_private_.param<double>("psi", psi, 0);
-  nh_private_.param<double>("v", v, 0);
-  nh_private_.param<double>("start_L", start_L, 0);
+  nh_private_.param<double>("V", V, 0);
+  nh_private_.param<double>("startLIdx", startLIdx, 0);
   nh_private_.param<std::string>("trajectory_type", trajectory_type, "None");
 
   // Common namespace of all nodes. This variable helps the node know what topics to subscribe to 
@@ -59,12 +59,17 @@ MSRPA::MSRPA()
   }
 
   // Initialize msgs
-  ROS_INFO("t0, xc, yc, Rad, wd, phi0, role: [%lf, %lf, %lf, %lf, %lf, %lf], %d", t0, xc, yc, Rad, wd, phi0, role);  
+  // ROS_INFO("t0, xc, yc, Rad, wd, phi0, role: [%lf, %lf, %lf, %lf, %lf, %lf], %d", t0, xc, yc, Rad, wd, phi0, role);  
   if (role == 3)
   {
    reset_message.type = trajectory_type;
+   if (trajectory_type == "circular"){
    reset_message.trajectory = {t0, xc, yc, Rad, wd, phi0};
-   reset_message.formation = {Rf, static_cast<double>(n)};
+   } else if (trajectory_type == "square") {
+     reset_message.trajectory = {t0, xc, yc, Leng, psi, V, startLIdx};
+   }
+
+    reset_message.formation = {Rf, static_cast<double>(n)};
     inform_states =reset_message;
   }
   else if (role == 1)
@@ -170,8 +175,8 @@ void MSRPA::switch_subCallback(const std_msgs::Bool::ConstPtr &msg)
 //  Subscriber Callback Function: subscribesreset_messagepaths of other nodes
 void MSRPA::ref_subCallback(const ref_msgs::ConstPtr &msgs, const int list_idx)
 {
-  ROS_INFO("cvec.size(): %lu", cvec.size());
-  ROS_INFO("list_idx: %d", list_idx);
+  // ROS_INFO("cvec.size(): %lu", cvec.size());
+  // ROS_INFO("list_idx: %d", list_idx);
   cvec[list_idx].type = msgs->type;
   cvec[list_idx].trajectory = msgs->trajectory;
   cvec[list_idx].formation = msgs->formation;
@@ -182,6 +187,8 @@ void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
 {
 
   Consensus(idx - 1); // Update internal_state
+
+  ROS_INFO("startLIdx: %lf", startLIdx);
   
   // Compares the type strings to see if internal_state is NaN. Only the string needs to be compared;
   // normal messages should NOT have "NaN" as their trajectorytype.
