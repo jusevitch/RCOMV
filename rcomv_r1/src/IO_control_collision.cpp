@@ -255,8 +255,10 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   // ROS_INFO("FOOOOOOBAAAARRRRRRR TIMER");
   // Input/Output Linearization Algorithm
   double xd, yd, vd;
-  double xddot, yddot; 
-  double y1d, y2d, vy1d, vy2d;
+  double xddot, yddot, thetaddot; //// 1st and 2nd derivatives of xd, yd, thetad
+  double xdoubledot, ydoubledot; // 2nd derivatives of xd, yd
+  double y1d, y2d;
+  double vy1d, vy2d;
   double y1, y2;
   double x = state.pose.pose.position.x;
   double y = state.pose.pose.position.y;
@@ -279,6 +281,11 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
      yddot = wd*(R*cos(thetaf) + Ri*sin(thetaf + alphai));
      thetad = atan2(yddot,xddot); // Desired direction
 
+     xdoubledot = -pow(wd,2)*(R*cos(thetaf) + Ri*cos(thetaf + alphai));
+     ydoubledot = -pow(wd,2)*(R*sin(thetaf) + Ri*sin(thetaf + alphai));
+
+     thetaddot = xddot/(pow(xddot,2) + pow(yddot,2))*ydoubledot - yddot/(pow(xddot,2) + pow(yddot,2))*xdoubledot;
+
      vd = hypot(wd*(-R*sin(wd*t+phi0) - Ri*sin(wd*t+phi0+alphai)),
                 wd*(R*cos(wd*t) + Ri*cos(wd*t+phi0+alphai))); // Do we use this?? This is the velocity of the position, but not the IO linearization point.
   }
@@ -286,27 +293,31 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   if (path_type.compare(std::string("eight_shaped")) == 0) {
      xd = xc + R1*sin(2*wd*t) + Ri*cos(wd*t+alphai);
      yd = yc + R2*sin(wd*t) + Ri*sin(wd*t+alphai);
+
+    xddot = wd*(2*R1*cos(2*wd*t) - Ri*sin(wd*t + alphai)); // First derivative of xd
+    yddot = wd*(R2*cos(wd*t) + Ri*cos(wd*t + alphai)); // First derivative of yd
+    thetad = atan2(yddot,xddot);
+
+     xdoubledot = -pow(wd,2)*(4*R1*sin(2*wd*t) + Ri*cos(wd*t + alphai)); // Second derivative of xd
+     ydoubledot = -pow(wd,2)*(R2*sin(wd*t) + Ri*sin(wd*t+alphai)); // Second derivative of yd
+     thetaddot = (xddot / (pow(xddot,2) + pow(yddot,2)))*ydoubledot - (yddot / (pow(xddot,2) + pow(yddot,2)))*xdoubledot;
+
+
      //vd = hypot((2*R1*wd*cos(2*wd*t)), (R2*wd*cos(wd*t)));
      vd = hypot((2*wd*R1*cos(2*wd*t) - wd*Ri*sin(theta+alphai)),
                 wd*(R2*cos(wd*t) + Ri*cos(theta+alphai)));
+
   }
   // the reference states and velocity: cubic polynomial path
   if (path_type.compare(std::string("cubic")) == 0) {
       CubePolyPath(qi, qf, poly_k, T, t, xd, yd, vd, wd);
   }
 
-  double xddot, yddot, theta_d, xdoubledot, ydoubledot, thetaddot; // 1st and 2nd derivatives of xd, yd. Theta_d is desired formation theta, thetaddot is 1st derivative of theta_d
   // ROS_INFO("wd : %lf", wd);
   // ROS_INFO("agent_index, rover_number: %d, %d", agent_index, rover_number);
 
   // the reference output
-  if(path_type.compare(std::string("circular")) == 0) {
-    theta_d = fmod(wd*t + phi0 + (M_PI / 2.0) + 2*M_PI, 2*M_PI);
-  } else if(path_type.compare(std::string("eight_shaped")) == 0) {
-    xddot = wd*(2*R1*cos(2*wd*t) - Ri*sin(wd*t + alphai)); // First derivative of xd
-    yddot = wd*(R2*cos(wd*t) + Ri*cos(wd*t + alphai)); // First derivative of yd
-    theta_d = atan2(yddot,xddot);
-  }
+
   // ROS_INFO("xd, yd : [%lf, %lf]", xd, yd);
   // ROS_INFO("xc, yc : [%lf, %lf]", xc, yc);
 
@@ -314,17 +325,10 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   double s_thd = sin(thetad);
   y1d = xd + b*c_thd;
   y2d = yd + b*s_thd;
+
   // the time derivative of the reference output
-  if(path_type.compare(std::string("circular")) == 0) {
-    vy1d = -wd*(R*sin(wd*t + phi0) + Ri*sin(wd*t + phi0 + alphai) + b*sin(theta_d)); // c_thd * vd - b * s_thd * wd;
-    vy2d = wd*(R*cos(wd*t) + phi0 + Ri*cos(wd*t + phi0 + alphai) + b*cos(theta_d)); // s_thd * vd + b * c_thd * wd;
-  } else if(path_type.compare(std::string("eight_shaped")) == 0) {
-    double xdoubledot = -pow(wd,2)*(4*R1*sin(2*wd*t) + Ri*cos(wd*t + alphai)); // Second derivative of xd
-    double ydoubledot = -pow(wd,2)*(R2*sin(wd*t) + Ri*sin(wd*t+alphai)); // Second derivative of yd
-    double thetaddot = (xddot / (pow(xddot,2) + pow(yddot,2)))*ydoubledot - (yddot / (pow(xddot,2) + pow(yddot,2)))*xdoubledot;
-    vy1d = xddot - b*sin(theta_d)*thetaddot;
-    vy2d = yddot + b*cos(theta_d)*thetaddot;
-  }
+  vy1d = xddot - b*s_thd*thetaddot;
+  vy2d = yddot + b*c_thd*thetaddot;
 
   // ROS_INFO("xd, yd, thetad: [%lf, %lf, %lf]", xd, yd, theta_d);
 
@@ -345,6 +349,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   
   control_cmd coll_avoid = IO_control_collision::collision_avoid(); // inputs are x,y,theta? Delays may cause problems
 
+  ROS_INFO("Agent %d", rover_number);
   ROS_INFO("Gamma, v_coll, w_coll: [%lf, %lf, %lf]", coll_avoid.gamma, coll_avoid.v, coll_avoid.w);
   ROS_INFO("mu2, k3: [%lf, %lf]", mu2, k3);
 
@@ -668,7 +673,7 @@ void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs)
     // ROS_INFO("ms_rpa callback worked");
   }
 
-  if(msgs->)
+  // if(msgs->)
 }
 
 

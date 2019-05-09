@@ -3,7 +3,8 @@
 
 import sys
 ## Append easylaunch directory to path
-sys.path.append('/home/dasc/Downloads/MSR/launch/easylaunch')
+# sys.path.append('/home/dasc/Downloads/MSR/launch/easylaunch')
+sys.path.append('/media/james/Data/code2/easylaunch')
 
 from math import pi, cos, sin
 from random import randint, sample
@@ -13,30 +14,30 @@ import easylaunch as el
 
 common_namespace = "R" # Root of the namespace for all nodes
 
-n = 2
+n = 3
 k = 1
 F = 0
 
-formation_r = 1.0
+formation_r = 0.75
 formation_angle = []
 
 for ii in range(n):
-    formation_angle.append(ii*2*pi/n + pi/2)
+    formation_angle.append(ii*2*pi/n)
 
-trajectory_r = 1.5
+trajectory_r = 1.25
 
 eta = 10
 
 xc = 0
 yc = -1
 wd = 0.09
-mu2 = 0.3
+mu2 = 0.5
 
 number_of_obstacles = 2
 
-obstacle_radii = [0.7, 0.7]
+obstacle_radii = [0.25, 0.25]
 
-rover_numbers = [4,5]
+rover_numbers = [4,5,6]
 
 gdb_xterm_output = 1
 
@@ -65,7 +66,7 @@ rover_args = {
     "b": "0.05",
     "k1": "0.5",
     "k2": "0.5",
-    "k3": "1",
+    "k3": "2",
     "vmax": "0.5",
     "wmax": "1.3",
     "mu2": str(mu2),
@@ -73,8 +74,8 @@ rover_args = {
     "R": str(trajectory_r),
     "R1": "1",
     "R2": "1",
-    "ds": "0.3",
-    "dc":"0.9",
+    "ds": "0.4",
+    "dc":"0.7",
     "gazebo": "0",
     "xc": str(xc),
     "yc": str(yc),
@@ -205,6 +206,7 @@ launch.node = []
 builder_node = el.node(name="builder_node", pkg="state_graph_builder", type="builder")
 builder_node.defparam = ["n", "gazebo"]
 builder_node.param = {"base_ns": "/R"}
+builder_node.rosparam = {"rover_numbers_list": str(rover_numbers)}
 launch.node.append(builder_node)
 
 # MS-RPA nodes
