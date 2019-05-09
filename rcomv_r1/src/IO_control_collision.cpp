@@ -18,6 +18,7 @@ IO_control_collision::IO_control_collision()
   nh_private_.param<double>("wmax", wmax, 1.0);
   nh_private_.param<double>("Ri", Ri, 0);
   nh_private_.param<double>("alphai", alphai, 0);
+  nh_private_.param<double>("mu2", mu2, 100);
 
   // Initialize the paramters (varying, will be updated by subscribers)
   nh_private_.param<std::string>("path_type", path_type, "circular");
@@ -54,7 +55,6 @@ IO_control_collision::IO_control_collision()
   nh_private_.getParam("obstacle_radii", obstacle_radii);
 
 
-  mu2=10000;
   even_cycle = false;
   //
   odometry_connected = false;
@@ -176,6 +176,7 @@ void IO_control_collision::odom_subCallback(const nav_msgs::Odometry::ConstPtr& 
   {
       odometry_connected = true;
       t0 = ros::Time::now().toSec(); // intial time
+      ROS_INFO("2: odometry callback worked");
   }
   state.header = msgs->header;
   state.child_frame_id = msgs->child_frame_id;
@@ -301,6 +302,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   }
   // ROS_INFO("xd, yd : [%lf, %lf]", xd, yd);
   // ROS_INFO("xc, yc : [%lf, %lf]", xc, yc);
+
   double c_thd = cos(theta_d);
   double s_thd = sin(theta_d);
   y1d = xd + b*c_thd;
@@ -337,6 +339,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   control_cmd coll_avoid = IO_control_collision::collision_avoid(); // inputs are x,y,theta? Delays may cause problems
 
   ROS_INFO("Gamma, v_coll, w_coll: [%lf, %lf, %lf]", coll_avoid.gamma, coll_avoid.v, coll_avoid.w);
+  ROS_INFO("mu2, k3: [%lf, %lf]", mu2, k3);
 
   // transform to the actual control inputs for the unicycle model
   cmd_vel.linear.x =  (1.0 - coll_avoid.gamma)*(c_th * u1 + s_th * u2) + coll_avoid.gamma*coll_avoid.v; // 
@@ -476,7 +479,6 @@ control_cmd IO_control_collision::collision_avoid(){
   // ROS_INFO("n: %d", n);
   // ROS_INFO("state_lists.size() == n: %d", (state_lists.size() == n));
 
-
   // Collect list of in-neighbors
   if(!state_lists.empty() && state_lists.size() == n){ // Keeps the node from crashing before the list is populated
     // ROS_INFO("FOOOOOOBAAAAARRRR");
@@ -489,10 +491,10 @@ control_cmd IO_control_collision::collision_avoid(){
     std::vector<PoseStamped_Radius> collision_states = collision_neighbors(all_states, current_state); 
     std::vector<PoseStamped_Radius> obstacle_collision_states = collision_neighbors(obstacles, current_state);
 
-    ROS_INFO("# collision agents, # obstacles for agent R%d: [%lu, %lu]", rover_number, collision_states.size(), obstacle_collision_states.size());
+    // ROS_INFO("# collision agents, # obstacles for agent R%d: [%lu, %lu]", rover_number, collision_states.size(), obstacle_collision_states.size());
 
     collision_states.insert(collision_states.end(), obstacle_collision_states.begin(), obstacle_collision_states.end());
-    ROS_INFO("Size of collision_states after insertion: %lu", collision_states.size());
+    // ROS_INFO("Size of collision_states after insertion: %lu", collision_states.size());
 
     if (!collision_states.empty()){
       
@@ -542,45 +544,68 @@ control_cmd IO_control_collision::collision_avoid(){
       out_cmd.w = k3*angle_error; // Proportional gain must be tuned
 
       // Only set a linear velocity if angular error is less than PI/4
-      if(abs(angle_error) < PI/4.0){
+      if(abs(angle_error) < PI/8.0){
         out_cmd.v = sqrt(pow(psi_collision_sum.x,2) + pow(psi_collision_sum.y,2));
       }
 
       // Calculate the variable gamma which interpolates between tracking the trajectory and the collision avoidance
-    
-      // Find out the smallest Euclidean distance between this agent and any one of the agents in collision_states
-      double min_distance;
-      double min_distance_r_safety;
-      // ROS_INFO("FOOBAR TO THE MAX!!! %d", agent_index);
-      if(agent_index > 2){
-        // ROS_INFO("collision_states.size(): %d", collision_states.size());
-      }
-      for (int jj=0; jj < collision_states.size(); jj++){
+      out_cmd.gamma = 0.0;
+
+      for (int jj = 0; jj < collision_states.size(); jj++)
+      {
         double xi = current_state.pose.position.x; double yi = current_state.pose.position.y; double zi = current_state.pose.position.z;
         double xj = collision_states[jj].pose.pose.position.x; double yj = collision_states[jj].pose.pose.position.y; double zj = collision_states[jj].pose.pose.position.z;
         double xij = std::sqrt(std::pow(xi - xj,2) + std::pow(yi - yj,2) + std::pow(zi - zj,2));
-        ROS_INFO("xij, r_safety[jj]: [%lf, %lf]", xij, collision_states[jj].r_safety);
-        if(jj == 0 || xij < min_distance){
-          min_distance = xij;
-          min_distance_r_safety = collision_states[jj].r_safety;
+        // ROS_INFO("xij, r_safety[jj]: [%lf, %lf]", xij, collision_states[jj].r_safety);
+        double gamma_jj;
+        if(xij > dc + collision_states[jj].r_safety){
+          gamma_jj = 0.0;
+        } else if(xij < ds + collision_states[jj].r_safety){
+          gamma_jj = 1.0;
+        } else {
+          gamma_jj = 1.0 - (xij - (ds + collision_states[jj].r_safety)) / std::abs(dc - ds); // Convex interpolation between 1 and 0
+        }
+        // ROS_INFO("gamma_jj: %lf", gamma_jj);
+        // ROS_INFO("mu2: %lf", mu2);
+        // Ensure out_cmd.gamma is highest of all gamma values
+        if(jj == 0 || gamma_jj > out_cmd.gamma){
+          out_cmd.gamma = gamma_jj;
         }
       }
-      ROS_INFO("min_distance, r0: [%lf, %lf]", min_distance, min_distance_r_safety);
-      ROS_INFO("dc + r0, ds + r0: [%lf, %lf]", dc + min_distance_r_safety, ds + min_distance_r_safety);
-      if (min_distance > dc + min_distance_r_safety){
-        out_cmd.gamma = 0.0;
-      } else if(min_distance < ds + min_distance_r_safety){
-        out_cmd.gamma = 1.0;
-      } else{
-        out_cmd.gamma = 1.0 - (min_distance - (ds + min_distance_r_safety)) / std::abs(dc - ds); // Convex interpolation between 1 and 0
-      }
+      
+
+      // OLD BELOW
+      // Find out the smallest Euclidean distance between this agent and any one of the agents in collision_states
+      // double min_distance;
+      // double min_distance_r_safety;
+
+      // for (int jj=0; jj < collision_states.size(); jj++){
+      //   double xi = current_state.pose.position.x; double yi = current_state.pose.position.y; double zi = current_state.pose.position.z;
+      //   double xj = collision_states[jj].pose.pose.position.x; double yj = collision_states[jj].pose.pose.position.y; double zj = collision_states[jj].pose.pose.position.z;
+      //   double xij = std::sqrt(std::pow(xi - xj,2) + std::pow(yi - yj,2) + std::pow(zi - zj,2));
+      //   ROS_INFO("xij, r_safety[jj]: [%lf, %lf]", xij, collision_states[jj].r_safety);
+      //   if(jj == 0 || xij < min_distance){
+      //     min_distance = xij;
+      //     min_distance_r_safety = collision_states[jj].r_safety;
+      //   }
+      // }
+      // ROS_INFO("min_distance, r0: [%lf, %lf]", min_distance, min_distance_r_safety);
+      // ROS_INFO("dc + r0, ds + r0: [%lf, %lf]", dc + min_distance_r_safety, ds + min_distance_r_safety);
+      // if (min_distance > dc + min_distance_r_safety){
+      //   out_cmd.gamma = 0.0;
+      // } else if(min_distance < ds + min_distance_r_safety){
+      //   out_cmd.gamma = 1.0;
+      // } else{
+      //   out_cmd.gamma = 1.0 - (min_distance - (ds + min_distance_r_safety)) / std::abs(dc - ds); // Convex interpolation between 1 and 0
+      // }
+      //  END OLD
     } else {
       out_cmd.gamma = 0.0;
       out_cmd.v = 0.0;
       out_cmd.w = 0.0;
     }
   }
-
+  
 
   return out_cmd;
 }
@@ -627,7 +652,7 @@ void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs)
   // Add new variables to the queue. Their values will be passed to the controller once t >= t0_q.
   if(msgs->type.compare("circular") == 0){
     type_q = msgs->type;
-    t0_q = msgs->trajectory[0];
+    t0_q = t0 + msgs->trajectory[0]; // NOTE: ros::Time::now() is different in gazebo.
     xc_q = msgs->trajectory[1];
     yc_q = msgs->trajectory[2];
     R_q = msgs->trajectory[3];
@@ -665,7 +690,7 @@ void IO_control_collision::change_trajectories(const ros::TimerEvent& event){
       phi0 =phi0_q;
       // ROS_INFO("Parameters switched: \n t0, xc, yc, R, wd, phi0: [%lf,%lf, %lf, %lf, %lf, %lf]", t0, xc, yc, R, wd, phi0);
     }
-
+    
     // Add square trajectories here
 
   }

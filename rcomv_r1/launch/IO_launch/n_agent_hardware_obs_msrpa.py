@@ -20,8 +20,8 @@ F = 0
 formation_r = 1.0
 formation_angle = []
 
-for i in range(n):
-    formation_angle.append(i*2*pi/n + pi/2)
+for ii in range(n):
+    formation_angle.append(ii*2*pi/n + pi/2)
 
 trajectory_r = 1.5
 
@@ -30,10 +30,11 @@ eta = 10
 xc = 0
 yc = -1
 wd = 0.09
+mu2 = 0.3
 
 number_of_obstacles = 2
 
-obstacle_radii = [0.3, 0.3]
+obstacle_radii = [0.7, 0.7]
 
 rover_numbers = [4,5]
 
@@ -64,14 +65,16 @@ rover_args = {
     "b": "0.05",
     "k1": "0.5",
     "k2": "0.5",
+    "k3": "1",
     "vmax": "0.5",
     "wmax": "1.3",
+    "mu2": str(mu2),
     "wd": str(wd),
     "R": str(trajectory_r),
     "R1": "1",
     "R2": "1",
-    "ds": ".5",
-    "dc":"1.0",
+    "ds": "0.3",
+    "dc":"0.9",
     "gazebo": "0",
     "xc": str(xc),
     "yc": str(yc),
@@ -125,8 +128,10 @@ ugv.defarg = [
     "b",
     "k1",
     "k2",
+    "k3",
     "vmax",
     "wmax",
+    "mu2",
     "wd",
     "R",
     "R1",
