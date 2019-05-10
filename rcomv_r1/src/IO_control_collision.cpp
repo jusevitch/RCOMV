@@ -339,61 +339,70 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
     // modulo the time for infinite looping
     double t_corrected = (t >= 8*T) ? fmod(t, 8*T) : t;
 
-    ROS_INFO("t, t_corrected, T: [%lf, %lf, %lf]", t, t_corrected, T);
+    // ROS_INFO("t, t_corrected, T: [%lf, %lf, %lf]", t, t_corrected, T);
 
     if(startLIdx == 0) t_corrected+=0;
     else if(startLIdx >= 1 && startLIdx < 3) t_corrected += T;
     else if(startLIdx >= 3 && startLIdx < 5) t_corrected += 3*T;
     else if(startLIdx >= 5 && startLIdx < 7) t_corrected += 5*T;
     else t_corrected += 7*T;
-
+    ROS_INFO("t_corrected: %f", t_corrected );
     // parameters for square
     if ( 0 <= t_corrected && t_corrected < T) {
       ROS_INFO("state1");
-      y1d = xc + Leng;
-      y2d = yc + V*t_corrected;
       vy1d = 0;
       vy2d = V;
+      y1d = Leng;
+      y2d = V*t_corrected;
+      
     } 
     else if ( T <= t_corrected && t_corrected < 3*T) {
       ROS_INFO("state2");
-      y1d = xc + Leng - V*(t_corrected-T);
-      y2d = yc + Leng;
       vy1d = -V;
       vy2d = 0;
+      y1d = Leng - V*(t_corrected-T);
+      y2d = Leng;
+      
     }
     else if ( 3*T <= t_corrected && t_corrected < 5*T) {
       ROS_INFO("state3");
-      y1d = xc - Leng;
-      y2d = yc + Leng -V*(t_corrected-3*T);
       vy1d = 0;
       vy2d = -V;
+      y1d = -Leng;
+      y2d = Leng -V*(t_corrected-3*T);
     }
     else if ( 5*T <= t_corrected && t_corrected < 7*T) {
       ROS_INFO("state4");
-      y1d = xc - Leng + V*(t_corrected-5*T);
-      y2d = yc - Leng;
       vy1d = V;
       vy2d = 0;
+      y1d = -Leng + V*(t_corrected-5*T);
+      y2d = -Leng;
     }
     else if ( 7*T <= t_corrected && t_corrected < 8*T) {
       ROS_INFO("state5");
-      y1d = xc + Leng;
-      y2d = yc - Leng + V*(t_corrected-7*T);
       vy1d = 0;
       vy2d = V;
+      y1d = Leng;
+      y2d = -Leng + V*(t_corrected-7*T);
     }
 
+    double y1d_temp = y1d * cos(psi) - y2d * sin(psi) + xc;
+    double y2d_temp = y1d * sin(psi) + y2d * cos(psi) + yc;
 
-    y1d = y1d * cos(psi) + y2d * sin(psi);
-    y2d = -y1d * sin(psi) + y2d * cos(psi);
+    y1d = y1d_temp;
+    y2d = y2d_temp;
 
-    vy1d = vy1d * cos(psi) + vy2d * sin(psi);
-    vy2d = -vy1d * sin(psi) + vy2d * cos(psi);
+    double vy1d_temp = vy1d * cos(psi) - vy2d * sin(psi);
+    double vy2d_temp = vy1d * sin(psi) + vy2d * cos(psi);
+
+    vy1d = vy1d_temp;
+    vy2d = vy2d_temp;
 
   }
 
   ROS_INFO("y1d, y2d: [%lf, %lf]", y1d, y2d);
+  ROS_INFO("vy1d, vy2d: [%lf, %lf]", vy1d, vy2d);
+  ROS_INFO("psi, cos(psi), sin(psi): [%lf, %lf, %lf]", psi, cos(psi), sin(psi)  );
 
   // the time derivative of the reference output
   

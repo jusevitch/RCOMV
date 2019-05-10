@@ -14,15 +14,15 @@ import easylaunch as el
 
 common_namespace = "R" # Root of the namespace for all nodes
 
-n = 3
+n = 2
 k = 1
 F = 0
 
-formation_r = 0.0 #0.75
+formation_r = 1
 formation_angle = []
 
 for ii in range(n):
-    formation_angle.append(ii*2*pi/n)
+    formation_angle.append(ii*2*pi/n + pi/2)
 
 trajectory_r = 1.25
 
@@ -34,15 +34,15 @@ wd = 0.09
 mu2 = 0.5
 
 Leng = 1
-psi = 0
-V = .2
+psi = 0.7854
+V = .2  
 startLIdx = 0
 
 number_of_obstacles = 2
 
 obstacle_radii = [0.25, 0.25]
 
-rover_numbers = [4,5,6]
+rover_numbers = [4,5]
 
 gdb_xterm_output = 1
 
@@ -79,7 +79,7 @@ rover_args = {
     "R1": "1",
     "R2": "1",
     "ds": "0.4",
-    "dc":"0.7",
+    "dc":"0.5",
     "gazebo": "0",
     "xc": str(xc),
     "yc": str(yc),
