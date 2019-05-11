@@ -336,67 +336,158 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   } 
 
   else if( path_type.compare(std::string("square")) == 0) { // Square path
-    // modulo the time for infinite looping
-    double t_corrected = (t >= 8*T) ? fmod(t, 8*T) : t;
+    
+    // Square path without rounded edges
+    //
+    //    3 ___ 2 ___ 1
+    //    |           |
+    //    4           0
+    //    |           |
+    //    5 ___ 6 ___ 7
+    //
+    //    T = Leng / V
 
-    // ROS_INFO("t, t_corrected, T: [%lf, %lf, %lf]", t, t_corrected, T);
+    if (fillet == 0) {
 
-    if(startLIdx == 0) t_corrected+=0;
-    else if(startLIdx >= 1 && startLIdx < 3) t_corrected += T;
-    else if(startLIdx >= 3 && startLIdx < 5) t_corrected += 3*T;
-    else if(startLIdx >= 5 && startLIdx < 7) t_corrected += 5*T;
-    else t_corrected += 7*T;
-    ROS_INFO("t_corrected: %f", t_corrected );
-    // parameters for square
-    if ( 0 <= t_corrected && t_corrected < T) {
-      ROS_INFO("state1");
-      vy1d = 0;
-      vy2d = V;
-      y1d = Leng;
-      y2d = V*t_corrected;
-      
-    } 
-    else if ( T <= t_corrected && t_corrected < 3*T) {
-      ROS_INFO("state2");
-      vy1d = -V;
-      vy2d = 0;
-      y1d = Leng - V*(t_corrected-T);
-      y2d = Leng;
-      
+      // modulo the time for infinite looping
+      double t_corrected = (t >= 8*T) ? fmod(t, 8*T) : t;
+
+      if(startLIdx == 0) t_corrected+=0;
+      else if(startLIdx >= 1 && startLIdx < 3) t_corrected += T;
+      else if(startLIdx >= 3 && startLIdx < 5) t_corrected += 3*T;
+      else if(startLIdx >= 5 && startLIdx < 7) t_corrected += 5*T;
+      else t_corrected += 7*T;
+
+      ROS_INFO("t_corrected: %f", t_corrected );
+      // parameters for square
+      if ( 0 <= t_corrected && t_corrected < T) {
+        ROS_INFO("state1");
+        vy1d = 0;
+        vy2d = V;
+        y1d = Leng;
+        y2d = V*t_corrected;
+        
+      } 
+      else if ( T <= t_corrected && t_corrected < 3*T) {
+        ROS_INFO("state2");
+        vy1d = -V;
+        vy2d = 0;
+        y1d = Leng - V*(t_corrected-T);
+        y2d = Leng;
+        
+      }
+      else if ( 3*T <= t_corrected && t_corrected < 5*T) {
+        ROS_INFO("state3");
+        vy1d = 0;
+        vy2d = -V;
+        y1d = -Leng;
+        y2d = Leng -V*(t_corrected-3*T);
+      }
+      else if ( 5*T <= t_corrected && t_corrected < 7*T) {
+        ROS_INFO("state4");
+        vy1d = V;
+        vy2d = 0;
+        y1d = -Leng + V*(t_corrected-5*T);
+        y2d = -Leng;
+      }
+      else if ( 7*T <= t_corrected && t_corrected < 8*T) {
+        ROS_INFO("state5");
+        vy1d = 0;
+        vy2d = V;
+        y1d = Leng;
+        y2d = -Leng + V*(t_corrected-7*T);
+      }
+
+      double y1d_temp = y1d * cos(psi) - y2d * sin(psi) + xc;
+      double y2d_temp = y1d * sin(psi) + y2d * cos(psi) + yc;
+      double vy1d_temp = vy1d * cos(psi) - vy2d * sin(psi);
+      double vy2d_temp = vy1d * sin(psi) + vy2d * cos(psi);
+
+      y2d = y2d_temp; y1d = y1d_temp; vy1d = vy1d_temp; vy2d = vy2d_temp;
     }
-    else if ( 3*T <= t_corrected && t_corrected < 5*T) {
-      ROS_INFO("state3");
-      vy1d = 0;
-      vy2d = -V;
-      y1d = -Leng;
-      y2d = Leng -V*(t_corrected-3*T);
+    
+
+    // Square path with rounded edges
+    //
+    //      4 ___ 3 ___ 2
+    //    5               1
+    //    |               |
+    //    6               0
+    //    |               |
+    //    7               11
+    //      8 ___ 9 ___ 10
+    //
+    //    T = (Leng - fillet) / V
+
+    else {
+     // modulo the time for infinite looping
+      double t_corrected = (t >= 12*T) ? fmod(t, 12*T) : t;
+      double thetadelta, pi = M_PI;
+
+      if(startLIdx == 0) t_corrected+=0;
+      else if(startLIdx >= 1 && startLIdx < 3) t_corrected += 2*T;
+      else if(startLIdx >= 3 && startLIdx < 5) t_corrected += 5*T;
+      else if(startLIdx >= 5 && startLIdx < 7) t_corrected += 8*T;
+      else t_corrected += 11*T;
+
+     // parameters for square
+      if ( 0 <= t_corrected && t_corrected < T) {
+        vy1d = 0; vy2d = V;
+        y1d = Leng; y2d = V*t_corrected;
+      }
+
+      else if ( T <= t_corrected && t_corrected < 2*T) {
+        thetadelta = 0 + (t_corrected - T) * (pi/(2*T));
+        y1d = (Leng - fillet) + fillet * cos(thetadelta)  ; y2d = (Leng - fillet) + fillet * sin(thetadelta);
+        vy1d = V*sin(-thetadelta); vy2d = V*cos(-thetadelta);
+      }
+
+      else if ( 2*T <= t_corrected && t_corrected < 4*T) {
+        vy1d = -V; vy2d = 0;
+        y1d = Leng - V*(t_corrected-2*T); y2d = Leng;
+      }
+
+      else if ( 4*T <= t_corrected && t_corrected < 5*T) {
+        thetadelta = pi/2 + (t_corrected - 4*T) * (pi/(2*T));
+        y1d = (Leng - fillet) + fillet * cos(thetadelta)  ; y2d = (Leng - fillet) + fillet * sin(thetadelta);
+        vy1d = V*sin(-thetadelta); vy2d = V*cos(-thetadelta);
+      }
+
+      else if ( 5*T <= t_corrected && t_corrected < 7*T) {
+        vy1d = 0; vy2d = -V;
+        y1d = -Leng; y2d = Leng -V*(t_corrected-5*T);
+      }
+
+      else if ( 7*T <= t_corrected && t_corrected < 8*T) {
+        thetadelta = pi + (t_corrected - 7*T) * (pi/(2*T));
+        y1d = (Leng - fillet) + fillet * cos(thetadelta)  ; y2d = (Leng - fillet) + fillet * sin(thetadelta);
+        vy1d = V*sin(-thetadelta); vy2d = V*cos(-thetadelta);
+      }
+
+      else if ( 8*T <= t_corrected && t_corrected < 10*T) {
+        vy1d = V; vy2d = 0;
+        y1d = -Leng + V*(t_corrected-8*T); y2d = -Leng;
+      }
+
+      else if ( 10*T <= t_corrected && t_corrected < 11*T) {
+        thetadelta = 3*pi/2 + (t_corrected - 10*T) * (pi/(2*T));
+        y1d = (Leng - fillet) + fillet * cos(thetadelta)  ; y2d = (Leng - fillet) + fillet * sin(thetadelta);
+        vy1d = V*sin(-thetadelta); vy2d = V*cos(-thetadelta);
+      }
+
+      else if ( 11*T <= t_corrected && t_corrected < 12*T) {
+        vy1d = 0; vy2d = V;
+        y1d = Leng; y2d = -Leng + V*(t_corrected-11*T);
+      }
+
+      double y1d_temp = y1d * cos(psi) - y2d * sin(psi) + xc;
+      double y2d_temp = y1d * sin(psi) + y2d * cos(psi) + yc;
+      double vy1d_temp = vy1d * cos(psi) - vy2d * sin(psi);
+      double vy2d_temp = vy1d * sin(psi) + vy2d * cos(psi);
+
+      y1d = y1d_temp; y2d = y2d_temp; vy1d = vy1d_temp; vy2d = vy2d_temp;
+
     }
-    else if ( 5*T <= t_corrected && t_corrected < 7*T) {
-      ROS_INFO("state4");
-      vy1d = V;
-      vy2d = 0;
-      y1d = -Leng + V*(t_corrected-5*T);
-      y2d = -Leng;
-    }
-    else if ( 7*T <= t_corrected && t_corrected < 8*T) {
-      ROS_INFO("state5");
-      vy1d = 0;
-      vy2d = V;
-      y1d = Leng;
-      y2d = -Leng + V*(t_corrected-7*T);
-    }
-
-    double y1d_temp = y1d * cos(psi) - y2d * sin(psi) + xc;
-    double y2d_temp = y1d * sin(psi) + y2d * cos(psi) + yc;
-
-    y1d = y1d_temp;
-    y2d = y2d_temp;
-
-    double vy1d_temp = vy1d * cos(psi) - vy2d * sin(psi);
-    double vy2d_temp = vy1d * sin(psi) + vy2d * cos(psi);
-
-    vy1d = vy1d_temp;
-    vy2d = vy2d_temp;
 
   }
 
@@ -777,6 +868,7 @@ void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs)
     V_q = msgs->trajectory[5];
     startLIdx_q = msgs->trajectory[6];
     T_q = Leng_q / V_q;
+    fillet_q = msgs->trajectory[7];
   }
 }
 
@@ -819,6 +911,7 @@ void IO_control_collision::change_trajectories(const ros::TimerEvent& event){
       V = V_q;
       startLIdx = startLIdx_q;
       T = T_q;
+      fillet = fillet_q;
     }
   }
 }

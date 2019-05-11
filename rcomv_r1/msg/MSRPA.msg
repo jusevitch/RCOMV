@@ -2,7 +2,7 @@
 #
 # trajectory : =
 #		(circular) [t0, xc, yc, Rad, wd, phi0]
-#		(square)   [t0, xc, yc, Leng, psi, v, start_L]
+#		(square)   [t0, xc, yc, Leng, psi, v, start_L, fillet]
 #
 # formation : =
 # 		(circular) [Rf, n]
