@@ -141,12 +141,14 @@ MSRPA::MSRPA()
       ROS_INFO("sub_idx at: [%d] with topic name: ", sub_idx);
     }
   } else {
-    for(int i = 0; i < in_neighbors.size(); i++) 
-    {
-      std::string sub_topic = "/" + common_namespace + std::to_string(in_neighbors[i]) + "/MSRPA/ref";
-      ref_subs.push_back(nh.subscribe<ref_msgs>(sub_topic, 2,
-                                                boost::bind(&MSRPA::ref_subCallback, this, _1, i)));
-      ROS_INFO("I subscribed to %s", sub_topic.c_str());
+    if (role == 2){ // Subscribers only needed for followers
+      for(int i = 0; i < in_neighbors.size(); i++) 
+      {
+        std::string sub_topic = "/" + common_namespace + std::to_string(in_neighbors[i]) + "/MSRPA/ref";
+        ref_subs.push_back(nh.subscribe<ref_msgs>(sub_topic, 2,
+                                                  boost::bind(&MSRPA::ref_subCallback, this, _1, i)));
+        ROS_INFO("I subscribed to %s", sub_topic.c_str());
+      }
     }
   }
 
@@ -181,9 +183,9 @@ void MSRPA::ref_subCallback(const ref_msgs::ConstPtr &msgs, const int list_idx)
   cvec[list_idx].trajectory = msgs->trajectory;
   cvec[list_idx].formation = msgs->formation;
 
-  if(rover_number == 7) {
-    ROS_INFO("list index: %lu \n type: %s \n trajectory.size(): %lu", list_idx, msgs->type.c_str(), msgs->trajectory.size());
-  }
+  // if(rover_number == 7) {
+  //   ROS_INFO("list index: %lu \n type: %s \n trajectory.size(): %lu", list_idx, msgs->type.c_str(), msgs->trajectory.size());
+  // }
 
 }
 
@@ -483,7 +485,7 @@ void MSRPA::leader_subCallback(const ref_msgs::ConstPtr& msgs){
       reset_message.formation[1] = n;
       internal_state = *msgs;
       internal_state.formation[1] = n; // Note: we don't offer the capability of changing n yet.
-      ROS_INFO("This function callback was called");
+      // ROS_INFO("This function callback was called");
     } else {
       ROS_INFO("ERROR: message to leaders was incorrect. Check the length of the vectors.");
     }
