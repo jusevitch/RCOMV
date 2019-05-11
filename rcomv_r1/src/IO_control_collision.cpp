@@ -413,16 +413,13 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
     //    T = (Leng - fillet) / V
     else {
       double t_corrected = (t >= 12*T) ? fmod(t, 12*T) : t;
-
-      // curvature radius from center of square to center of fillet
-      double radius = sqrt(2) * (Leng - fillet);
       double thetad;
 
       if(startLIdx == 0) t_corrected+=0;
-      else if(startLIdx >= 1 && startLIdx < 3) t_corrected += T;
-      else if(startLIdx >= 3 && startLIdx < 5) t_corrected += 3*T;
-      else if(startLIdx >= 5 && startLIdx < 7) t_corrected += 5*T;
-      else t_corrected += 7*T;
+      else if(startLIdx >= 1 && startLIdx < 3) t_corrected += 2*T;
+      else if(startLIdx >= 3 && startLIdx < 5) t_corrected += 5*T;
+      else if(startLIdx >= 5 && startLIdx < 7) t_corrected += 8*T;
+      else t_corrected += 11*T;
 
       // parameters for square
       if ( 0 <= t_corrected && t_corrected < T) {
@@ -432,7 +429,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
 
       else if ( T <= t_corrected && t_corrected < 2*T) {
         thetad = 0 + (t_corrected - T) * (pi/(2*T));
-        y1d = radius + fillet * cos(thetad)  ; y2d = radius + fillet * sin(thetad);
+        y1d = (Leng - fillet) + fillet * cos(thetad)  ; y2d = (Leng - fillet) + fillet * sin(thetad);
         vy1d = V*sin(-thetad); vy2d = V*cos(-thetad);
       }
 
@@ -443,7 +440,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
 
       else if ( 4*T <= t_corrected && t_corrected < 5*T) {
         thetad = pi/2 + (t_corrected - 4*T) * (pi/(2*T));
-        y1d = radius + fillet * cos(thetad)  ; y2d = radius + fillet * sin(thetad);
+        y1d = (Leng - fillet) + fillet * cos(thetad)  ; y2d = (Leng - fillet) + fillet * sin(thetad);
         vy1d = V*sin(-thetad); vy2d = V*cos(-thetad);
       }
 
@@ -454,7 +451,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
 
       else if ( 7*T <= t_corrected && t_corrected < 8*T) {
         thetad = pi + (t_corrected - 7*T) * (pi/(2*T));
-        y1d = radius + fillet * cos(thetad)  ; y2d = radius + fillet * sin(thetad);
+        y1d = (Leng - fillet) + fillet * cos(thetad)  ; y2d = (Leng - fillet) + fillet * sin(thetad);
         vy1d = V*sin(-thetad); vy2d = V*cos(-thetad);
       }
 
@@ -465,7 +462,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
 
       else if ( 10*T <= t_corrected && t_corrected < 11*T) {
         thetad = 3*pi/2 + (t_corrected - 10*T) * (pi/(2*T));
-        y1d = radius + fillet * cos(thetad)  ; y2d = radius + fillet * sin(thetad);
+        y1d = (Leng - fillet) + fillet * cos(thetad)  ; y2d = (Leng - fillet) + fillet * sin(thetad);
         vy1d = V*sin(-thetad); vy2d = V*cos(-thetad);
       }
 
