@@ -26,13 +26,13 @@ MSRPA::MSRPA()
 
   nh_private_.param<int>("F", F, 0);
   nh_private_.param<int>("eta", eta, 10);
-  nh_private_.param<double>("Rf", Rf, 10);
+  nh_private_.param<double>("Rf", Rf, 0.0);
 
   //Trajectory parameters:
   nh_private_.param<double>("t0", t0, 0);
   nh_private_.param<double>("xc", xc, 0);
   nh_private_.param<double>("yc", yc, 0);
-  nh_private_.param<double>("Rad", Rad, 100);
+  nh_private_.param<double>("Rad", Rad, 0.0);
   nh_private_.param<double>("wd", wd, 0); // wd in the code
   nh_private_.param<double>("phi0", phi0, 0);
   nh_private_.param<double>("Leng", Leng, 0);

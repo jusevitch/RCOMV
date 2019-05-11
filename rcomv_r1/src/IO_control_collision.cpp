@@ -53,9 +53,30 @@ IO_control_collision::IO_control_collision()
   nh_private_.param<int>("gazebo", gazebo, 1);   // Tests whether we're running it indoors or not
   nh_private_.param<int>("rover_number", rover_number, 0); // gives Rover number; 0 throws an error.
 
-  // Parameter to determine number of obstacles to watch for. HARDWARE ONLY.
+
+  // Parameter to parse number of obstacles and collision avoidance radii.
   nh_private_.param<int>("number_of_obstacles", number_of_obstacles,0);
-  nh_private_.getParam("obstacle_radii", obstacle_radii);
+  if(gazebo) {
+    
+    for (int ii = 0; ii < number_of_obstacles; ii++)
+    {
+      std::string obj_param_name = "obs" + std::to_string(ii);
+      nh_private_.param<int>(obj_param_name, obstacle_radii_gazebo[obj_param_name]);
+    }
+    
+  } else {
+    
+    nh_private_.getParam("obstacle_radii", obstacle_radii);
+    obstacles.resize(number_of_obstacles);
+    for(int ii = 0; ii < obstacles.size(); ii++)
+    {
+      // Set it to some ridiculous number so that the obstacles don't interfere with the agents until their actual position is obtained
+      obstacles[ii].pose.pose.position.x = -1000;
+      obstacles[ii].pose.pose.position.y = -1000;
+      obstacles[ii].pose.pose.position.z = -1000;
+      obstacles[ii].r_safety = obstacle_radii[ii]; // Set the safety radius.
+    }
+  }
 
 
   even_cycle = false;
@@ -63,18 +84,10 @@ IO_control_collision::IO_control_collision()
   odometry_connected = false;
   initial_time = ros::Time().toSec();
 
-  ROS_INFO("number_of_obstacles: %d", number_of_obstacles);
-  ROS_INFO("obstacle_radii.size(): %lu", obstacle_radii.size());
+  // ROS_INFO("number_of_obstacles: %d", number_of_obstacles);
+  // ROS_INFO("obstacle_radii.size(): %lu", obstacle_radii.size());
 
-  obstacles.resize(number_of_obstacles);
-  for(int ii = 0; ii < obstacles.size(); ii++)
-  {
-    // Set it to some ridiculous number so that the obstacles don't interfere with the agents until their actual position is obtained
-    obstacles[ii].pose.pose.position.x = -1000;
-    obstacles[ii].pose.pose.position.y = -1000;
-    obstacles[ii].pose.pose.position.z = -1000;
-    obstacles[ii].r_safety = obstacle_radii[ii]; // Set the safety radius.
-  }
+  
   
 
   // ------------------------------ Set Pubs/Subs -----------------------------
@@ -764,38 +777,39 @@ void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr &msgs)
   }
 }
 
-void IO_control_collision::obstacle_Callback(const gazebo_msgs::ModelStates::ConstPtr &msgs)
-{
-  std::vector<PoseStamped_Radius> temp_vector;
-  PoseStamped_Radius temp_pose;
-  // Iterate through list of models. All obstacles should have "obs" in front of their name.
-  if (msgs->name.size() > 0)
-  {
-    for (int ii = 0; ii < msgs->name.size(); ii++)
-    {
-      if (msgs->name[ii].substr(0, 3).compare("obs") == 0)
-      {
-        temp_pose.pose.header.stamp = ros::Time::now();
-        temp_pose.pose.pose = msgs->pose[ii];
+// No longer needed?
+// void IO_control_collision::obstacle_Callback(const gazebo_msgs::ModelStates::ConstPtr &msgs)
+// {
+//   std::vector<PoseStamped_Radius> temp_vector;
+//   PoseStamped_Radius temp_pose;
+//   // Iterate through list of models. All obstacles should have "obs" in front of their name.
+//   if (msgs->name.size() > 0)
+//   {
+//     for (int ii = 0; ii < msgs->name.size(); ii++)
+//     {
+//       if (msgs->name[ii].substr(0, 3).compare("obs") == 0)
+//       {
+//         temp_pose.pose.header.stamp = ros::Time::now();
+//         temp_pose.pose.pose = msgs->pose[ii];
 
-        // Extract safety radius from name
-        std::smatch m;
-        std::regex r("\\d+\\.\\d+"); // Looks for a double. The double MUST have a leading zero; e.g. 0.5.
-        std::regex_search(msgs->name[ii],m,r);
-        if(m.size() > 0){
-          std::string::size_type sz;
-          temp_pose.r_safety = std::stod(m[0],&sz);
-        } else {
-          // ROS_INFO("No radius for this obstacle! Setting default size to 0");
-          temp_pose.r_safety = 0.0;
-        }
-        temp_vector.push_back(temp_pose);
-      }
-    }
+//         // Extract safety radius from name
+//         std::smatch m;
+//         std::regex r("\\d+\\.\\d+"); // Looks for a double. The double MUST have a leading zero; e.g. 0.5.
+//         std::regex_search(msgs->name[ii],m,r);
+//         if(m.size() > 0){
+//           std::string::size_type sz;
+//           temp_pose.r_safety = std::stod(m[0],&sz);
+//         } else {
+//           // ROS_INFO("No radius for this obstacle! Setting default size to 0");
+//           temp_pose.r_safety = 0.0;
+//         }
+//         temp_vector.push_back(temp_pose);
+//       }
+//     }
 
-    obstacles = temp_vector;
-  }
-}
+//     obstacles = temp_vector;
+//   }
+// }
 
 
 void IO_control_collision::vicon_obstacle(const geometry_msgs::TransformStamped::ConstPtr& msgs, const int ii){
@@ -805,6 +819,25 @@ void IO_control_collision::vicon_obstacle(const geometry_msgs::TransformStamped:
   obstacles[ii].pose.pose.position.z = msgs->transform.translation.z;
   obstacles[ii].pose.pose.orientation = msgs->transform.rotation;
 
+}
+
+void IO_control_collision::gazebo_obstacle(const gazebo_msgs::ModelStates::ConstPtr& msgs){
+  std::vector<PoseStamped_Radius> temp;
+  int count = 0;
+
+  for (int ii = 0; ii < msgs.name.size(); ii++)
+  {
+    if(obstacle_radii_gazebo.count(msgs.name[ii]) > 0) {
+      // obstacle_radii_gazebo[msgs.name[ii]] = msgs.pose[ii];
+
+      temp.push_back(PoseStamped_Radius());
+      temp[temp.end()-1].pose.pose = msgs->pose[ii];
+      temp[temp.end()-1].pose.header = ros::Time::now.toSec();
+    }
+  }
+
+  obstacles = temp;
+  
 }
 
 void IO_control_collision::change_trajectories(const ros::TimerEvent& event){

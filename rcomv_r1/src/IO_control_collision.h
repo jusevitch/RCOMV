@@ -21,7 +21,8 @@
 #include <math.h>
 #include <string>
 #include <vector>
-#include <regex>
+#include <map>
+#include <regex> // Remove? We may not need this
 #include <functional> // std::bind; Requires C++11 or later; use boost::bind otherwise
 
 #include <state_graph_builder/graph.h>
@@ -173,6 +174,7 @@ private:
   std::string pub_topic;
   int number_of_obstacles;
   std::vector<double> obstacle_radii;
+  // std::map<std::string, double> obstacle_radii_gazebo;
 
 
 

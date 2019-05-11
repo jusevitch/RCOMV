@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<launch>
+    <rosparam param="test_param">
+        obj0: 10.0
+        obj1: 20.0
+    </rosparam>
+</launch>

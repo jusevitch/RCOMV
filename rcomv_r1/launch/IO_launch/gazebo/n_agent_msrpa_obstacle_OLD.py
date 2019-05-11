@@ -1,9 +1,7 @@
-# Launch file script for n agents with IO_collision avoidance and msrpa
-# This is for hardware with physical obstacles (i.e. gazebo = 0)
+# Launch file script for n agents with IO_collision_control and msrpa
 
 import sys
 ## Append easylaunch directory to path
-# sys.path.append('/home/dasc/Downloads/MSR/launch/easylaunch')
 sys.path.append('/media/james/Data/code2/easylaunch')
 
 from math import pi, cos, sin
@@ -14,39 +12,29 @@ import easylaunch as el
 
 common_namespace = "R" # Root of the namespace for all nodes
 
-n = 4
-k = 1
+n = 10
+k = 3
 F = 0
 
-formation_r = 1
+formation_r = 15
 formation_angle = []
 
-for ii in range(n):
-    formation_angle.append(ii*2*pi/n + pi/2)
+for i in range(n):
+    formation_angle.append(i*2*pi/n)
 
-trajectory_r = 1.25
+trajectory_r = 20
 
 eta = 10
 
 xc = 0
-yc = -1
+yc = 0
 wd = 0.09
-mu2 = 0.5
 
-Leng = 1
-psi = 0.7854
-V = .2  
-startLIdx = 0
+gdb_xterm_output = 0
 
-number_of_obstacles = 2
-number_of_trucks = 3
-truck_radius = 5
-
-obstacle_radii = [0.25, 0.25]
-
-rover_numbers = [i+1 for i in range(n)]
-
-gdb_xterm_output = 1
+# Truck obstacle variables
+number_of_trucks = 2
+truck_radius = 40
 
 ## Create launchFile object
 
@@ -60,6 +48,7 @@ rover_args = {
     "enable_logging": "true",
     "enable_ground_truth": "true",
     "n": str(n),
+    "path_type": "circular",
     "qi_x": "10",
     "qi_y": "0",
     "qi_theta": "1.5708",
@@ -69,25 +58,20 @@ rover_args = {
     "poly_k": "60",
     "T": "30",
     "endless": "true",
-    "b": "0.2",
+    "b": "0.05",
     "k1": "0.5",
     "k2": "0.5",
-    "k3": "2",
-    "vmax": "0.5",
-    "wmax": "1.3",
-    "mu2": str(mu2),
+    "vmax": "1.5",
+    "wmax": "4",
     "wd": str(wd),
     "R": str(trajectory_r),
     "R1": "1",
     "R2": "1",
-    "ds": "0.4",
-    "dc":"0.5",
+    "ds": "1",
+    "dc":"3",
     "gazebo": "1",
     "xc": str(xc),
-    "yc": str(yc),
-    "obstacle_radii": str(obstacle_radii),
-    "number_of_obstacles": str(number_of_obstacles),
-    "path_type": "NaN"
+    "yc": str(yc)
 }
 
 # Why did I use str(0) instead of "0"? I have no idea...it's all the same.
@@ -101,11 +85,11 @@ msrpa_args = {
     "yc": str(yc),
     "Rad": str(trajectory_r),
     "wd": str(wd),
-    "phi0": str(0.0),
-    "Leng": str(Leng),
-    "psi": str(psi),
-    "V": str(V),
-    "startLIdx": str(startLIdx),
+    "phi0": str(0),
+    "leng": str(10),
+    "psi": str(0),
+    "v": str(0),
+    "start_L": str(0),
     "common_namespace": common_namespace
 }
 
@@ -131,14 +115,13 @@ launch.include.append(ew)
 ugv = el.include(file="$(find rcomv_r1)/launch/IO_launch/ugv_with_IO_collision.launch")
 ugv.defarg = [
     "enable_logging",
+    "path_type",
     "endless",
     "b",
     "k1",
     "k2",
-    "k3",
     "vmax",
     "wmax",
-    "mu2",
     "wd",
     "R",
     "R1",
@@ -148,10 +131,7 @@ ugv.defarg = [
     "dc",
     "gazebo",
     "xc",
-    "yc",
-    "obstacle_radii",
-    "number_of_obstacles",
-    "path_type"
+    "yc"
 ]
 
 ugv.arg = {
@@ -182,13 +162,13 @@ ugv_list = ugv.copy(n)
 
 for j in range(0,n):
     temp_args = {
-        "x": "0",
-        "y": str(5*j - 5*n/2),
+        "x": str(10*cos(j*2*pi/n)),
+        "y": str(10*sin(j*2*pi/n)),
         "z": "0.1",
-        "rover_number": str(rover_numbers[j]),
+        "rover_number": str(j+1),
         "agent_index": str(j+1),
-        "ugv_name": "R" + str(rover_numbers[j]),
-        "name_space": "R" + str(rover_numbers[j]),
+        "ugv_name": "R" + str(j+1),
+        "name_space": "R" + str(j+1),
         "Ri": str(formation_r),
         "alphai": str(formation_angle[j])
     }
@@ -196,9 +176,6 @@ for j in range(0,n):
 
 launch.include += ugv_list
 
-# vicon_bridge node
-
-# launch.include += [el.include(file="$(find vicon_bridge)/launch/vicon.launch")]
 
 
 ## Node elements
@@ -213,7 +190,6 @@ launch.node.append(switch_node)
 builder_node = el.node(name="builder_node", pkg="state_graph_builder", type="builder")
 builder_node.defparam = ["n", "gazebo"]
 builder_node.param = {"base_ns": "/R"}
-builder_node.rosparam = {"rover_numbers_list": str(rover_numbers)}
 launch.node.append(builder_node)
 
 # MS-RPA nodes
@@ -230,10 +206,10 @@ msrpa_node.defparam = [
     "Rad",
     "wd",
     "phi0",
-    "Leng",
+    "leng",
     "psi",
-    "V",
-    "startLIdx",
+    "v",
+    "start_L",
     "common_namespace"
 ]
 
@@ -241,23 +217,13 @@ array_msrpa = msrpa_node.copy(n)
 
 # The namespace must be set here.
 for i in range(n):
-    array_msrpa[i].ns = common_namespace + str(rover_numbers[i])
+    array_msrpa[i].ns = common_namespace + str(i+1)
 
 for i in range(n):
     array_msrpa[i].param = {
         "idx": str(i + 1),
-        "role": str(2),
-        "Rf": str(trajectory_r)
+        "role": str(2)
     }
-
-for i in range(n):
-    in_neighbor_array = []
-    for j in range(k):
-        in_neighbor_array.append(rover_numbers[i-(j+1)]) # Should work with negative indices too.
-    array_msrpa[i].rosparam = {
-        "in_neighbors": str(in_neighbor_array)
-    }
-        
 
 # Array of malicious agents
 malicious = sample(range(1,n),F)
@@ -265,7 +231,7 @@ malicious = sample(range(1,n),F)
 for j in malicious:
     array_msrpa[j].param["role"] = str(1)
 
-leaders = [1]
+leaders = [1,2,3]
 
 for j in leaders:
     array_msrpa[j-1].param["role"] = str(3)
@@ -291,6 +257,7 @@ for i in range(number_of_trucks):
 
 launch.node += truck_array
 
+
 # Make all nodes have xterm and gdb output for debugging if gdb_xterm_output = True above
 if gdb_xterm_output == 1:
     for i in launch.node:
@@ -298,8 +265,8 @@ if gdb_xterm_output == 1:
         i.launch_prefix = "xterm -e gdb -ex run --args"
 
 # Debugging: Set leader (1) gdb debugging on
-launch.node[-n].output = "screen"
-launch.node[-n].launch_prefix = "xterm -e gdb -ex run --args"
+# launch.node[-n].output = "screen"
+# launch.node[-n].launch_prefix = "xterm -e gdb -ex run --args"
 
 
 ## Write the file
@@ -308,6 +275,6 @@ launch.node[-n].launch_prefix = "xterm -e gdb -ex run --args"
 if len(sys.argv) > 1:
     launchfile_name = sys.argv[1] # Must be 1. The 0th entry of the array will be "msrpa_only.py".
 else:
-    launchfile_name = "./" + str(n) + "_agent_gazebo_obs_msrpa.launch"
+    launchfile_name = "./" + str(n) + "_agent_msrpa_obstacle.launch"
 
 launch.write(filename=launchfile_name)
