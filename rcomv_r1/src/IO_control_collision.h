@@ -172,7 +172,6 @@ private:
   std::string sub_topic;
   std::string pub_topic;
   int number_of_obstacles;
-  std::vector<PoseStamped_Radius> obstacles;
   std::vector<double> obstacle_radii;
 
 
