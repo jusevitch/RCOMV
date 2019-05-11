@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <regex>
+#include <functional> // std::bind; Requires C++11 or later; use boost::bind otherwise
 
 #include <state_graph_builder/graph.h>
 #include <state_graph_builder/posegraph.h>
@@ -72,6 +73,7 @@ private:
   ros::Subscriber states_sub;
   ros::Subscriber msrpa_sub;
   ros::Subscriber obstacle_sub;
+  std::vector<ros::Subscriber> obstacle_subs;
 
   // Callback functions
   void pubCallback(const ros::TimerEvent& event);
@@ -83,6 +85,7 @@ private:
   void graph_subCallback_PoseStamped(const state_graph_builder::posestampedgraph::ConstPtr& msgs);
   void obstacle_Callback(const gazebo_msgs::ModelStates::ConstPtr& msgs);
   void change_trajectories(const ros::TimerEvent& event);
+  void vicon_obstacle(const geometry_msgs::TransformStamped::ConstPtr& msgs, int ii);
 
   // Callback functions for the MS-RPA algorithm. This callback function updates the trajectory parameters when it receives values from MS-RPA nodes.
   void msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs);
@@ -90,16 +93,21 @@ private:
 
 
   std::vector<geometry_msgs::Pose> collision_neighbors(const std::vector<geometry_msgs::Pose> &other_agents, const geometry_msgs::Pose &current_state);
-  std::vector<geometry_msgs::Pose> collision_neighbors(const std::vector<geometry_msgs::PoseStamped> &other_agents, const geometry_msgs::PoseStamped &current_state);
+  std::vector<PoseStamped_Radius> collision_neighbors(const std::vector<geometry_msgs::PoseStamped> &other_agents, const geometry_msgs::PoseStamped &current_state);
+  std::vector<PoseStamped_Radius> collision_neighbors(const std::vector<PoseStamped_Radius> &obstacle_vector, const geometry_msgs::PoseStamped &current_state);
   double psi_col_helper(const geometry_msgs::Point &m_agent, const  geometry_msgs::Point &n_agent);
+  double psi_col_helper(const geometry_msgs::Point &m_agent, const PoseStamped_Radius &n_agent);
   geometry_msgs::Vector3 psi_col_gradient(const geometry_msgs::Pose &m_agent, const geometry_msgs::Pose &n_agent);
   geometry_msgs::Vector3 psi_col_gradient(const geometry_msgs::PoseStamped &m_agent, const geometry_msgs::Pose &n_agent);
+  geometry_msgs::Vector3 psi_col_gradient(const geometry_msgs::PoseStamped &m_agent, const PoseStamped_Radius &n_agent);
   geometry_msgs::Vector3 calc_vec(const geometry_msgs::Point& state1, const geometry_msgs::Point& state2);
   double self_norm(const geometry_msgs::Vector3 &tiny);
   control_cmd collision_avoid();
   double difference_norm(const geometry_msgs::Pose &v1, const geometry_msgs::Pose &v2);
   double difference_norm(const geometry_msgs::PoseStamped &v1, const geometry_msgs::Pose &v2);
+  double difference_norm(const geometry_msgs::PoseStamped &v1, const PoseStamped_Radius &vPSR);
   std::vector<PoseStamped_Radius> states_to_PS_Radius(const geometry_msgs::PoseStamped &v1);
+
   // private variables
 
 
@@ -122,6 +130,7 @@ private:
   double R1, R2; // radius for eight_shaped path
   double wd; // reference turning rate
   double phi0; // Initial starting point on circle trajectory w.r.t. the zero angle position in the global frame.
+  double Leng, psi, V, startLIdx; // parameters for square path
 
   // Safety parameters
   double ds; // Safety radius; must not be crossed 
@@ -149,8 +158,7 @@ private:
   double phi0_q;
 
   // Add square q parameters
-
-
+  double Leng_q, T_q, V_q, psi_q, startLIdx_q;
 
   bool odometry_connected; // flag of odometry
   double initial_time;
@@ -163,6 +171,9 @@ private:
   int rover_number; // The number of the rover. This should correspond with the VICON topic the state is published to.
   std::string sub_topic;
   std::string pub_topic;
+  int number_of_obstacles;
+  std::vector<PoseStamped_Radius> obstacles;
+  std::vector<double> obstacle_radii;
 
 
 

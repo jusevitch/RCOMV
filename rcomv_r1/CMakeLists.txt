@@ -200,6 +200,10 @@ target_link_libraries(switch ${catkin_LIBRARIES})
 add_executable(msrpa_node src/msrpa.cpp src/msrpa.h)
 add_dependencies(msrpa_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(msrpa_node ${catkin_LIBRARIES})
+
+add_executable(msrpa_auto_leader src/msrpa_auto_leader.cpp)
+add_dependencies(msrpa_auto_leader ${catkin_EXPORTED_TARGETS})
+target_link_libraries(msrpa_auto_leader ${catkin_LIBRARIES})
 #############
 ## Install ##
 #############

@@ -15,8 +15,10 @@ MSRPA::MSRPA()
   // syntax: ("variable name in the launch file", variable to be assigned, default value)
   nh_private_.param<int>("n", n, 15);
   nh_private_.param<int>("k", k, 7);
+  nh_private_.param<std::vector<int> >("in_neighbors", in_neighbors, std::vector<int>());
 
   nh_private_.param<int>("idx", idx, 1);
+  nh_private_.param<int>("rover_number", rover_number, 0); // gives Rover number; 0 throws an error.
   // Role 1: Malicious
   // Role 2: Follower
   // Role 3: Leader
@@ -33,15 +35,16 @@ MSRPA::MSRPA()
   nh_private_.param<double>("Rad", Rad, 100);
   nh_private_.param<double>("wd", wd, 0); // wd in the code
   nh_private_.param<double>("phi0", phi0, 0);
-  nh_private_.param<double>("Leng", Leng, 10);
+  nh_private_.param<double>("Leng", Leng, 0);
   nh_private_.param<double>("psi", psi, 0);
-  nh_private_.param<double>("v", v, 0);
-  nh_private_.param<double>("start_L", start_L, 0);
+  nh_private_.param<double>("V", V, 0);
+  nh_private_.param<double>("startLIdx", startLIdx, 0);
   nh_private_.param<std::string>("trajectory_type", trajectory_type, "None");
 
   // Common namespace of all nodes. This variable helps the node know what topics to subscribe to 
   //  to receive MS-RPA information from other nodes in the network.
   nh_private_.param<std::string>("common_namespace", common_namespace, "/ugv");
+  nh_private_.param<int>("gazebo", gazebo,0);
 
   NANMSG.type = "NaN";
   double nanmsg = std::numeric_limits<double>::quiet_NaN();
@@ -56,12 +59,17 @@ MSRPA::MSRPA()
   }
 
   // Initialize msgs
-  ROS_INFO("t0, xc, yc, Rad, wd, phi0, role: [%lf, %lf, %lf, %lf, %lf, %lf], %d", t0, xc, yc, Rad, wd, phi0, role);  
+  // ROS_INFO("t0, xc, yc, Rad, wd, phi0, role: [%lf, %lf, %lf, %lf, %lf, %lf], %d", t0, xc, yc, Rad, wd, phi0, role);  
   if (role == 3)
   {
    reset_message.type = trajectory_type;
+   if (trajectory_type == "circular"){
    reset_message.trajectory = {t0, xc, yc, Rad, wd, phi0};
-   reset_message.formation = {Rf, static_cast<double>(n)};
+   } else if (trajectory_type == "square") {
+     reset_message.trajectory = {t0, xc, yc, Leng, psi, V, startLIdx};
+   }
+
+    reset_message.formation = {Rf, static_cast<double>(n)};
     inform_states =reset_message;
   }
   else if (role == 1)
@@ -85,16 +93,16 @@ MSRPA::MSRPA()
   //we are not publishing the goals to the PID controller anymore so it is 100% irrelevant
 
   // Subscriber: subscribe the switch topic
-  switch_sub = nh.subscribe("/switch", 10, &MSRPA::switch_subCallback, this);
+  // switch_sub = nh.subscribe("/switch", 10, &MSRPA::switch_subCallback, this);
   // wait until receiving the turn on signal
-  while (switch_signal.data == false)
-  {
+  // while (switch_signal.data == false)
+  // {
 
-    ros::spinOnce();
-    ROS_INFO("Wait until all robots are spawned, stay at initial positions.");
+  //   ros::spinOnce();
+  //   ROS_INFO("Wait until all robots are spawned, stay at initial positions.");
 
-    ros::Duration(0.1).sleep();
-  }
+  //   ros::Duration(0.1).sleep();
+  // }
 
   ROS_INFO("Simulation is ready, turn on MSRPA node...");
 
@@ -118,18 +126,28 @@ MSRPA::MSRPA()
   // Subscribers: (msgs list to hold the msgs from subscibed topics)
 
   // This is specific to k-circulant graphs
-  for (int i = 1; i <= k; i++)
-  {
+  if(gazebo){
+    for (int i = 1; i <= k; i++)
+    {
 
-    // Initialize subscriber
-    int sub_idx = (idx - i) > 0 ? (idx - i) : (n + idx - i);
-    // sub topics are resolved in global namespace
-    std::string sub_topic = "/" + common_namespace + std::to_string(sub_idx) + "/MSRPA/ref";
+      // Initialize subscriber
+      int sub_idx = (idx - i) > 0 ? (idx - i) : (n + idx - i);
+      // sub topics are resolved in global namespace
+      std::string sub_topic = "/" + common_namespace + std::to_string(sub_idx) + "/MSRPA/ref";
 
-    ref_subs.push_back(nh.subscribe<ref_msgs>(sub_topic, 2,
-                                              boost::bind(&MSRPA::ref_subCallback, this, _1, i - 1)));
+      ref_subs.push_back(nh.subscribe<ref_msgs>(sub_topic, 2,
+                                                boost::bind(&MSRPA::ref_subCallback, this, _1, i - 1)));
 
-    ROS_INFO("sub_idx at: [%d] with topic name: ", sub_idx);
+      ROS_INFO("sub_idx at: [%d] with topic name: ", sub_idx);
+    }
+  } else {
+    for(int i = 0; i < in_neighbors.size(); i++) 
+    {
+      std::string sub_topic = "/" + common_namespace + std::to_string(in_neighbors[i]) + "/MSRPA/ref";
+      ref_subs.push_back(nh.subscribe<ref_msgs>(sub_topic, 2,
+                                                boost::bind(&MSRPA::ref_subCallback, this, _1, i)));
+      ROS_INFO("I subscribed to %s", sub_topic.c_str());
+    }
   }
 
   while (ros::ok)
@@ -157,6 +175,8 @@ void MSRPA::switch_subCallback(const std_msgs::Bool::ConstPtr &msg)
 //  Subscriber Callback Function: subscribesreset_messagepaths of other nodes
 void MSRPA::ref_subCallback(const ref_msgs::ConstPtr &msgs, const int list_idx)
 {
+  // ROS_INFO("cvec.size(): %lu", cvec.size());
+  // ROS_INFO("list_idx: %d", list_idx);
   cvec[list_idx].type = msgs->type;
   cvec[list_idx].trajectory = msgs->trajectory;
   cvec[list_idx].formation = msgs->formation;
@@ -167,6 +187,8 @@ void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
 {
 
   Consensus(idx - 1); // Update internal_state
+
+  ROS_INFO("startLIdx: %lf", startLIdx);
   
   // Compares the type strings to see if internal_state is NaN. Only the string needs to be compared;
   // normal messages should NOT have "NaN" as their trajectorytype.
@@ -443,7 +465,7 @@ sref_msgs MSRPA::castToPoseAndSubtract(const tiny_msgs point, const sref_msgs po
 // Function allowing you to publish messages to leaders from command line
 void MSRPA::leader_subCallback(const ref_msgs::ConstPtr& msgs){
   // Test to see if leader
-  ROS_INFO("role: %d", role);
+  // ROS_INFO("role: %d", role);
   if(role == 3) {
     if(((msgs->type.compare("circular") == 0) || (msgs->type.compare("square") == 0)) &&\
     msgs->trajectory.size() >= 7 &&\
@@ -452,7 +474,7 @@ void MSRPA::leader_subCallback(const ref_msgs::ConstPtr& msgs){
       reset_message.formation[1] = n;
       internal_state = *msgs;
       internal_state.formation[1] = n; // Note: we don't offer the capability of changing n yet.
-      ROS_INFO("This function callback was called");
+      // ROS_INFO("This function callback was called");
     } else {
       ROS_INFO("ERROR: message to leaders was incorrect. Check the length of the vectors.");
     }

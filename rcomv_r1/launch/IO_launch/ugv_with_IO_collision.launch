@@ -28,9 +28,11 @@
     <arg name="b" default="0.05" />
     <arg name="k1" default="4" />
     <arg name="k2" default="4"/>
+    <arg name="k3" default="10"/>
     <arg name="vmax" default="6" />
     <arg name="wmax" default="4"/>
-    <arg name="path_type" default="circular" />
+    <arg name="mu2" default="100"/>
+    <arg name="path_type" default="NaN" />
     <arg name="xc" default="0" />
     <arg name="yc" default="0" />
     <arg name="R" default="4" />
@@ -48,6 +50,8 @@
     <arg name="endless" default="false" />
     <arg name="agent_index" default="0"/>
     <arg name="rover_number" default="0"/>
+    <arg name="number_of_obstacles" default="0"/>
+    <arg name="obstacle_radii" default="[]"/>
 
     <!-- Parameters for collision avoidance -->
     <arg name="ds" default="1"/>
@@ -97,8 +101,10 @@
             <param name="b" value="$(arg b)" />
             <param name="k1" value="$(arg k1)" />
             <param name="k2" value="$(arg k2)"/>
+            <param name="k3" value="$(arg k3)"/>
             <param name="vmax" value="$(arg vmax)" />
             <param name="wmax" value="$(arg wmax)"/>
+            <param name="mu2" value="$(arg mu2)"/>
 
             <param name="path_type" value="$(arg path_type)" />
             <param name="xc" value="$(arg xc)" />
@@ -121,6 +127,9 @@
             <param name="ds" value="$(arg ds)"/>
             <param name="dc" value="$(arg dc)"/>
 
+
+            <param name="number_of_obstacles" value="$(arg number_of_obstacles)"/>
+            <rosparam param="obstacle_radii" subst_value="True">$(arg obstacle_radii)</rosparam>
         </node>
 
         <!-- In/Output Linearization controller node WITH debugging-->
@@ -137,8 +146,10 @@
             <param name="b" value="$(arg b)" />
             <param name="k1" value="$(arg k1)" />
             <param name="k2" value="$(arg k2)"/>
+            <param name="k3" value="$(arg k3)"/>
             <param name="vmax" value="$(arg vmax)" />
             <param name="wmax" value="$(arg wmax)"/>
+            <param name="mu2" value="$(arg mu2)"/>
 
             <param name="path_type" value="$(arg path_type)" />
             <param name="xc" value="$(arg xc)" />
@@ -160,6 +171,9 @@
 
             <param name="ds" value="$(arg ds)"/>
             <param name="dc" value="$(arg dc)"/>
+
+            <param name="number_of_obstacles" value="$(arg number_of_obstacles)"/>
+            <rosparam param="obstacle_radii" subst_value="true">$(arg obstacle_radii) </rosparam>
 
         </node>
         

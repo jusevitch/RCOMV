@@ -1,0 +1,186 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg default="0" name="F"/>
+  <arg default="0" name="t0"/>
+  <arg default="0.5" name="vmax"/>
+  <arg default="0.5" name="k2"/>
+  <arg default="1" name="radius"/>
+  <arg default="2" name="number_of_obstacles"/>
+  <arg default="10" name="qi_x"/>
+  <arg default="2" name="k3"/>
+  <arg default="0" name="qi_y"/>
+  <arg default="0.4" name="ds"/>
+  <arg default="-1" name="yc"/>
+  <arg default="1.5708" name="qf_theta"/>
+  <arg default="0" name="gazebo"/>
+  <arg default="0" name="startLIdx"/>
+  <arg default="1.25" name="Rad"/>
+  <arg default="-10" name="qf_x"/>
+  <arg default="r1_sim" name="ugv_name"/>
+  <arg default="60" name="poly_k"/>
+  <arg default="10" name="eta"/>
+  <arg default="true" name="endless"/>
+  <arg default="1.25" name="R"/>
+  <arg default="30" name="T"/>
+  <arg default="0.5" name="mu2"/>
+  <arg default="0.7854" name="psi"/>
+  <arg default="0.5" name="k1"/>
+  <arg default="1.5708" name="qi_theta"/>
+  <arg default="1" name="R1"/>
+  <arg default="0.0" name="phi0"/>
+  <arg default="0.09" name="wd"/>
+  <arg default="1" name="Leng"/>
+  <arg default="0.2" name="b"/>
+  <arg default="1" name="k"/>
+  <arg default="0" name="xc"/>
+  <arg default="0" name="qf_y"/>
+  <arg default="[0.25, 0.25]" name="obstacle_radii"/>
+  <arg default="0.5" name="dc"/>
+  <arg default="0.2" name="V"/>
+  <arg default="1" name="R2"/>
+  <arg default="1.3" name="wmax"/>
+  <arg default="true" name="enable_logging"/>
+  <arg default="2" name="n"/>
+  <arg default="NaN" name="path_type"/>
+  <arg default="R" name="common_namespace"/>
+  <arg default="basic" name="world_name"/>
+  <arg default="true" name="enable_ground_truth"/>
+  <include file="$(find rcomv_r1)/launch/IO_launch/ugv_with_IO_collision.launch">
+    <arg name="enable_logging" value="$(arg enable_logging)"/>
+    <arg name="endless" value="$(arg endless)"/>
+    <arg name="b" value="$(arg b)"/>
+    <arg name="k1" value="$(arg k1)"/>
+    <arg name="k2" value="$(arg k2)"/>
+    <arg name="k3" value="$(arg k3)"/>
+    <arg name="vmax" value="$(arg vmax)"/>
+    <arg name="wmax" value="$(arg wmax)"/>
+    <arg name="mu2" value="$(arg mu2)"/>
+    <arg name="wd" value="$(arg wd)"/>
+    <arg name="R" value="$(arg R)"/>
+    <arg name="R1" value="$(arg R1)"/>
+    <arg name="R2" value="$(arg R2)"/>
+    <arg name="n" value="$(arg n)"/>
+    <arg name="ds" value="$(arg ds)"/>
+    <arg name="dc" value="$(arg dc)"/>
+    <arg name="gazebo" value="$(arg gazebo)"/>
+    <arg name="xc" value="$(arg xc)"/>
+    <arg name="yc" value="$(arg yc)"/>
+    <arg name="obstacle_radii" value="$(arg obstacle_radii)"/>
+    <arg name="number_of_obstacles" value="$(arg number_of_obstacles)"/>
+    <arg name="path_type" value="$(arg path_type)"/>
+    <arg name="yaw" value="1.5708"/>
+    <arg name="qi_theta" value="1.5498"/>
+    <arg name="name_space" value="R4"/>
+    <arg name="Ri" value="1"/>
+    <arg name="agent_index" value="1"/>
+    <arg name="qi_x" value="9.9662"/>
+    <arg name="qi_y" value="-0.053919"/>
+    <arg name="gdb_xterm_output" value="1"/>
+    <arg name="z" value="0.1"/>
+    <arg name="qf_theta" value="1.5918"/>
+    <arg name="x" value="0"/>
+    <arg name="y" value="-5.0"/>
+    <arg name="qf_y" value="-0.0078972"/>
+    <arg name="qf_x" value="-9.9225"/>
+    <arg name="alphai" value="1.5707963267948966"/>
+    <arg name="ugv_name" value="R4"/>
+    <arg name="poly_k" value="60"/>
+    <arg name="rover_number" value="4"/>
+    <arg name="T" value="30"/>
+  </include>
+  <include file="$(find rcomv_r1)/launch/IO_launch/ugv_with_IO_collision.launch">
+    <arg name="enable_logging" value="$(arg enable_logging)"/>
+    <arg name="endless" value="$(arg endless)"/>
+    <arg name="b" value="$(arg b)"/>
+    <arg name="k1" value="$(arg k1)"/>
+    <arg name="k2" value="$(arg k2)"/>
+    <arg name="k3" value="$(arg k3)"/>
+    <arg name="vmax" value="$(arg vmax)"/>
+    <arg name="wmax" value="$(arg wmax)"/>
+    <arg name="mu2" value="$(arg mu2)"/>
+    <arg name="wd" value="$(arg wd)"/>
+    <arg name="R" value="$(arg R)"/>
+    <arg name="R1" value="$(arg R1)"/>
+    <arg name="R2" value="$(arg R2)"/>
+    <arg name="n" value="$(arg n)"/>
+    <arg name="ds" value="$(arg ds)"/>
+    <arg name="dc" value="$(arg dc)"/>
+    <arg name="gazebo" value="$(arg gazebo)"/>
+    <arg name="xc" value="$(arg xc)"/>
+    <arg name="yc" value="$(arg yc)"/>
+    <arg name="obstacle_radii" value="$(arg obstacle_radii)"/>
+    <arg name="number_of_obstacles" value="$(arg number_of_obstacles)"/>
+    <arg name="path_type" value="$(arg path_type)"/>
+    <arg name="yaw" value="1.5708"/>
+    <arg name="qi_theta" value="1.5498"/>
+    <arg name="name_space" value="R5"/>
+    <arg name="Ri" value="1"/>
+    <arg name="agent_index" value="2"/>
+    <arg name="qi_x" value="9.9662"/>
+    <arg name="qi_y" value="-0.053919"/>
+    <arg name="gdb_xterm_output" value="1"/>
+    <arg name="z" value="0.1"/>
+    <arg name="qf_theta" value="1.5918"/>
+    <arg name="x" value="0"/>
+    <arg name="y" value="0.0"/>
+    <arg name="qf_y" value="-0.0078972"/>
+    <arg name="qf_x" value="-9.9225"/>
+    <arg name="alphai" value="4.71238898038469"/>
+    <arg name="ugv_name" value="R5"/>
+    <arg name="poly_k" value="60"/>
+    <arg name="rover_number" value="5"/>
+    <arg name="T" value="30"/>
+  </include>
+  <node launch-prefix="xterm -e gdb -ex run --args" name="builder_node" output="screen" pkg="state_graph_builder" type="builder">
+    <param name="n" value="$(arg n)"/>
+    <param name="gazebo" value="$(arg gazebo)"/>
+    <param name="base_ns" value="/R"/>
+    <rosparam param="rover_numbers_list">[4, 5]</rosparam>
+  </node>
+  <node launch-prefix="xterm -e gdb -ex run --args" name="msrpa_node1" ns="R4" output="screen" pkg="rcomv_r1" type="msrpa_node">
+    <param name="n" value="$(arg n)"/>
+    <param name="k" value="$(arg k)"/>
+    <param name="F" value="$(arg F)"/>
+    <param name="eta" value="$(arg eta)"/>
+    <param name="radius" value="$(arg radius)"/>
+    <param name="t0" value="$(arg t0)"/>
+    <param name="xc" value="$(arg xc)"/>
+    <param name="yc" value="$(arg yc)"/>
+    <param name="Rad" value="$(arg Rad)"/>
+    <param name="wd" value="$(arg wd)"/>
+    <param name="phi0" value="$(arg phi0)"/>
+    <param name="Leng" value="$(arg Leng)"/>
+    <param name="psi" value="$(arg psi)"/>
+    <param name="V" value="$(arg V)"/>
+    <param name="startLIdx" value="$(arg startLIdx)"/>
+    <param name="common_namespace" value="$(arg common_namespace)"/>
+    <param name="Rf" value="1.25"/>
+    <param name="trajectory_type" value="square"/>
+    <param name="role" value="3"/>
+    <param name="idx" value="1"/>
+    <rosparam param="in_neighbors">[5]</rosparam>
+  </node>
+  <node launch-prefix="xterm -e gdb -ex run --args" name="msrpa_node2" ns="R5" output="screen" pkg="rcomv_r1" type="msrpa_node">
+    <param name="n" value="$(arg n)"/>
+    <param name="k" value="$(arg k)"/>
+    <param name="F" value="$(arg F)"/>
+    <param name="eta" value="$(arg eta)"/>
+    <param name="radius" value="$(arg radius)"/>
+    <param name="t0" value="$(arg t0)"/>
+    <param name="xc" value="$(arg xc)"/>
+    <param name="yc" value="$(arg yc)"/>
+    <param name="Rad" value="$(arg Rad)"/>
+    <param name="wd" value="$(arg wd)"/>
+    <param name="phi0" value="$(arg phi0)"/>
+    <param name="Leng" value="$(arg Leng)"/>
+    <param name="psi" value="$(arg psi)"/>
+    <param name="V" value="$(arg V)"/>
+    <param name="startLIdx" value="$(arg startLIdx)"/>
+    <param name="common_namespace" value="$(arg common_namespace)"/>
+    <param name="Rf" value="1.25"/>
+    <param name="role" value="2"/>
+    <param name="idx" value="2"/>
+    <rosparam param="in_neighbors">[4]</rosparam>
+  </node>
+</launch>
+
