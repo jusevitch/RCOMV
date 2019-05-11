@@ -167,7 +167,7 @@ private:
   std::vector<geometry_msgs::PoseStamped> state_lists;
   int agent_index;
 
-  int gazebo_msgs; // Must be put as true if you're running Gazebo simulations
+  int gazebo; // Must be put as 1 if you're running Gazebo simulations
   int rover_number; // The number of the rover. This should correspond with the VICON topic the state is published to.
   std::string sub_topic;
   std::string pub_topic;

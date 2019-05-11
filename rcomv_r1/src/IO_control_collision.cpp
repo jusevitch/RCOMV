@@ -50,7 +50,7 @@ IO_control_collision::IO_control_collision()
   nh_private_.param<int>("agent_index", agent_index, 0);
 
   // Distinguishes between running in simulation and running in hardware
-  nh_private_.param<int>("gazebo_msgs", gazebo_msgs, 1);   // Tests whether we're running it indoors or not
+  nh_private_.param<int>("gazebo", gazebo, 1);   // Tests whether we're running it indoors or not
   nh_private_.param<int>("rover_number", rover_number, 0); // gives Rover number; 0 throws an error.
 
   // Parameter to determine number of obstacles to watch for. HARDWARE ONLY.
@@ -79,7 +79,7 @@ IO_control_collision::IO_control_collision()
 
   // ------------------------------ Set Pubs/Subs -----------------------------
   // Publisher := cmd_vel_mux/input/teleop
-  if (gazebo_msgs)
+  if (gazebo)
   {
     pub_topic = "cmd_vel_mux/input/teleop";
 
@@ -613,7 +613,7 @@ control_cmd IO_control_collision::collision_avoid()
           // !!! THE FOLLOWING CODE ONLY WORKS FOR 2D GROUND ROVERS
           double grad_norm = std::abs(2*mu2/(ds - dc) - pow(mu2,2)/pow(ds - dc,2)); // This equation may need to change due to the r_safety changes.
           double grad_angle = std::atan2(current_state.pose.position.y - collision_states[j].pose.pose.position.y,current_state.pose.position.x - collision_states[j].pose.pose.position.x);
-          grad_angle = std::fmod(grad_angle + 2*M_PI, 2*M_PI);git merge --no-commit
+          grad_angle = std::fmod(grad_angle + 2*M_PI, 2*M_PI);
           // ROS_INFO("grad_angle: %lf", grad_angle);
           // ROS_INFO("grad_angle for agent %d: %lf", agent_index, grad_angle);
 
@@ -1138,17 +1138,17 @@ double IO_control_collision::difference_norm(const geometry_msgs::PoseStamped &v
   return sqrt(out_double);
 }
 
-std::vector<PoseStamped_Radius> IO_control_collision::states_to_PS_Radius(const geometry_msgs::PoseStamped &v1){
-  std::vector<PoseStamped_Radius> out_vector;
-  PoseStamped_Radius temp;
-  for(int ii = 0; ii < v1.size(); ii++)
-  {
-    temp.pose = v1[ii].pose;
-    temp.r_safety = ds; // All agents are homogeneous; this is known to all of them
-    out_vector.push_back(temp);
-  }
-  return out_vector;
-}
+// std::vector<PoseStamped_Radius> IO_control_collision::states_to_PS_Radius(const geometry_msgs::PoseStamped &v1){
+//   std::vector<PoseStamped_Radius> out_vector;
+//   PoseStamped_Radius temp;
+//   for(int ii = 0; ii < v1.size(); ii++)
+//   {
+//     temp.pose = v1[ii].pose;
+//     temp.r_safety = ds; // All agents are homogeneous; this is known to all of them
+//     out_vector.push_back(temp);
+//   }
+//   return out_vector;
+// }
 
 
 
