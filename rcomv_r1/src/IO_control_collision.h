@@ -113,6 +113,9 @@ private:
 
   std::string path_type;
   double t0; // initial time
+  double t; // current time
+
+  double thetaf; // For circles, current angle defining center of formation location w.r.t. global frame
 
   // parametric path paramters
   double xc, yc; // center location
@@ -146,6 +149,7 @@ private:
   double R_q;
   double wd_q;
   double phi0_q;
+  bool smooth_trajectory_q;
 
   // Add square q parameters
   double Leng_q, T_q, V_q, psi_q, startLIdx_q;

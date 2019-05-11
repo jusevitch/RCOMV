@@ -271,8 +271,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
 
   // ROS_INFO("gazebo: %d", gazebo ? 1 : 0);
 
-  double t = ros::Time::now().toSec() - t0;
-  double thetaf = wd*t + phi0; // Angle which determines the center of formation position. Note that d/dt(thetaf) = wd.
+  t = ros::Time::now().toSec() - t0; // Member of the class so it's accessible by other functions
+  thetaf = wd*t + phi0; // Angle which determines the center of formation position. Note that d/dt(thetaf) = wd.
 
   // the reference states and velocity: circular path
   if (path_type.compare(std::string("circular")) == 0) {
@@ -763,7 +763,18 @@ void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs)
     yc_q = msgs->trajectory[2];
     R_q = msgs->trajectory[3];
     wd_q = msgs->trajectory[4];
-    phi0_q = msgs->trajectory[5];
+    if(msgs->smooth_trajectory == false){
+      smooth_trajectory_q = false;
+      phi0_q = msgs->trajectory[5];
+    } else {
+      smooth_trajectory_q = true;
+      if(t0_q > t){
+        phi0_q = fmod(thetaf + wd*(t0_q - t), 2*M_PI); // Projected future angle
+      } else {
+        phi0_q = fmod(thetaf, 2*M_PI);
+      }
+      
+    }
     // ROS_INFO("ms_rpa callback worked");
   }
 
