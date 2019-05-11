@@ -134,7 +134,7 @@
 
         <!-- In/Output Linearization controller node WITH debugging-->
         <!-- No wmsr node involved -->
-        <node if="$(arg gdb_xterm_output)" name="IO_control_collision_node" pkg="rcomv_r1" type="IO_control_collision" launch-prefix="xterm -e gdb -ex run --args" output="screen">
+        <node if="$(arg gdb_xterm_output)" name="IO_control_collision_node" pkg="rcomv_r1" type="IO_control_collision" launch-prefix="xterm -xrm 'XTerm.vt100.allowTitleOps: false' -T $(arg ugv_name) -e gdb -ex run --args" output="screen">
             
             <param name="gazebo" value="$(arg gazebo)"/>
             <param name="Ri" value="$(arg Ri)" />

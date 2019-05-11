@@ -36,7 +36,7 @@ obstacle_radii = [0.25, 0.25]
 
 rover_numbers = [2,3,4,5,6,7]
 
-gdb_xterm_output = 0
+gdb_xterm_output = 1
 
 # Configurations for auto leader
 
@@ -344,11 +344,11 @@ launch.node += [node_auto]
 if gdb_xterm_output == 1:
     for i in launch.node:
         i.output = "screen"
-        i.launch_prefix = "xterm -e gdb -ex run --args"
+        i.launch_prefix = "xterm -xrm 'XTerm.vt100.allowTitleOps: false' -T " + str(i.name) + " -e gdb -ex run --args"
 
 # Debugging: Set leader (1) gdb debugging on
 launch.node[-n].output = "screen"
-launch.node[-n].launch_prefix = "xterm -e gdb -ex run --args"
+launch.node[-n].launch_prefix = "xterm -xrm 'XTerm.vt100.allowTitleOps: false' -T  -e gdb -ex run --args"
 
 
 ## Write the file
