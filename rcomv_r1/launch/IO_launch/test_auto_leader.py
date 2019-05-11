@@ -18,7 +18,7 @@ import random
 launch = el.launchFile()
 
 
-# Configurations
+# Configurations for auto leader
 
 flattened_trajectory_list = []
 flattened_formation_list = []

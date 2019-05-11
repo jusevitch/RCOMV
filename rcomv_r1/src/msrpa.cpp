@@ -120,7 +120,7 @@ MSRPA::MSRPA()
   ref_pub = nh.advertise<ref_msgs>(pub_topic, 2);
   // Publisher Timer
   // frequency: 10 Hz
-  ref_pub_timer = nh.createTimer(ros::Duration(0.1),
+  ref_pub_timer = nh.createTimer(ros::Duration(0.05),
                                  &MSRPA::ref_pubCallback, this);
 
   // Subscribers: (msgs list to hold the msgs from subscibed topics)
