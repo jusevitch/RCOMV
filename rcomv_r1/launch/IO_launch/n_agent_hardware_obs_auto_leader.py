@@ -360,8 +360,8 @@ if gdb_xterm_output == 1:
         i.launch_prefix = "xterm -xrm 'XTerm.vt100.allowTitleOps: false' -T " + str(i.name) + " -e gdb -ex run --args"
 
 # Debugging: Set leader (1) gdb debugging on
-launch.node[-n].output = "screen"
-launch.node[-n].launch_prefix = "xterm -xrm 'XTerm.vt100.allowTitleOps: false' -T  -e gdb -ex run --args"
+# launch.node[-n].output = "screen"
+# launch.node[-n].launch_prefix = "xterm -xrm 'XTerm.vt100.allowTitleOps: false' -T  -e gdb -ex run --args"
 
 
 ## Write the file

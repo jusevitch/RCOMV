@@ -195,17 +195,9 @@ void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
 
   // ROS_INFO("startLIdx: %lf", startLIdx);
   ROS_INFO("rover_number: %d", rover_number);
-  ROS_INFO("size of in-neighbors: %lu", in_neighbors.size());
-  if(rover_number == 7){
-    ROS_INFO("FOOBAR");
-    ROS_INFO("ref_subs size = %lu", ref_subs.size());
-
-    for (int ii = 0; ii < ref_subs.size(); ii++)
-    {
-      /* code */
-    }
-    
-  }
+  // ROS_INFO("size of in-neighbors: %lu", in_neighbors.size());
+  
+  print_cvec();
   
   // Compares the type strings to see if internal_state is NaN. Only the string needs to be compared;
   // normal messages should NOT have "NaN" as their trajectorytype.
