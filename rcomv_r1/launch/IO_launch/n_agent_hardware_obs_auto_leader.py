@@ -357,9 +357,15 @@ launch.node += [node_auto]
 if gdb_xterm_output == 1:
     for i in launch.node:
         i.output = "screen"
-        i.launch_prefix = "xterm -e gdb -ex run --args"
+        i.launch_prefix = "xterm -xrm 'XTerm.vt100.allowTitleOps: false' -T " + str(i.name) + " -e gdb -ex run --args"
 
+<<<<<<< HEAD
 
+=======
+# Debugging: Set leader (1) gdb debugging on
+launch.node[-n].output = "screen"
+launch.node[-n].launch_prefix = "xterm -xrm 'XTerm.vt100.allowTitleOps: false' -T  -e gdb -ex run --args"
+>>>>>>> a02676ed068ae2774a10fee56b60a660173f5dcb
 
 
 ## Write the file
