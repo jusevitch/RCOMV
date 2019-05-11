@@ -72,7 +72,7 @@ IO_control_collision::IO_control_collision()
     obstacles[ii].pose.pose.position.z = -1000;
     obstacles[ii].r_safety = obstacle_radii[ii]; // Set the safety radius.
   }
-  
+
 
   // ------------------------------ Set Pubs/Subs -----------------------------
   // Publisher := cmd_vel_mux/input/teleop
@@ -112,9 +112,9 @@ IO_control_collision::IO_control_collision()
 
 
   // Subscriber : MS-RPA callback function
-  
+
   msrpa_sub = nh.subscribe("ref", 1, &IO_control_collision::msrpa_Callback, this);
-  
+
   // Obstacle subscriber
   std::string obs_sub_name;
   if (!gazebo){
@@ -125,7 +125,7 @@ IO_control_collision::IO_control_collision()
       ROS_INFO("obs_sub_name: %s", obs_sub_name.c_str());
       obstacle_subs.push_back(nh.subscribe<geometry_msgs::TransformStamped>(obs_sub_name, 1, boost::bind(&IO_control_collision::vicon_obstacle, this, _1, ii)));
     }
-    
+
   }
 
 }
@@ -309,8 +309,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
                 wd*(R2*cos(wd*t) + Ri*cos(theta+alphai)));
 
   }
-  
-  
+
+
   // the reference states and velocity: cubic polynomial path
   if (path_type.compare(std::string("cubic")) == 0) {
       CubePolyPath(qi, qf, poly_k, T, t, xd, yd, vd, wd);
@@ -333,71 +333,155 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
     y2d = yd + b*s_thd;
     vy1d = xddot - b*s_thd*thetaddot;
     vy2d = yddot + b*c_thd*thetaddot;
-  } 
+  }
 
-  else if( path_type.compare(std::string("square")) == 0) { // Square path
-    // modulo the time for infinite looping
-    double t_corrected = (t >= 8*T) ? fmod(t, 8*T) : t;
 
-    // ROS_INFO("t, t_corrected, T: [%lf, %lf, %lf]", t, t_corrected, T);
+  else if( path_type == "square") { // Square path
 
-    if(startLIdx == 0) t_corrected+=0;
-    else if(startLIdx >= 1 && startLIdx < 3) t_corrected += T;
-    else if(startLIdx >= 3 && startLIdx < 5) t_corrected += 3*T;
-    else if(startLIdx >= 5 && startLIdx < 7) t_corrected += 5*T;
-    else t_corrected += 7*T;
-    ROS_INFO("t_corrected: %f", t_corrected );
-    // parameters for square
-    if ( 0 <= t_corrected && t_corrected < T) {
-      ROS_INFO("state1");
-      vy1d = 0;
-      vy2d = V;
-      y1d = Leng;
-      y2d = V*t_corrected;
-      
-    } 
-    else if ( T <= t_corrected && t_corrected < 3*T) {
-      ROS_INFO("state2");
-      vy1d = -V;
-      vy2d = 0;
-      y1d = Leng - V*(t_corrected-T);
-      y2d = Leng;
-      
+    // Square path without rounded edges
+    //
+    //    3 ___ 2 ___ 1
+    //    |           |
+    //    4           0
+    //    |           |
+    //    5 ___ 6 ___ 7
+    //
+    //    T = Leng / V
+    if(fillet == 0) {
+      // modulo the time for infinite looping
+      double t_corrected = (t >= 8*T) ? fmod(t, 8*T) : t;
+
+      // ROS_INFO("t, t_corrected, T: [%lf, %lf, %lf]", t, t_corrected, T);
+
+      if(startLIdx == 0) t_corrected+=0;
+      else if(startLIdx >= 1 && startLIdx < 3) t_corrected += T;
+      else if(startLIdx >= 3 && startLIdx < 5) t_corrected += 3*T;
+      else if(startLIdx >= 5 && startLIdx < 7) t_corrected += 5*T;
+      else t_corrected += 7*T;
+
+      ROS_INFO("t_corrected: %f", t_corrected );
+
+      // parameters for square
+      if ( 0 <= t_corrected && t_corrected < T) {
+        ROS_INFO("state1");
+        vy1d = 0; vy2d = V;
+        y1d = Leng; y2d = V*t_corrected;
+      }
+
+      else if ( T <= t_corrected && t_corrected < 3*T) {
+        ROS_INFO("state2");
+        vy1d = -V; vy2d = 0;
+        y1d = Leng - V*(t_corrected-T); y2d = Leng;
+      }
+
+      else if ( 3*T <= t_corrected && t_corrected < 5*T) {
+        ROS_INFO("state3");
+        vy1d = 0; vy2d = -V;
+        y1d = -Leng; y2d = Leng -V*(t_corrected-3*T);
+      }
+
+      else if ( 5*T <= t_corrected && t_corrected < 7*T) {
+        ROS_INFO("state4");
+        vy1d = V; vy2d = 0;
+        y1d = -Leng + V*(t_corrected-5*T); y2d = -Leng;
+      }
+
+      else if ( 7*T <= t_corrected && t_corrected < 8*T) {
+        ROS_INFO("state5");
+        vy1d = 0; vy2d = V;
+        y1d = Leng; y2d = -Leng + V*(t_corrected-7*T);
+      }
+
+      double y1d_temp = y1d * cos(psi) - y2d * sin(psi) + xc;
+      double y2d_temp = y1d * sin(psi) + y2d * cos(psi) + yc;
+      double vy1d_temp = vy1d * cos(psi) - vy2d * sin(psi);
+      double vy2d_temp = vy1d * sin(psi) + vy2d * cos(psi);
+
+      y1d = y1d_temp; y2d = y2d_temp; vy1d = vy1d_temp; vy2d = vy2d_temp;
     }
-    else if ( 3*T <= t_corrected && t_corrected < 5*T) {
-      ROS_INFO("state3");
-      vy1d = 0;
-      vy2d = -V;
-      y1d = -Leng;
-      y2d = Leng -V*(t_corrected-3*T);
+
+    // Square path with rounded edges
+    //
+    //      4 ___ 3 ___ 2
+    //    5               1
+    //    |               |
+    //    6               0
+    //    |               |
+    //    7               11
+    //      8 ___ 9 ___ 10
+    //
+    //    T = (Leng - fillet) / V
+    else {
+      double t_corrected = (t >= 12*T) ? fmod(t, 12*T) : t;
+
+      // curvature radius from center of square to center of fillet
+      double radius = sqrt(2) * (Leng - fillet);
+      double thetad;
+
+      if(startLIdx == 0) t_corrected+=0;
+      else if(startLIdx >= 1 && startLIdx < 3) t_corrected += T;
+      else if(startLIdx >= 3 && startLIdx < 5) t_corrected += 3*T;
+      else if(startLIdx >= 5 && startLIdx < 7) t_corrected += 5*T;
+      else t_corrected += 7*T;
+
+      // parameters for square
+      if ( 0 <= t_corrected && t_corrected < T) {
+        vy1d = 0; vy2d = V;
+        y1d = Leng; y2d = V*t_corrected;
+      }
+
+      else if ( T <= t_corrected && t_corrected < 2*T) {
+        thetad = 0 + t_corrected * (pi/(2*T));
+        y1d = radius + fillet * cos(thetad)  ; y2d = radius + fillet * sin(thetad);
+        vy1d = V*sin(-thetad); vy2d = V*cos(-thetad);
+      }
+
+      else if ( 2*T <= t_corrected && t_corrected < 4*T) {
+        vy1d = -V; vy2d = 0;
+        y1d = Leng - V*(t_corrected-2*T); y2d = Leng;
+      }
+
+      else if ( 4*T <= t_corrected && t_corrected < 5*T) {
+        thetad = pi/2 + t_corrected * (pi/(2*T));
+        y1d = radius + fillet * cos(thetad)  ; y2d = radius + fillet * sin(thetad);
+        vy1d = V*sin(-thetad); vy2d = V*cos(-thetad);
+      }
+
+      else if ( 5*T <= t_corrected && t_corrected < 7*T) {
+        vy1d = 0; vy2d = -V;
+        y1d = -Leng; y2d = Leng -V*(t_corrected-5*T);
+      }
+
+      else if ( 7*T <= t_corrected && t_corrected < 8*T) {
+        thetad = pi + t_corrected * (pi/(2*T));
+        y1d = radius + fillet * cos(thetad)  ; y2d = radius + fillet * sin(thetad);
+        vy1d = V*sin(-thetad); vy2d = V*cos(-thetad);
+      }
+
+      else if ( 8*T <= t_corrected && t_corrected < 10*T) {
+        vy1d = V; vy2d = 0;
+        y1d = -Leng + V*(t_corrected-8*T); y2d = -Leng;
+      }
+
+      else if ( 10*T <= t_corrected && t_corrected < 11*T) {
+        thetad = 3*pi/2 + t_corrected * (pi/(2*T));
+        y1d = radius + fillet * cos(thetad)  ; y2d = radius + fillet * sin(thetad);
+        vy1d = V*sin(-thetad); vy2d = V*cos(-thetad);
+      }
+
+      else if ( 11*T <= t_corrected && t_corrected < 12*T) {
+        vy1d = 0; vy2d = V;
+        y1d = Leng; y2d = -Leng + V*(t_corrected-11*T);
+      }
+
+      double y1d_temp = y1d * cos(psi) - y2d * sin(psi) + xc;
+      double y2d_temp = y1d * sin(psi) + y2d * cos(psi) + yc;
+      double vy1d_temp = vy1d * cos(psi) - vy2d * sin(psi);
+      double vy2d_temp = vy1d * sin(psi) + vy2d * cos(psi);
+
+      y1d = y1d_temp; y2d = y2d_temp; vy1d = vy1d_temp; vy2d = vy2d_temp;
+      }
     }
-    else if ( 5*T <= t_corrected && t_corrected < 7*T) {
-      ROS_INFO("state4");
-      vy1d = V;
-      vy2d = 0;
-      y1d = -Leng + V*(t_corrected-5*T);
-      y2d = -Leng;
-    }
-    else if ( 7*T <= t_corrected && t_corrected < 8*T) {
-      ROS_INFO("state5");
-      vy1d = 0;
-      vy2d = V;
-      y1d = Leng;
-      y2d = -Leng + V*(t_corrected-7*T);
-    }
-
-    double y1d_temp = y1d * cos(psi) - y2d * sin(psi) + xc;
-    double y2d_temp = y1d * sin(psi) + y2d * cos(psi) + yc;
-
-    y1d = y1d_temp;
-    y2d = y2d_temp;
-
-    double vy1d_temp = vy1d * cos(psi) - vy2d * sin(psi);
-    double vy2d_temp = vy1d * sin(psi) + vy2d * cos(psi);
-
-    vy1d = vy1d_temp;
-    vy2d = vy2d_temp;
-
   }
 
   ROS_INFO("y1d, y2d: [%lf, %lf]", y1d, y2d);
@@ -405,7 +489,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   ROS_INFO("psi, cos(psi), sin(psi): [%lf, %lf, %lf]", psi, cos(psi), sin(psi)  );
 
   // the time derivative of the reference output
-  
+
   // if(path_type.compare(std::string("circular")) == 0) {
   //   vy1d = -wd*(R*sin(wd*t + phi0) + Ri*sin(wd*t + phi0 + alphai) + b*sin(theta_d)); // c_thd * vd - b * s_thd * wd;
   //   vy2d = wd*(R*cos(wd*t) + phi0 + Ri*cos(wd*t + phi0 + alphai) + b*cos(theta_d)); // s_thd * vd + b * c_thd * wd;
@@ -415,8 +499,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   //   double thetaddot = (xddot / (pow(xddot,2) + pow(yddot,2)))*ydoubledot - (yddot / (pow(xddot,2) + pow(yddot,2)))*xdoubledot;
   //   vy1d = xddot - b*sin(theta_d)*thetaddot;
   //   vy2d = yddot + b*cos(theta_d)*thetaddot;
-  // } else 
-  
+  // } else
+
 
   // ROS_INFO("xd, yd, thetad: [%lf, %lf, %lf]", xd, yd, theta_d);
 
@@ -436,7 +520,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   u2 = vy2d + k2 * e_y2;
 
   // compute collision avoidance term
-  
+
   control_cmd coll_avoid = IO_control_collision::collision_avoid(); // inputs are x,y,theta? Delays may cause problems
 
   ROS_INFO("Agent %d", rover_number);
@@ -444,8 +528,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
   // ROS_INFO("mu2, k3: [%lf, %lf]", mu2, k3);
 
   // transform to the actual control inputs for the unicycle model
-  cmd_vel.linear.x =  (1.0 - coll_avoid.gamma)*(c_th * u1 + s_th * u2) + coll_avoid.gamma*coll_avoid.v; // 
-  cmd_vel.angular.z =  (1.0 - coll_avoid.gamma)*(-s_th/b * u1 + c_th/b * u2) + coll_avoid.gamma*coll_avoid.w; // 
+  cmd_vel.linear.x =  (1.0 - coll_avoid.gamma)*(c_th * u1 + s_th * u2) + coll_avoid.gamma*coll_avoid.v; //
+  cmd_vel.angular.z =  (1.0 - coll_avoid.gamma)*(-s_th/b * u1 + c_th/b * u2) + coll_avoid.gamma*coll_avoid.w; //
 
   // saturation
   cmd_vel.linear.x = std::max(-vmax, std::min(cmd_vel.linear.x, vmax));
@@ -594,7 +678,7 @@ control_cmd IO_control_collision::collision_avoid(){
       current_state.pose.position.x, current_state.pose.position.y, current_state.pose.position.z);
     // ROS_INFO("current_state x,y,z: [%lf, %lf, %lf]", current_state.position.x, current_state.position.y, current_state.position.z);
     all_states.erase(all_states.begin() + agent_index - 1); // Remove the agent's state from the list
-    std::vector<PoseStamped_Radius> collision_states = collision_neighbors(all_states, current_state); 
+    std::vector<PoseStamped_Radius> collision_states = collision_neighbors(all_states, current_state);
     std::vector<PoseStamped_Radius> obstacle_collision_states = collision_neighbors(obstacles, current_state);
 
     // ROS_INFO("# collision agents, # obstacles for agent R%d: [%lu, %lu]", rover_number, collision_states.size(), obstacle_collision_states.size());
@@ -603,12 +687,12 @@ control_cmd IO_control_collision::collision_avoid(){
     // ROS_INFO("Size of collision_states after insertion: %lu", collision_states.size());
 
     if (!collision_states.empty()){
-      
+
       // Get the collision avoidance gradient term
       geometry_msgs::Vector3 psi_collision_sum; psi_collision_sum.x = 0.0; psi_collision_sum.y = 0.0; psi_collision_sum.z = 0.0;
       geometry_msgs::Vector3 grad_vector; grad_vector.x = 0.0; grad_vector.y = 0.0; grad_vector.z = 0.0;
       for (int j=0; j<collision_states.size(); j++){
-        
+
         // ROS_INFO("current state: [%lf, %lf, %lf] \
         // collision_states[j]: [%lf, %lf, %lf]\
         // difference_norm: %lf, \
@@ -627,12 +711,12 @@ control_cmd IO_control_collision::collision_avoid(){
           grad_angle = std::fmod(grad_angle + 2*M_PI, 2*M_PI);
           // ROS_INFO("grad_angle: %lf", grad_angle);
           // ROS_INFO("grad_angle for agent %d: %lf", agent_index, grad_angle);
-          
+
           grad_vector.x = grad_norm*std::cos(grad_angle);
           grad_vector.y = grad_norm*std::sin(grad_angle);
 
           // ROS_INFO("grad_vector x,y : [%lf, %lf]", grad_vector.x, grad_vector.y);
-        } else {        
+        } else {
           grad_vector = psi_col_gradient(current_state, collision_states[j]);
         }
 
@@ -678,7 +762,7 @@ control_cmd IO_control_collision::collision_avoid(){
           out_cmd.gamma = gamma_jj;
         }
       }
-      
+
 
       // OLD BELOW
       // Find out the smallest Euclidean distance between this agent and any one of the agents in collision_states
@@ -711,7 +795,7 @@ control_cmd IO_control_collision::collision_avoid(){
       out_cmd.w = 0.0;
     }
   }
-  
+
 
   return out_cmd;
 }
@@ -752,7 +836,7 @@ void IO_control_collision::graph_subCallback_PoseStamped(const state_graph_build
 
 
 void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs){
-  
+
   // Need to add square trajectory functionality. To be created.
 
   // Add new variables to the queue. Their values will be passed to the controller once t >= t0_q.
@@ -776,7 +860,8 @@ void IO_control_collision::msrpa_Callback(const rcomv_r1::MSRPA::ConstPtr& msgs)
     psi_q = msgs->trajectory[4];
     V_q = msgs->trajectory[5];
     startLIdx_q = msgs->trajectory[6];
-    T_q = Leng_q / V_q;
+    fillet_q = msgs->trajectory[7];
+    T_q = (Leng_q -fillet_q )/ V_q;
   }
 }
 
@@ -819,6 +904,7 @@ void IO_control_collision::change_trajectories(const ros::TimerEvent& event){
       V = V_q;
       startLIdx = startLIdx_q;
       T = T_q;
+      fillet = fillet_q;
     }
   }
 }
@@ -873,8 +959,8 @@ std::vector<PoseStamped_Radius> IO_control_collision::collision_neighbors(const 
   std::vector<PoseStamped_Radius> close_poses;
   for(int ii=0; ii < obstacle_vector.size(); ii++){
     distance = std::sqrt(std::pow(current_state.pose.position.x - obstacle_vector[ii].pose.pose.position.x,2) +\
-      std::pow(current_state.pose.position.y - obstacle_vector[ii].pose.pose.position.y,2) + std::pow(current_state.pose.position.z - obstacle_vector[ii].pose.pose.position.z,2)); 
-      // ROS_INFO("distance, r_safety: [%lf, %lf]", distance, obstacle_vector[ii].r_safety);   
+      std::pow(current_state.pose.position.y - obstacle_vector[ii].pose.pose.position.y,2) + std::pow(current_state.pose.position.z - obstacle_vector[ii].pose.pose.position.z,2));
+      // ROS_INFO("distance, r_safety: [%lf, %lf]", distance, obstacle_vector[ii].r_safety);
     if(distance < dc + obstacle_vector[ii].r_safety){
       // Save the close poses
       close_poses.push_back(obstacle_vector[ii]);

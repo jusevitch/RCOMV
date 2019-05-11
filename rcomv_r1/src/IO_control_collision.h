@@ -42,7 +42,7 @@ struct control_cmd{
 
 struct PoseStamped_Radius{
   geometry_msgs::PoseStamped pose;
-  double r_safety; 
+  double r_safety;
 };
 
 class IO_control_collision
@@ -51,7 +51,7 @@ public:
   IO_control_collision();
   ~IO_control_collision();
 private:
-  // ROS node handle  
+  // ROS node handle
   ros::NodeHandle nh;
   ros::NodeHandle nh_private_;
 
@@ -120,10 +120,10 @@ private:
   double R1, R2; // radius for eight_shaped path
   double wd; // reference turning rate
   double phi0; // Initial starting point on circle trajectory w.r.t. the zero angle position in the global frame.
-  double Leng, psi, V, startLIdx; // parameters for square path
+  double Leng, psi, V, startLIdx, fillet; // parameters for square path
 
   // Safety parameters
-  double ds; // Safety radius; must not be crossed 
+  double ds; // Safety radius; must not be crossed
   double dc; // Radius where collision avoidance function is activated
   double mu2; // Parameter for collision avoidance barrier function
 
@@ -148,7 +148,7 @@ private:
   double phi0_q;
 
   // Add square q parameters
-  double Leng_q, T_q, V_q, psi_q, startLIdx_q;
+  double Leng_q, T_q, V_q, psi_q, startLIdx_q, fillet_q;
 
   bool odometry_connected; // flag of odometry
   double initial_time;
