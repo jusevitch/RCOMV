@@ -431,7 +431,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
       }
 
       else if ( T <= t_corrected && t_corrected < 2*T) {
-        thetad = 0 + t_corrected * (pi/(2*T));
+        thetad = 0 + (t_corrected - T) * (pi/(2*T));
         y1d = radius + fillet * cos(thetad)  ; y2d = radius + fillet * sin(thetad);
         vy1d = V*sin(-thetad); vy2d = V*cos(-thetad);
       }
@@ -442,7 +442,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
       }
 
       else if ( 4*T <= t_corrected && t_corrected < 5*T) {
-        thetad = pi/2 + t_corrected * (pi/(2*T));
+        thetad = pi/2 + (t_corrected - 4*T) * (pi/(2*T));
         y1d = radius + fillet * cos(thetad)  ; y2d = radius + fillet * sin(thetad);
         vy1d = V*sin(-thetad); vy2d = V*cos(-thetad);
       }
@@ -453,7 +453,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
       }
 
       else if ( 7*T <= t_corrected && t_corrected < 8*T) {
-        thetad = pi + t_corrected * (pi/(2*T));
+        thetad = pi + (t_corrected - 7*T) * (pi/(2*T));
         y1d = radius + fillet * cos(thetad)  ; y2d = radius + fillet * sin(thetad);
         vy1d = V*sin(-thetad); vy2d = V*cos(-thetad);
       }
@@ -464,7 +464,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
       }
 
       else if ( 10*T <= t_corrected && t_corrected < 11*T) {
-        thetad = 3*pi/2 + t_corrected * (pi/(2*T));
+        thetad = 3*pi/2 + (t_corrected - 10*T) * (pi/(2*T));
         y1d = radius + fillet * cos(thetad)  ; y2d = radius + fillet * sin(thetad);
         vy1d = V*sin(-thetad); vy2d = V*cos(-thetad);
       }
