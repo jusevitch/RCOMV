@@ -5,7 +5,7 @@
 #		(square)   [t0, xc, yc, Leng, psi, v, start_L]
 #
 # formation : =
-# 		(circular) [Rf, n]
+# 		(circular) [Rf, n] (do we need to add alphai? Probably at some point yes)
 
 string type
 float64[] trajectory

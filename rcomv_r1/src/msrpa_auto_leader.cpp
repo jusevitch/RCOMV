@@ -128,9 +128,14 @@ void Auto_Leader::timerCallback(const ros::TimerEvent& event)
     msg.trajectory = deque2vec(master_trajectory_list[configuration_counter], master_trajectory_list[configuration_counter].size());
     msg.formation = deque2vec(master_formation_list[configuration_counter], master_formation_list[configuration_counter].size());
 
-    // ROS_INFO("trajectory: [%lf, %lf, %lf]", msg.trajectory[0], msg.trajectory[1], msg.trajectory[2]);
+    if (msg.trajectory.size() > 0) {
+    ROS_INFO("trajectory.size : %lu", msg.trajectory.size());
+    ROS_INFO("trajectory: [%lf, %lf, %lf]", msg.trajectory[0], msg.trajectory[1], msg.trajectory[2]);
 
     pub.publish(msg);
+    } else {
+        ROS_INFO("WARNING: trajectory.size == 0 at time %lf", current_time);
+    }
 
 }
 
