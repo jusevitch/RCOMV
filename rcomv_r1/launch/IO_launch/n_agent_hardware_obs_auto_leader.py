@@ -3,8 +3,8 @@
 
 import sys
 ## Append easylaunch directory to path
-# sys.path.append('/home/dasc/Downloads/MSR/launch/easylaunch')
-sys.path.append('/media/james/Data/code2/easylaunch')
+sys.path.append('/home/dasc/Downloads/MSR/launch/easylaunch')
+# sys.path.append('/media/james/Data/code2/easylaunch')
 
 from math import pi, cos, sin
 from random import randint, sample
@@ -36,7 +36,7 @@ obstacle_radii = [0.25, 0.25]
 
 rover_numbers = [2,3,4,5,6,7]
 
-gdb_xterm_output = 0
+gdb_xterm_output = 1
 
 # Configurations for auto leader
 
@@ -225,7 +225,7 @@ ugv_list = ugv.copy(n)
 
 # Different args for the other UGVs
 
-for j in range(0,n):
+for j in range(n):
     temp_args = {
         "x": "0",
         "y": str(5*j - 5*n/2),
@@ -292,7 +292,8 @@ for i in range(n):
     array_msrpa[i].param = {
         "idx": str(i + 1),
         "role": str(2),
-        "Rf": str(trajectory_r)
+        "Rf": str(trajectory_r),
+        "rover_number": str(rover_numbers[i])
     }
 
 for i in range(n):
@@ -305,16 +306,16 @@ for i in range(n):
         
 
 # Array of malicious agents
-malicious = sample(range(1,n),F)
+# malicious = sample(range(1,n),F)
 
-for j in malicious:
-    array_msrpa[j].param["role"] = str(1) # j-1?
+# for j in malicious:
+#     array_msrpa[j].param["role"] = str(1) # j-1?
 
 leaders = [1,2,3]
 
 for j in leaders:
     array_msrpa[j-1].param["role"] = str(3)
-    array_msrpa[j-1].param["trajectory_type"] = "square"
+    array_msrpa[j-1].param["trajectory_type"] = "NaN"
 
 # for j in [4,5,6]:
 #     array_msrpa[j-1].output = "screen"
@@ -323,6 +324,18 @@ for j in leaders:
 
 launch.node += array_msrpa
 
+# Debugging: Set leader (1) gdb debugging on
+# launch.node[-n].output = "screen"
+# launch.node[-n].launch_prefix = "xterm -e gdb -ex run --args"
+
+# launch.node[-(n-1)].output = "screen"
+# launch.node[-(n-1)].launch_prefix = "xterm -e gdb -ex run --args"
+
+# launch.node[-(n-2)].output = "screen"
+# launch.node[-(n-2)].launch_prefix = "xterm -e gdb -ex run --args"
+
+launch.node[-1].output = "screen"
+launch.node[-1].launch_prefix = "xterm -e gdb -ex run --args"
 
 # Node for msrpa_auto_leader
 
@@ -346,9 +359,7 @@ if gdb_xterm_output == 1:
         i.output = "screen"
         i.launch_prefix = "xterm -e gdb -ex run --args"
 
-# Debugging: Set leader (1) gdb debugging on
-launch.node[-n].output = "screen"
-launch.node[-n].launch_prefix = "xterm -e gdb -ex run --args"
+
 
 
 ## Write the file

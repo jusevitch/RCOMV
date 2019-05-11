@@ -180,6 +180,11 @@ void MSRPA::ref_subCallback(const ref_msgs::ConstPtr &msgs, const int list_idx)
   cvec[list_idx].type = msgs->type;
   cvec[list_idx].trajectory = msgs->trajectory;
   cvec[list_idx].formation = msgs->formation;
+
+  if(rover_number == 7) {
+    ROS_INFO("list index: %lu \n type: %s \n trajectory.size(): %lu", list_idx, msgs->type.c_str(), msgs->trajectory.size());
+  }
+
 }
 
 // inform states Publisher Callback
@@ -188,7 +193,19 @@ void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
 
   Consensus(idx - 1); // Update internal_state
 
-  ROS_INFO("startLIdx: %lf", startLIdx);
+  // ROS_INFO("startLIdx: %lf", startLIdx);
+  ROS_INFO("rover_number: %d", rover_number);
+  ROS_INFO("size of in-neighbors: %lu", in_neighbors.size());
+  if(rover_number == 7){
+    ROS_INFO("FOOBAR");
+    ROS_INFO("ref_subs size = %lu", ref_subs.size());
+
+    for (int ii = 0; ii < ref_subs.size(); ii++)
+    {
+      /* code */
+    }
+    
+  }
   
   // Compares the type strings to see if internal_state is NaN. Only the string needs to be compared;
   // normal messages should NOT have "NaN" as their trajectorytype.
@@ -468,13 +485,13 @@ void MSRPA::leader_subCallback(const ref_msgs::ConstPtr& msgs){
   // ROS_INFO("role: %d", role);
   if(role == 3) {
     if(((msgs->type.compare("circular") == 0) || (msgs->type.compare("square") == 0)) &&\
-    msgs->trajectory.size() >= 7 &&\
+    msgs->trajectory.size() >= 6 &&\
     msgs->formation.size() >= 2) {
       reset_message = *msgs;
       reset_message.formation[1] = n;
       internal_state = *msgs;
       internal_state.formation[1] = n; // Note: we don't offer the capability of changing n yet.
-      // ROS_INFO("This function callback was called");
+      ROS_INFO("This function callback was called");
     } else {
       ROS_INFO("ERROR: message to leaders was incorrect. Check the length of the vectors.");
     }
