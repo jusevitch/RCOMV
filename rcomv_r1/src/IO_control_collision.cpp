@@ -434,7 +434,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
         thetadelta = 0 + (t_corrected - T) * (pi/(2*T));
         omega = thetadelta;
         y1d = (Leng - fillet) + fillet * cos(thetadelta)  ; y2d = (Leng - fillet) + fillet * sin(thetadelta);
-        vy1d = V*sin(-thetadelta); vy2d = V*cos(-thetadelta);
+        double dist = sqrt( y1d*y1d + y2d*y2d );
+        vy1d = V*sin(-thetadelta)*dist/fillet; vy2d = V*cos(-thetadelta)*dist/fillet;
       }
 
       else if ( 2*T <= t_corrected && t_corrected < 4*T) {
@@ -447,7 +448,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
         thetadelta = pi/2 + (t_corrected - 4*T) * (pi/(2*T));
         omega = thetadelta;
         y1d = (Leng - fillet) + fillet * cos(thetadelta)  ; y2d = (Leng - fillet) + fillet * sin(thetadelta);
-        vy1d = V*sin(-thetadelta); vy2d = V*cos(-thetadelta);
+        double dist = sqrt( y1d*y1d + y2d*y2d );
+        vy1d = V*sin(-thetadelta)*dist/fillet; vy2d = V*cos(-thetadelta)*dist/fillet;
       }
 
       else if ( 5*T <= t_corrected && t_corrected < 7*T) {
@@ -460,7 +462,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
         thetadelta = pi + (t_corrected - 7*T) * (pi/(2*T));
         omega = thetadelta;
         y1d = (Leng - fillet) + fillet * cos(thetadelta)  ; y2d = (Leng - fillet) + fillet * sin(thetadelta);
-        vy1d = V*sin(-thetadelta); vy2d = V*cos(-thetadelta);
+        double dist = sqrt( y1d*y1d + y2d*y2d );
+        vy1d = V*sin(-thetadelta)*dist/fillet; vy2d = V*cos(-thetadelta)*dist/fillet;
       }
 
       else if ( 8*T <= t_corrected && t_corrected < 10*T) {
@@ -473,7 +476,8 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
         thetadelta = 3*pi/2 + (t_corrected - 10*T) * (pi/(2*T));
         omega = thetadelta;
         y1d = (Leng - fillet) + fillet * cos(thetadelta)  ; y2d = (Leng - fillet) + fillet * sin(thetadelta);
-        vy1d = V*sin(-thetadelta); vy2d = V*cos(-thetadelta);
+        double dist = sqrt( y1d*y1d + y2d*y2d );
+        vy1d = V*sin(-thetadelta)*dist/fillet; vy2d = V*cos(-thetadelta)*dist/fillet;
       }
 
       else if ( 11*T <= t_corrected && t_corrected < 12*T) {
