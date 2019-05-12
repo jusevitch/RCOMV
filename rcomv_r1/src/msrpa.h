@@ -127,6 +127,8 @@ private:
   ref_msgs NANMSG;
   std::vector<double> multiply_scalar_vec(const double val, const std::vector<double> vec);
   int reasonable_physical_misbehavior;
+  int stealthy_cyber_misbehavior;
+  int is_malicious;
 
 }; // end of class
 

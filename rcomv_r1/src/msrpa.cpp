@@ -19,10 +19,11 @@ MSRPA::MSRPA()
 
   nh_private_.param<int>("idx", idx, 1);
   nh_private_.param<int>("rover_number", rover_number, 0); // gives Rover number; 0 throws an error.
-  // Role 1: Malicious
+  // DEPRECATED: Role 1 used to be malicious, but this is now determined by "is_malicious" int.
   // Role 2: Follower
   // Role 3: Leader
   nh_private_.param<int>("role", role, 2); // What do role numbers correspond to again?
+  nh_private_.param<int>("is_malicious", is_malicious, 0); // Not malicious by default
 
   nh_private_.param<int>("F", F, 0);
   nh_private_.param<int>("eta", eta, 10);
@@ -49,7 +50,9 @@ MSRPA::MSRPA()
   NANMSG.type = "NaN";
   double nanmsg = std::numeric_limits<double>::quiet_NaN();
 
-  reasonable_physical_misbehavior = 1; // See the get_malicious_reference function. 
+  // Add these to parameters later?
+  reasonable_physical_misbehavior = 1; // See the get_malicious_reference function.
+  stealthy_cyber_misbehavior = 1; // Agent will physically behave normally, but will send misinformation via MSRPA. 
 
   for (int i = 0; i < 7; i++)
   {
@@ -74,17 +77,18 @@ MSRPA::MSRPA()
     reset_message.formation = {Rf, static_cast<double>(n)};
     inform_states =reset_message;
   }
-  else if (role == 1)
+  else if (role == 2)
+  {
+    inform_states = NANMSG;
+    reset_message= NANMSG;
+  }
+
+  if (is_malicious) // TODO
   {
     // Malicious misbehavior
     // Later, add getting custom parameters
     reset_message= get_malicious_reference();
     inform_states =reset_message;
-  }
-  else
-  {
-    inform_states = NANMSG;
-    reset_message= NANMSG;
   }
 
   // "reference" is the value to be sent to the IO_collision_control nodes
