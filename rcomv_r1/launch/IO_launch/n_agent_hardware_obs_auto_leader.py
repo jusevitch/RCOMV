@@ -151,7 +151,8 @@ msrpa_args = {
     "psi": str(psi),
     "V": str(V),
     "startLIdx": str(startLIdx),
-    "common_namespace": common_namespace
+    "common_namespace": common_namespace,
+    "is_malicious": "0"
 }
 
 # Merges the two dictionaries together (https://stackoverflow.com/a/26853961). 
@@ -279,7 +280,7 @@ msrpa_node.defparam = [
     "psi",
     "V",
     "startLIdx",
-    "common_namespace"
+    "common_namespace",
 ]
 
 array_msrpa = msrpa_node.copy(n)
@@ -313,8 +314,7 @@ print(malicious)
 
 for j in malicious:
     array_msrpa[j].param["role"] = str(1) # j-1?
-    print(j)
-    print(array_msrpa[j].param["role"])
+    array_msrpa[j].param["is_malicious"] = str(1)
 
 leaders = [1,2,3]
 

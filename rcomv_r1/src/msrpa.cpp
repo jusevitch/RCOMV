@@ -75,20 +75,17 @@ MSRPA::MSRPA()
    }
 
     reset_message.formation = {Rf, static_cast<double>(n)};
-    inform_states =reset_message;
   }
   else if (role == 2)
   {
-    inform_states = NANMSG;
     reset_message= NANMSG;
   }
 
-  if (is_malicious) // TODO
+  if (is_malicious)
   {
     // Malicious misbehavior
-    // Later, add getting custom parameters
-    reset_message= get_malicious_reference();
-    inform_states =reset_message;
+    // Later, add getting custom parameters here
+    malicious_cyber_message = get_malicious_reference();
   }
 
   // "reference" is the value to be sent to the IO_collision_control nodes
@@ -197,7 +194,7 @@ void MSRPA::ref_subCallback(const ref_msgs::ConstPtr &msgs, const int list_idx)
 
 }
 
-// inform states Publisher Callback
+
 void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
 {
 
@@ -210,7 +207,7 @@ void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
   print_cvec();
   
   // Compares the type strings to see if internal_state is NaN. Only the string needs to be compared;
-  // normal messages should NOT have "NaN" as their trajectorytype.
+  // normal messages should NOT have "NaN" as their trajectory type.
   bool internal_state_is_NANMSG = (internal_state.type.compare(NANMSG.type) == 0);
 
 // ROS_INFO("NANMSG.type: %s", NANMSG.type.c_str());
@@ -224,6 +221,12 @@ void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
   
   // ROS_INFO("Iteration: [%ld]", iteration);
   // ROS_INFO("interation mod eta: %d", iteration % eta);
+  if (is_malicious == 1){
+    ref_pub.publish(malicious_cyber_message);
+    // Change the malicious message
+    malicious_cyber_message = get_malicious_reference();
+  }
+
   if (iteration % eta == 0){
     // If iteration % eta == 0 and internal_state is not NANMSG, set reference_state = internal_state
     // internal_state == NANMSG means that the agent didn't get the same message from at least F+1 other agents
@@ -240,17 +243,18 @@ void MSRPA::ref_pubCallback(const ros::TimerEvent &event)
 
     internal_state = reset_message; // Resets the internal state. 
 
-    if (role == 3){
+    if (role == 3 && is_malicious == 0){
       ref_pub.publish(internal_state); // Publish only if agent is a leader (or malicious--add later)
       // ROS_INFO("This published");
     }
   } else {
-    if (!(internal_state_is_NANMSG)){
+    if (!(internal_state_is_NANMSG) && is_malicious == 0){
       // If internal state is not the NaN message, publish it to out-neighbors
       ref_pub.publish(internal_state); //MSRPA messages
       // ROS_INFO("This published for agent %d", idx);
     } 
   }
+  
 
   
   //ROS_INFO("cvec [%lf]", cvec[idx-1].x);

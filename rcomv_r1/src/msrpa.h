@@ -74,10 +74,6 @@ private:
   std::vector<ros::Subscriber> ref_subs; // subscribe references from neighbor MSRPA nodes
 
   rcomv_r1::MSRPA ref_msg;
-
-  // messages
-  ref_msgs inform_states; // reference center location
-  //message for states
   
   // Callback Functions
   void ref_subCallback(const ref_msgs::ConstPtr& msgs, const int list_idx);
@@ -101,6 +97,11 @@ private:
   int F;    // allowed maximum number of adversaries
   int gazebo; // Determines whether simulation is in Gazebo or not
   std::vector<int> in_neighbors; // List of in-neighbors. Used for hardware.
+  ref_msgs malicious_cyber_message;
+  int reasonable_physical_misbehavior;
+  int stealthy_cyber_misbehavior;
+  int is_malicious;
+  ref_msgs NANMSG;
 
   double Rf, t0, xc, yc, Rad, wd, phi0, Leng, psi, V, startLIdx;  // parameters to define the trajectory
 
@@ -124,11 +125,9 @@ private:
   ref_msgs reference_state;
   sref_msgs update_reference(const sref_msgs reference, const sref_msgs control);
   sref_msgs castToPoseAndSubtract(const tiny_msgs point, const sref_msgs pose);
-  ref_msgs NANMSG;
+  
   std::vector<double> multiply_scalar_vec(const double val, const std::vector<double> vec);
-  int reasonable_physical_misbehavior;
-  int stealthy_cyber_misbehavior;
-  int is_malicious;
+  
 
 }; // end of class
 
