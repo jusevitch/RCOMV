@@ -305,11 +305,16 @@ for i in range(n):
     }
         
 
-# Array of malicious agents
-# malicious = sample(range(1,n),F)
+print([array_msrpa[i].param["rover_number"] for i in range(len(array_msrpa))])
 
-# for j in malicious:
-#     array_msrpa[j].param["role"] = str(1) # j-1?
+# Array of malicious agents
+malicious = sample(range(0,n),F)
+print(malicious)
+
+for j in malicious:
+    array_msrpa[j].param["role"] = str(1) # j-1?
+    print(j)
+    print(array_msrpa[j].param["role"])
 
 leaders = [1,2,3]
 
