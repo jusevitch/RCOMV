@@ -48,7 +48,9 @@ MSRPA::MSRPA()
 
   NANMSG.type = "NaN";
   double nanmsg = std::numeric_limits<double>::quiet_NaN();
-  ;
+
+  reasonable_physical_misbehavior = 1; // See the get_malicious_reference function. 
+
   for (int i = 0; i < 7; i++)
   {
     NANMSG.trajectory.push_back(nanmsg);
@@ -74,7 +76,9 @@ MSRPA::MSRPA()
   }
   else if (role == 1)
   {
-   reset_message= get_malicious_reference();
+    // Malicious misbehavior
+    // Later, add getting custom parameters
+    reset_message= get_malicious_reference();
     inform_states =reset_message;
   }
   else
@@ -283,21 +287,46 @@ sref_msgs MSRPA::get_leader_reference(uint t)
   return leader;
 }
 
+
+// Defines agent misbehavior
 ref_msgs MSRPA::get_malicious_reference()
 {
   ref_msgs malicious;
   static std::default_random_engine e;
+  static std::default_random_engine s; // Stealthy
+  e.seed(std::chrono::system_clock::now().time_since_epoch().count());;
+  s.seed(std::chrono::system_clock::now().time_since_epoch().count());;
   static std::uniform_real_distribution<double> dis(0, 1);
+  static std::bernoulli_distribution bd(0.5);
 
+  std::vector<std::string> types_vec = {"circular", "square"};
+  // malicious.type = types_vec[bd(s)]; // randomly choose
   malicious.type = "circular";
-  for (int i = 0; i < 7; i++)
-  {
-    malicious.trajectory.push_back(100 * dis(e));
+
+  if(reasonable_physical_misbehavior == 1){
+    malicious.trajectory.resize(7);
+    malicious.trajectory[0] = 0.0; // t0
+    malicious.trajectory[1] = dis(e) - 0.5; // xc
+    malicious.trajectory[2] = dis(e) - 0.5; // yc
+    malicious.trajectory[3] = 3*dis(e); // Rad (trajectory radius)
+    malicious.trajectory[4] = 3.5*dis(e) - 1.25; // wd
+    malicious.trajectory[5] = 2*M_PI*dis(e); // phi0
+    malicious.trajectory[6] = 0.0; // Padded extra last entry
+
+    malicious.formation.resize(2);
+    malicious.formation[0] = 0.0; // Rf; should be zero
+    malicious.formation[1] = 0.0; // n; doesn't matter
+  } else {
+      for (int i = 0; i < 7; i++)
+    {
+      malicious.trajectory.push_back(100 * dis(e));
+    }
+    for (int i = 0; i < 2; i++)
+    {
+      malicious.formation.push_back(100 * dis(e));
+    }
   }
-  for (int i = 0; i < 2; i++)
-  {
-    malicious.formation.push_back(100 * dis(e));
-  }
+  
   return malicious;
 }
 

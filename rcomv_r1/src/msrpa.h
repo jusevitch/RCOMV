@@ -126,6 +126,7 @@ private:
   sref_msgs castToPoseAndSubtract(const tiny_msgs point, const sref_msgs pose);
   ref_msgs NANMSG;
   std::vector<double> multiply_scalar_vec(const double val, const std::vector<double> vec);
+  int reasonable_physical_misbehavior;
 
 }; // end of class
 
