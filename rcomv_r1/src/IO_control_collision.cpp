@@ -434,7 +434,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
         thetadelta = 0 + (t_corrected - T) * (pi/(2*T));
         omega = thetadelta;
         y1d = (Leng - fillet) + fillet * cos(thetadelta)  ; y2d = (Leng - fillet) + fillet * sin(thetadelta);
-        double dist = sqrt( y1d*y1d + y2d*y2d );
+        double dist = sqrt( fillet * cos(thetadelta)*fillet * cos(thetadelta) + fillet * sin(thetadelta)*fillet * sin(thetadelta) );
         vy1d = V*sin(-thetadelta)*dist/fillet; vy2d = V*cos(-thetadelta)*dist/fillet;
       }
 
@@ -448,7 +448,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
         thetadelta = pi/2 + (t_corrected - 4*T) * (pi/(2*T));
         omega = thetadelta;
         y1d = (Leng - fillet) + fillet * cos(thetadelta)  ; y2d = (Leng - fillet) + fillet * sin(thetadelta);
-        double dist = sqrt( y1d*y1d + y2d*y2d );
+        double dist = sqrt( fillet * cos(thetadelta)*fillet * cos(thetadelta) + fillet * sin(thetadelta)*fillet * sin(thetadelta) );
         vy1d = V*sin(-thetadelta)*dist/fillet; vy2d = V*cos(-thetadelta)*dist/fillet;
       }
 
@@ -462,7 +462,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
         thetadelta = pi + (t_corrected - 7*T) * (pi/(2*T));
         omega = thetadelta;
         y1d = (Leng - fillet) + fillet * cos(thetadelta)  ; y2d = (Leng - fillet) + fillet * sin(thetadelta);
-        double dist = sqrt( y1d*y1d + y2d*y2d );
+        double dist = sqrt( fillet * cos(thetadelta)*fillet * cos(thetadelta) + fillet * sin(thetadelta)*fillet * sin(thetadelta) );
         vy1d = V*sin(-thetadelta)*dist/fillet; vy2d = V*cos(-thetadelta)*dist/fillet;
       }
 
@@ -476,7 +476,7 @@ void IO_control_collision::pubCallback(const ros::TimerEvent& event)
         thetadelta = 3*pi/2 + (t_corrected - 10*T) * (pi/(2*T));
         omega = thetadelta;
         y1d = (Leng - fillet) + fillet * cos(thetadelta)  ; y2d = (Leng - fillet) + fillet * sin(thetadelta);
-        double dist = sqrt( y1d*y1d + y2d*y2d );
+        double dist = sqrt( fillet * cos(thetadelta)*fillet * cos(thetadelta) + fillet * sin(thetadelta)*fillet * sin(thetadelta) );
         vy1d = V*sin(-thetadelta)*dist/fillet; vy2d = V*cos(-thetadelta)*dist/fillet;
       }
 
