@@ -557,6 +557,15 @@ void MSRPA::print_cvec(){
   }
 }
 
+void MSRPA::print_ref_msgs(const ref_msgs &msgs) {
+  ROS_INFO("ref_msg:\ntype: %s \n\
+  trajectory: [%lf, %lf, %lf, %lf, %lf, %lf, %lf]\n\
+  formation: [%lf, %lf]",\
+  msgs.type.c_str(),\
+  msgs.trajectory[0], msgs.trajectory[1], msgs.trajectory[2], msgs.trajectory[3], msgs.trajectory[4], msgs.trajectory[5], msgs.trajectory[6], msgs.trajectory[7],\
+  msgs.formation[0], msgs.formation[1]);
+}
+
 // main function
 int main(int argc, char **argv)
 {

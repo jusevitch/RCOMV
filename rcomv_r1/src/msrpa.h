@@ -85,6 +85,7 @@ private:
   
   // Testing purposes only
    void print_cvec();
+   void print_ref_msgs(const ref_msgs &msgs);
 
   // private variables for intermediate calculations
   //int weight_x, weight_y, weight_z;   // weights for the neighbor agents

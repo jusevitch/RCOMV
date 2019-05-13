@@ -294,7 +294,8 @@ for i in range(n):
         "idx": str(i + 1),
         "role": str(2),
         "Rf": str(trajectory_r),
-        "rover_number": str(rover_numbers[i])
+        "rover_number": str(rover_numbers[i]),
+        "clear_params": "true"
     }
 
 for i in range(n):
@@ -308,12 +309,17 @@ for i in range(n):
 
 print([array_msrpa[i].param["rover_number"] for i in range(len(array_msrpa))])
 
+# Set all agents' mode to non-malicious by default
+
+for k in array_msrpa:
+    k.param["is_malicious"] = str(0)
+
 # Array of malicious agents
 malicious = sample(range(0,n),F)
 print(malicious)
 
 for j in malicious:
-    array_msrpa[j].param["role"] = str(1) # j-1?
+    # array_msrpa[j].param["role"] = str(1) # j-1?
     array_msrpa[j].param["is_malicious"] = str(1)
 
 leaders = [1,2,3]
